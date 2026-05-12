@@ -6,7 +6,7 @@ import {
   ArrowUp, ArrowDown,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { savePage, uploadImage, uploadLogo, uploadMenuItemPhoto } from '@/actions/page-editor'
+import { savePage, uploadLogo, uploadMenuItemPhoto } from '@/actions/page-editor'
 import type { PageData, MenuSectionData, MenuItemData } from '@/actions/page-editor'
 import { LandingClient } from '@/app/p/[slug]/landing-client'
 
