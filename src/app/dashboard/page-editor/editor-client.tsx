@@ -6,8 +6,9 @@ import {
   ArrowUp, ArrowDown,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { savePage, saveLogoUrl, updateMenuItemPhotoUrl, uploadLogo, uploadMenuItemPhoto } from '@/actions/page-editor'
+import { savePage, saveLogoUrl, uploadLogo } from '@/actions/page-editor'
 import type { PageData, MenuSectionData, MenuItemData } from '@/actions/page-editor'
+import { createClient } from '@/lib/supabase/client'
 import { LandingClient } from '@/app/p/[slug]/landing-client'
 
 // ─── Local types ──────────────────────────────────────────────────────────────
@@ -86,6 +87,7 @@ function SectionPanel({
 // ─── Main editor ──────────────────────────────────────────────────────────────
 
 export function PageEditorClient({ initial, slug: initialSlug }: { initial: PageData | null; slug: string | null }) {
+  const supabase = createClient()
   const hero0 = parseHeroBg(initial?.hero_bg ?? null)
 
   const initSections: LocalSection[] = ((initial?.menu_sections ?? []) as MenuSectionData[]).map(s => ({
@@ -151,30 +153,39 @@ export function PageEditorClient({ initial, slug: initialSlug }: { initial: Page
   }
 
   function handleItemPhotoSelect(sectionId: string, itemId: string, file: File) {
+    // Immediate local preview
     setSections(prev => prev.map(s => s.id !== sectionId ? s : {
       ...s, items: s.items.map(i => i.id !== itemId ? i : { ...i, photoPreview: URL.createObjectURL(file) }),
     }))
-    const fd = new FormData()
-    fd.append('file', file)
     startTransition(async () => {
-      const res = await uploadMenuItemPhoto(fd, itemId)
-      if ('url' in res) {
-        // Update React state for preview only
-        setSections(prev => prev.map(s => s.id !== sectionId ? s : {
-          ...s, items: s.items.map(i => i.id !== itemId ? i : { ...i, photo_url: res.url }),
-        }))
-        // Direct DB update — keyed on both user_id and slug
-        if (!currentSlug) {
-          console.error('[ItemPhoto] DB save skipped: no slug available')
-        } else {
-          const saveRes = await updateMenuItemPhotoUrl(itemId, res.url, currentSlug)
-          if (saveRes.error) {
-            console.error('[ItemPhoto] DB save failed:', saveRes.error)
-          } else {
-            console.log('[ItemPhoto] DB save OK for item', itemId, 'slug', currentSlug)
-          }
-        }
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) { console.error('[ItemPhoto] not authenticated'); return }
+
+      const path = `${user.id}/menu/${itemId}`
+
+      const { error: uploadError } = await supabase.storage
+        .from('client-assets')
+        .upload(path, file, { upsert: true })
+
+      if (uploadError) {
+        console.error('[ItemPhoto] upload failed:', uploadError.message)
+        return
       }
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('client-assets')
+        .getPublicUrl(path)
+
+      // Compute updated sections directly — do not rely on React state commit timing
+      const updatedSections = sections.map(s => s.id !== sectionId ? s : {
+        ...s, items: s.items.map(i => i.id !== itemId ? i : { ...i, photo_url: publicUrl }),
+      })
+      setSections(updatedSections)
+
+      // Full save passing the updated sections directly
+      await doSave(updatedSections)
+      setSaveMsg('Photo saved!')
+      setTimeout(() => setSaveMsg(''), 2000)
     })
   }
 
@@ -224,47 +235,50 @@ export function PageEditorClient({ initial, slug: initialSlug }: { initial: Page
 
   // ── Save ──
 
+  async function doSave(overrideSections?: LocalSection[]) {
+    const sectionsToSave = overrideSections ?? sections
+    const data: PageData = {
+      restaurant_name:     restaurantName,
+      tagline,
+      hero_bg:             heroBg,
+      logo_url:            logoUrl,
+      google_review_url:   googleReviewUrl,
+      instagram_url:       instagramUrl,
+      facebook_url:        facebookUrl,
+      tiktok_url:          tiktokUrl,
+      whatsapp_number:     whatsappNumber,
+      opening_hours:       openingHours,
+      phone,
+      address,
+      wifi_name:           wifiName,
+      wifi_password:       wifiPassword,
+      call_waiter_enabled: callWaiter,
+      restaurant_type:     restaurantType,
+      city,
+      year_established:    yearEstablished,
+      rating,
+      review_count:        reviewCount,
+      todays_specials:     todaysSpecials,
+      trip_advisor_url:    tripAdvisorUrl,
+      website_url:         websiteUrl,
+      menu_sections: sectionsToSave.map(({ id, name, items }) => ({
+        id, name,
+        items: items.map(({ id, name, price, description, photo_url, available, allergens }) => ({
+          id, name, price, description, photo_url, available: available !== false, allergens,
+        })),
+      })),
+    }
+    const res = await savePage(data)
+    setSaveMsg(res.error ? `Error: ${res.error}` : 'Saved!')
+    if (!res.error) {
+      if (res.slug) setCurrentSlug(res.slug)
+      setTimeout(() => setSaveMsg(''), 3000)
+    }
+  }
+
   function handleSave() {
     setSaveMsg('')
-    startTransition(async () => {
-      const data: PageData = {
-        restaurant_name:     restaurantName,
-        tagline,
-        hero_bg:             heroBg,
-        logo_url:            logoUrl,
-        google_review_url:   googleReviewUrl,
-        instagram_url:       instagramUrl,
-        facebook_url:        facebookUrl,
-        tiktok_url:          tiktokUrl,
-        whatsapp_number:     whatsappNumber,
-        opening_hours:       openingHours,
-        phone,
-        address,
-        wifi_name:           wifiName,
-        wifi_password:       wifiPassword,
-        call_waiter_enabled: callWaiter,
-        restaurant_type:     restaurantType,
-        city,
-        year_established:    yearEstablished,
-        rating,
-        review_count:        reviewCount,
-        todays_specials:     todaysSpecials,
-        trip_advisor_url:    tripAdvisorUrl,
-        website_url:         websiteUrl,
-        menu_sections: sections.map(({ id, name, items }) => ({
-          id, name,
-          items: items.map(({ id, name, price, description, photo_url, available, allergens }) => ({
-            id, name, price, description, photo_url, available: available !== false, allergens,
-          })),
-        })),
-      }
-      const res = await savePage(data)
-      setSaveMsg(res.error ? `Error: ${res.error}` : 'Saved!')
-      if (!res.error) {
-        if (res.slug) setCurrentSlug(res.slug)
-        setTimeout(() => setSaveMsg(''), 3000)
-      }
-    })
+    startTransition(() => doSave())
   }
 
   // ── Preview sections (LocalSection → MenuSectionData) ──
