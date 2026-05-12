@@ -1,7 +1,6 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
-import { ChevronDown, ChevronUp } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import type { MenuSectionData, MenuItemData } from '@/actions/page-editor'
 
@@ -185,93 +184,111 @@ function MenuItemCard({ item, onView }: MenuItemCardProps) {
   return (
     <div
       ref={ref}
-      className="flex items-start gap-3 py-4 border-b last:border-0"
-      style={{ borderColor: 'rgba(255,255,255,0.05)' }}
+      className="flex items-start gap-3 p-3.5 rounded-2xl"
+      style={{ background: '#161920', border: '1px solid rgba(255,255,255,0.07)' }}
     >
+      {/* Photo — left side */}
+      {item.photo_url && (
+        <img
+          src={item.photo_url}
+          alt={item.name}
+          className="w-[68px] h-[68px] rounded-xl object-cover shrink-0"
+          style={{ border: '1px solid rgba(255,255,255,0.07)' }}
+        />
+      )}
+
       {/* Text */}
       <div className="flex-1 min-w-0">
         <p className="font-sans font-semibold leading-snug" style={{ fontSize: 14, color: '#F0F2F8' }}>
           {item.name}
         </p>
         {item.description && (
-          <p
-            className="font-sans leading-relaxed mt-1 line-clamp-2"
-            style={{ fontSize: 12, color: '#8A90A0' }}
-          >
+          <p className="font-sans leading-relaxed mt-1 line-clamp-2" style={{ fontSize: 12, color: '#8A90A0' }}>
             {item.description}
           </p>
         )}
         {item.price && (
-          <p className="font-sans font-bold mt-2 tabular-nums" style={{ fontSize: 13, color: '#38BEFF' }}>
+          <p className="font-sans font-bold mt-2.5 tabular-nums" style={{ fontSize: 14, color: '#38BEFF' }}>
             {item.price}
           </p>
         )}
       </div>
-
-      {/* Photo — right side */}
-      {item.photo_url && (
-        <img
-          src={item.photo_url}
-          alt={item.name}
-          className="w-[72px] h-[72px] rounded-xl object-cover shrink-0"
-          style={{ border: '1px solid rgba(255,255,255,0.07)' }}
-        />
-      )}
     </div>
   )
 }
 
-// ─── Menu section (collapsible accordion) ────────────────────────────────────
+// ─── Menu tabs section ────────────────────────────────────────────────────────
 
-interface MenuSectionProps {
-  section: MenuSectionData
+interface MenuTabsSectionProps {
+  sections: MenuSectionData[]
   standId: string | null
   clientId: string
-  defaultOpen: boolean
 }
 
-function MenuSection({ section, standId, clientId, defaultOpen }: MenuSectionProps) {
-  const [open, setOpen]   = useState(defaultOpen)
-  const visibleItems      = section.items.filter(i => i.name && i.available !== false)
-  if (!visibleItems.length) return null
+function MenuTabsSection({ sections, standId, clientId }: MenuTabsSectionProps) {
+  const visibleSections = sections
+    .map(s => ({ ...s, items: s.items.filter(i => i.name && i.available !== false) }))
+    .filter(s => s.items.length > 0)
+
+  const [activeId, setActiveId] = useState<string>(() => visibleSections[0]?.id ?? '')
+
+  if (!visibleSections.length) return null
+
+  const totalItems    = visibleSections.reduce((sum, s) => sum + s.items.length, 0)
+  const activeSection = visibleSections.find(s => s.id === activeId) ?? visibleSections[0]
 
   return (
-    <div
-      className="rounded-2xl overflow-hidden"
-      style={{ background: '#161920', border: '1px solid rgba(255,255,255,0.07)' }}
-    >
-      {/* Header */}
-      <button
-        type="button"
-        onClick={() => setOpen(o => !o)}
-        className="w-full flex items-center justify-between px-4 py-3.5 active:bg-white/[0.03] transition-colors"
-        style={{ background: '#1E2229' }}
-      >
-        <div className="flex items-center gap-2.5">
-          <span className="font-display font-bold text-white" style={{ fontSize: 14 }}>
-            {section.name}
-          </span>
-          <span
-            className="font-sans font-semibold rounded-full px-2 py-0.5"
-            style={{
-              fontSize: 11,
-              color: '#8A90A0',
-              background: 'rgba(255,255,255,0.06)',
-              border: '1px solid rgba(255,255,255,0.06)',
-            }}
-          >
-            {visibleItems.length}
-          </span>
-        </div>
-        <span style={{ color: 'rgba(255,255,255,0.3)' }}>
-          {open ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
-        </span>
-      </button>
+    <div id="menu-section" className="px-4 pt-6 pb-2">
 
-      {/* Items */}
-      {open && (
-        <div className="px-4">
-          {visibleItems.map(item => (
+      {/* Header */}
+      <div className="flex items-center gap-2.5 mb-4">
+        <h2 className="font-display font-bold text-white" style={{ fontSize: 22 }}>Our Menu</h2>
+        <span
+          className="font-sans font-semibold rounded-full px-2.5 py-0.5"
+          style={{
+            fontSize: 11,
+            color: '#8A90A0',
+            background: 'rgba(255,255,255,0.06)',
+            border: '1px solid rgba(255,255,255,0.07)',
+          }}
+        >
+          {totalItems}
+        </span>
+      </div>
+
+      {/* Category tabs */}
+      {visibleSections.length > 1 && (
+        <div
+          className="flex gap-2 overflow-x-auto pb-4"
+          style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' } as React.CSSProperties}
+        >
+          {visibleSections.map(section => {
+            const active = section.id === activeId
+            return (
+              <button
+                key={section.id}
+                type="button"
+                onClick={() => setActiveId(section.id)}
+                className="shrink-0 px-4 py-1.5 rounded-full font-sans font-semibold transition-all active:scale-95"
+                style={{
+                  fontSize: 13,
+                  background: active ? '#2B65F0' : 'rgba(255,255,255,0.065)',
+                  border: active ? '1px solid rgba(43,101,240,0.5)' : '1px solid rgba(255,255,255,0.07)',
+                  color: active ? '#ffffff' : 'rgba(255,255,255,0.45)',
+                  boxShadow: active ? '0 2px 12px rgba(43,101,240,0.35)' : 'none',
+                }}
+              >
+                {section.name}
+              </button>
+            )
+          })}
+        </div>
+      )}
+
+      {/* Items for active section */}
+      {activeSection && (
+        <div className="space-y-2.5">
+          {activeSection.items.map(item => (
             <MenuItemCard
               key={item.id}
               item={item}
@@ -348,11 +365,6 @@ export function LandingClient({
     : ''
 
   const hasSocial = !!(instagramUrl || facebookUrl || tiktokUrl || whatsappHref)
-
-  function scrollToMenu() {
-    trackButton(standId, clientId, 'menu')
-    document.getElementById('menu-section')?.scrollIntoView({ behavior: 'smooth' })
-  }
 
   return (
     <div className="min-h-screen" style={{ background: '#0D0F14' }}>
@@ -526,50 +538,13 @@ export function LandingClient({
           </div>
         )}
 
-        {/* ── View Menu CTA ─────────────────────────────────────────────────── */}
+        {/* ── Menu tabs ─────────────────────────────────────────────────────── */}
         {hasMenu && (
-          <div className="px-4 pt-3">
-            <button
-              type="button"
-              onClick={scrollToMenu}
-              className="flex items-center justify-between w-full px-5 py-3.5 rounded-2xl font-sans font-semibold text-sm active:scale-[0.98] transition-all"
-              style={{
-                background: 'rgba(27,79,216,0.09)',
-                border: '1px solid rgba(27,79,216,0.22)',
-                color: '#2B65F0',
-              }}
-            >
-              <span>View Menu</span>
-              <ChevronDown size={16} />
-            </button>
-          </div>
-        )}
-
-        {/* ── Menu accordion ────────────────────────────────────────────────── */}
-        {hasMenu && (
-          <div id="menu-section" className="px-4 pt-6 space-y-2.5">
-            {/* Section label */}
-            <div className="flex items-center gap-3 mb-1">
-              <div className="h-px flex-1" style={{ background: 'rgba(255,255,255,0.06)' }} />
-              <span
-                className="font-display font-bold uppercase tracking-[0.18em]"
-                style={{ fontSize: 10, color: 'rgba(255,255,255,0.22)' }}
-              >
-                Menu
-              </span>
-              <div className="h-px flex-1" style={{ background: 'rgba(255,255,255,0.06)' }} />
-            </div>
-
-            {menuSections.map((section, i) => (
-              <MenuSection
-                key={section.id}
-                section={section}
-                standId={standId}
-                clientId={clientId}
-                defaultOpen={i === 0}
-              />
-            ))}
-          </div>
+          <MenuTabsSection
+            sections={menuSections}
+            standId={standId}
+            clientId={clientId}
+          />
         )}
 
         {/* ── Footer ───────────────────────────────────────────────────────── */}

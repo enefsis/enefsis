@@ -107,10 +107,16 @@ export function PageEditorClient({ initial, slug: initialSlug }: { initial: Page
   const [facebookUrl,      setFacebookUrl]       = useState(initial?.facebook_url      ?? '')
   const [tiktokUrl,        setTiktokUrl]         = useState(initial?.tiktok_url        ?? '')
   const [whatsappNumber,   setWhatsappNumber]    = useState(initial?.whatsapp_number   ?? '')
-  const [sections,         setSections]          = useState<LocalSection[]>(initSections)
-  const [saveMsg,          setSaveMsg]           = useState('')
-  const [currentSlug,      setCurrentSlug]       = useState<string | null>(initialSlug)
-  const [isPending,        startTransition]      = useTransition()
+  const [sections,          setSections]          = useState<LocalSection[]>(initSections)
+  const [openingHours,      setOpeningHours]      = useState(initial?.opening_hours      ?? '')
+  const [phone,             setPhone]             = useState(initial?.phone              ?? '')
+  const [address,           setAddress]           = useState(initial?.address            ?? '')
+  const [wifiName,          setWifiName]          = useState(initial?.wifi_name          ?? '')
+  const [wifiPassword,      setWifiPassword]      = useState(initial?.wifi_password      ?? '')
+  const [callWaiter,        setCallWaiter]        = useState(initial?.call_waiter_enabled ?? false)
+  const [saveMsg,           setSaveMsg]           = useState('')
+  const [currentSlug,       setCurrentSlug]       = useState<string | null>(initialSlug)
+  const [isPending,         startTransition]      = useTransition()
 
   const logoInputRef = useRef<HTMLInputElement>(null)
 
@@ -198,15 +204,21 @@ export function PageEditorClient({ initial, slug: initialSlug }: { initial: Page
     setSaveMsg('')
     startTransition(async () => {
       const data: PageData = {
-        restaurant_name:   restaurantName,
+        restaurant_name:     restaurantName,
         tagline,
-        hero_bg:           heroBg,
-        logo_url:          logoUrl,
-        google_review_url: googleReviewUrl,
-        instagram_url:     instagramUrl,
-        facebook_url:      facebookUrl,
-        tiktok_url:        tiktokUrl,
-        whatsapp_number:   whatsappNumber,
+        hero_bg:             heroBg,
+        logo_url:            logoUrl,
+        google_review_url:   googleReviewUrl,
+        instagram_url:       instagramUrl,
+        facebook_url:        facebookUrl,
+        tiktok_url:          tiktokUrl,
+        whatsapp_number:     whatsappNumber,
+        opening_hours:       openingHours,
+        phone,
+        address,
+        wifi_name:           wifiName,
+        wifi_password:       wifiPassword,
+        call_waiter_enabled: callWaiter,
         menu_sections: sections.map(({ id, name, items }) => ({
           id, name,
           items: items.map(({ id, name, price, description, photo_url, available }) => ({
@@ -428,6 +440,77 @@ export function PageEditorClient({ initial, slug: initialSlug }: { initial: Page
               <input type="tel" value={whatsappNumber} onChange={e => setWhatsappNumber(e.target.value)}
                 placeholder="+30 210 000 0000" className={inputCls} />
             </Field>
+          </SectionPanel>
+
+          {/* Info */}
+          <SectionPanel title="Info" defaultOpen={false}>
+            <Field label="Opening Hours">
+              <input
+                type="text"
+                value={openingHours}
+                onChange={e => setOpeningHours(e.target.value)}
+                placeholder="Mon–Fri 09:00–23:00, Sat–Sun 10:00–00:00"
+                className={inputCls}
+              />
+            </Field>
+            <Field label="Phone Number">
+              <input
+                type="tel"
+                value={phone}
+                onChange={e => setPhone(e.target.value)}
+                placeholder="+30 210 000 0000"
+                className={inputCls}
+              />
+            </Field>
+            <Field label="Address">
+              <input
+                type="text"
+                value={address}
+                onChange={e => setAddress(e.target.value)}
+                placeholder="123 Main Street, Athens"
+                className={inputCls}
+              />
+            </Field>
+            <Field label="WiFi Network">
+              <input
+                type="text"
+                value={wifiName}
+                onChange={e => setWifiName(e.target.value)}
+                placeholder="Network name"
+                className={inputCls}
+              />
+            </Field>
+            <Field label="WiFi Password">
+              <input
+                type="text"
+                value={wifiPassword}
+                onChange={e => setWifiPassword(e.target.value)}
+                placeholder="Password"
+                className={inputCls}
+              />
+            </Field>
+            <div className="flex items-center justify-between py-1">
+              <div>
+                <p className="text-xs font-medium text-white/50">Call Waiter Button</p>
+                <p className="text-[11px] text-white/25 mt-0.5">Show a "Call Waiter" button on the landing page</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setCallWaiter(v => !v)}
+                className={cn(
+                  'relative w-10 h-5.5 rounded-full transition-colors shrink-0',
+                  callWaiter ? 'bg-[#2B5CE6]' : 'bg-white/[0.10]',
+                )}
+                style={{ height: 22, width: 40 }}
+              >
+                <span
+                  className={cn(
+                    'absolute top-0.5 w-[18px] h-[18px] rounded-full bg-white shadow transition-transform',
+                    callWaiter ? 'translate-x-[19px]' : 'translate-x-0.5',
+                  )}
+                />
+              </button>
+            </div>
           </SectionPanel>
 
           {/* Menu */}

@@ -42,6 +42,12 @@ export type PageData = {
   tiktok_url: string
   whatsapp_number: string
   menu_sections: MenuSectionData[]
+  opening_hours: string
+  phone: string
+  address: string
+  wifi_name: string
+  wifi_password: string
+  call_waiter_enabled: boolean
 }
 
 export async function savePage(data: PageData): Promise<{ slug?: string; error?: string }> {
@@ -53,17 +59,23 @@ export async function savePage(data: PageData): Promise<{ slug?: string; error?:
 
   // Build payload — never touch the slug (set at account creation)
   const payload = {
-    restaurant_name:   data.restaurant_name   || null,
-    tagline:           data.tagline           || null,
-    hero_bg:           data.hero_bg           || null,
-    logo_url:          data.logo_url          || null,
-    google_review_url: data.google_review_url || null,
-    instagram_url:     data.instagram_url     || null,
-    facebook_url:      data.facebook_url      || null,
-    tiktok_url:        data.tiktok_url        || null,
-    whatsapp_number:   data.whatsapp_number   || null,
-    menu_sections:     data.menu_sections as unknown as Json,
-    updated_at:        new Date().toISOString(),
+    restaurant_name:     data.restaurant_name     || null,
+    tagline:             data.tagline             || null,
+    hero_bg:             data.hero_bg             || null,
+    logo_url:            data.logo_url            || null,
+    google_review_url:   data.google_review_url   || null,
+    instagram_url:       data.instagram_url       || null,
+    facebook_url:        data.facebook_url        || null,
+    tiktok_url:          data.tiktok_url          || null,
+    whatsapp_number:     data.whatsapp_number     || null,
+    menu_sections:       data.menu_sections as unknown as Json,
+    opening_hours:       data.opening_hours       || null,
+    phone:               data.phone               || null,
+    address:             data.address             || null,
+    wifi_name:           data.wifi_name           || null,
+    wifi_password:       data.wifi_password       || null,
+    call_waiter_enabled: data.call_waiter_enabled ?? false,
+    updated_at:          new Date().toISOString(),
   }
 
   console.log('[savePage] user_id:', user.id)

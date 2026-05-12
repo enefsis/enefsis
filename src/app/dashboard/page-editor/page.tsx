@@ -34,16 +34,22 @@ export default async function PageEditorPage() {
 
   const initial: PageData | null = raw
     ? {
-        restaurant_name:   raw.restaurant_name   ?? '',
-        tagline:           raw.tagline            ?? '',
-        hero_bg:           raw.hero_bg            ?? '#111318',
-        logo_url:          raw.logo_url           ?? null,
-        google_review_url: raw.google_review_url  ?? '',
-        instagram_url:     raw.instagram_url      ?? '',
-        facebook_url:      raw.facebook_url       ?? '',
-        tiktok_url:        raw.tiktok_url         ?? '',
-        whatsapp_number:   raw.whatsapp_number    ?? '',
-        menu_sections:     (raw.menu_sections ?? []) as unknown as MenuSectionData[],
+        restaurant_name:     raw.restaurant_name     ?? '',
+        tagline:             raw.tagline             ?? '',
+        hero_bg:             raw.hero_bg             ?? '#111318',
+        logo_url:            raw.logo_url            ?? null,
+        google_review_url:   raw.google_review_url   ?? '',
+        instagram_url:       raw.instagram_url       ?? '',
+        facebook_url:        raw.facebook_url        ?? '',
+        tiktok_url:          raw.tiktok_url          ?? '',
+        whatsapp_number:     raw.whatsapp_number     ?? '',
+        menu_sections:       (raw.menu_sections ?? []) as unknown as MenuSectionData[],
+        opening_hours:       raw.opening_hours       ?? '',
+        phone:               raw.phone               ?? '',
+        address:             raw.address             ?? '',
+        wifi_name:           raw.wifi_name           ?? '',
+        wifi_password:       raw.wifi_password       ?? '',
+        call_waiter_enabled: raw.call_waiter_enabled ?? false,
       }
     : null
 

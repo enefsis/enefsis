@@ -172,6 +172,12 @@ export interface Database {
           tiktok_url: string | null
           whatsapp_number: string | null
           menu_sections: Json
+          opening_hours: string | null
+          phone: string | null
+          address: string | null
+          wifi_name: string | null
+          wifi_password: string | null
+          call_waiter_enabled: boolean
         }
         Insert: {
           id?: string
@@ -189,6 +195,12 @@ export interface Database {
           tiktok_url?: string | null
           whatsapp_number?: string | null
           menu_sections?: Json
+          opening_hours?: string | null
+          phone?: string | null
+          address?: string | null
+          wifi_name?: string | null
+          wifi_password?: string | null
+          call_waiter_enabled?: boolean
         }
         Update: {
           id?: string
@@ -206,6 +218,12 @@ export interface Database {
           tiktok_url?: string | null
           whatsapp_number?: string | null
           menu_sections?: Json
+          opening_hours?: string | null
+          phone?: string | null
+          address?: string | null
+          wifi_name?: string | null
+          wifi_password?: string | null
+          call_waiter_enabled?: boolean
         }
         Relationships: []
       }
