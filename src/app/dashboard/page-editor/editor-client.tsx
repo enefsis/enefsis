@@ -114,6 +114,14 @@ export function PageEditorClient({ initial, slug: initialSlug }: { initial: Page
   const [wifiName,          setWifiName]          = useState(initial?.wifi_name          ?? '')
   const [wifiPassword,      setWifiPassword]      = useState(initial?.wifi_password      ?? '')
   const [callWaiter,        setCallWaiter]        = useState(initial?.call_waiter_enabled ?? false)
+  const [restaurantType,    setRestaurantType]    = useState(initial?.restaurant_type    ?? '')
+  const [city,              setCity]              = useState(initial?.city               ?? '')
+  const [yearEstablished,   setYearEstablished]   = useState(initial?.year_established   ?? '')
+  const [rating,            setRating]            = useState(initial?.rating             ?? '')
+  const [reviewCount,       setReviewCount]       = useState(initial?.review_count       ?? '')
+  const [todaysSpecials,    setTodaysSpecials]    = useState(initial?.todays_specials    ?? '')
+  const [tripAdvisorUrl,    setTripAdvisorUrl]    = useState(initial?.trip_advisor_url   ?? '')
+  const [websiteUrl,        setWebsiteUrl]        = useState(initial?.website_url        ?? '')
   const [saveMsg,           setSaveMsg]           = useState('')
   const [currentSlug,       setCurrentSlug]       = useState<string | null>(initialSlug)
   const [isPending,         startTransition]      = useTransition()
@@ -219,6 +227,14 @@ export function PageEditorClient({ initial, slug: initialSlug }: { initial: Page
         wifi_name:           wifiName,
         wifi_password:       wifiPassword,
         call_waiter_enabled: callWaiter,
+        restaurant_type:     restaurantType,
+        city,
+        year_established:    yearEstablished,
+        rating,
+        review_count:        reviewCount,
+        todays_specials:     todaysSpecials,
+        trip_advisor_url:    tripAdvisorUrl,
+        website_url:         websiteUrl,
         menu_sections: sections.map(({ id, name, items }) => ({
           id, name,
           items: items.map(({ id, name, price, description, photo_url, available }) => ({
@@ -284,6 +300,37 @@ export function PageEditorClient({ initial, slug: initialSlug }: { initial: Page
 
         {/* Scrollable form */}
         <div className="flex-1 overflow-y-auto">
+
+          {/* Identity */}
+          <SectionPanel title="Identity">
+            <Field label="Restaurant Category">
+              <input type="text" value={restaurantType} onChange={e => setRestaurantType(e.target.value)}
+                placeholder="Greek Restaurant, Café, Bar…" className={inputCls} />
+            </Field>
+            <Field label="City">
+              <input type="text" value={city} onChange={e => setCity(e.target.value)}
+                placeholder="Athens" className={inputCls} />
+            </Field>
+            <div className="grid grid-cols-2 gap-2">
+              <Field label="Year Established">
+                <input type="text" value={yearEstablished} onChange={e => setYearEstablished(e.target.value)}
+                  placeholder="2010" className={inputCls} />
+              </Field>
+              <Field label="Rating">
+                <input type="text" value={rating} onChange={e => setRating(e.target.value)}
+                  placeholder="4.9" className={inputCls} />
+              </Field>
+            </div>
+            <Field label="Review Count">
+              <input type="text" value={reviewCount} onChange={e => setReviewCount(e.target.value)}
+                placeholder="200+" className={inputCls} />
+            </Field>
+            <Field label="Today&apos;s Specials">
+              <input type="text" value={todaysSpecials} onChange={e => setTodaysSpecials(e.target.value)}
+                placeholder="Moussaka, Grilled Octopus, Tzatziki…" className={inputCls} />
+              <p className="text-[10px] text-white/25 mt-1">Comma-separated list shown as a banner</p>
+            </Field>
+          </SectionPanel>
 
           {/* Branding */}
           <SectionPanel title="Branding">
@@ -439,6 +486,14 @@ export function PageEditorClient({ initial, slug: initialSlug }: { initial: Page
             <Field label="WhatsApp Number">
               <input type="tel" value={whatsappNumber} onChange={e => setWhatsappNumber(e.target.value)}
                 placeholder="+30 210 000 0000" className={inputCls} />
+            </Field>
+            <Field label="TripAdvisor URL">
+              <input type="url" value={tripAdvisorUrl} onChange={e => setTripAdvisorUrl(e.target.value)}
+                placeholder="https://tripadvisor.com/Restaurant_Review-…" className={inputCls} />
+            </Field>
+            <Field label="Website URL">
+              <input type="url" value={websiteUrl} onChange={e => setWebsiteUrl(e.target.value)}
+                placeholder="https://yourrestaurant.com" className={inputCls} />
             </Field>
           </SectionPanel>
 

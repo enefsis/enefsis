@@ -50,6 +50,14 @@ export default async function PageEditorPage() {
         wifi_name:           raw.wifi_name           ?? '',
         wifi_password:       raw.wifi_password       ?? '',
         call_waiter_enabled: raw.call_waiter_enabled ?? false,
+        restaurant_type:     raw.restaurant_type     ?? '',
+        city:                raw.city                ?? '',
+        year_established:    raw.year_established    ?? '',
+        rating:              raw.rating              ?? '',
+        review_count:        raw.review_count        ?? '',
+        todays_specials:     raw.todays_specials     ?? '',
+        trip_advisor_url:    raw.trip_advisor_url    ?? '',
+        website_url:         raw.website_url         ?? '',
       }
     : null
 

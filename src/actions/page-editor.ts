@@ -23,11 +23,14 @@ export type MenuItemData = {
   description: string
   photo_url: string | null
   available?: boolean
+  allergens?: string
+  is_popular?: boolean
 }
 
 export type MenuSectionData = {
   id: string
   name: string
+  emoji?: string
   items: MenuItemData[]
 }
 
@@ -48,6 +51,14 @@ export type PageData = {
   wifi_name: string
   wifi_password: string
   call_waiter_enabled: boolean
+  restaurant_type: string
+  city: string
+  year_established: string
+  rating: string
+  review_count: string
+  todays_specials: string
+  trip_advisor_url: string
+  website_url: string
 }
 
 export async function savePage(data: PageData): Promise<{ slug?: string; error?: string }> {
@@ -75,6 +86,14 @@ export async function savePage(data: PageData): Promise<{ slug?: string; error?:
     wifi_name:           data.wifi_name           || null,
     wifi_password:       data.wifi_password       || null,
     call_waiter_enabled: data.call_waiter_enabled ?? false,
+    restaurant_type:     data.restaurant_type     || null,
+    city:                data.city                || null,
+    year_established:    data.year_established    || null,
+    rating:              data.rating              || null,
+    review_count:        data.review_count        || null,
+    todays_specials:     data.todays_specials     || null,
+    trip_advisor_url:    data.trip_advisor_url    || null,
+    website_url:         data.website_url         || null,
     updated_at:          new Date().toISOString(),
   }
 

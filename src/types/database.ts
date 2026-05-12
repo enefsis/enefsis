@@ -178,6 +178,14 @@ export interface Database {
           wifi_name: string | null
           wifi_password: string | null
           call_waiter_enabled: boolean
+          restaurant_type: string | null
+          city: string | null
+          year_established: string | null
+          rating: string | null
+          review_count: string | null
+          todays_specials: string | null
+          trip_advisor_url: string | null
+          website_url: string | null
         }
         Insert: {
           id?: string
@@ -201,6 +209,14 @@ export interface Database {
           wifi_name?: string | null
           wifi_password?: string | null
           call_waiter_enabled?: boolean
+          restaurant_type?: string | null
+          city?: string | null
+          year_established?: string | null
+          rating?: string | null
+          review_count?: string | null
+          todays_specials?: string | null
+          trip_advisor_url?: string | null
+          website_url?: string | null
         }
         Update: {
           id?: string
@@ -224,6 +240,14 @@ export interface Database {
           wifi_name?: string | null
           wifi_password?: string | null
           call_waiter_enabled?: boolean
+          restaurant_type?: string | null
+          city?: string | null
+          year_established?: string | null
+          rating?: string | null
+          review_count?: string | null
+          todays_specials?: string | null
+          trip_advisor_url?: string | null
+          website_url?: string | null
         }
         Relationships: []
       }
