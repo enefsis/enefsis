@@ -6,7 +6,7 @@ import {
   ArrowUp, ArrowDown,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { savePage, saveLogoUrl, uploadLogo, uploadMenuItemPhoto } from '@/actions/page-editor'
+import { savePage, saveLogoUrl, saveMenuSections, uploadLogo, uploadMenuItemPhoto } from '@/actions/page-editor'
 import type { PageData, MenuSectionData, MenuItemData } from '@/actions/page-editor'
 import { LandingClient } from '@/app/p/[slug]/landing-client'
 
@@ -159,9 +159,21 @@ export function PageEditorClient({ initial, slug: initialSlug }: { initial: Page
     startTransition(async () => {
       const res = await uploadMenuItemPhoto(fd, itemId)
       if ('url' in res) {
+        // Update local state
         setSections(prev => prev.map(s => s.id !== sectionId ? s : {
           ...s, items: s.items.map(i => i.id !== itemId ? i : { ...i, photo_url: res.url }),
         }))
+        // Immediately persist to DB — compute updated sections from current closure
+        const updatedSections = sections.map(s => s.id !== sectionId ? s : {
+          ...s, items: s.items.map(i => i.id !== itemId ? i : { ...i, photo_url: res.url }),
+        })
+        await saveMenuSections(updatedSections.map(({ id, name, items }) => ({
+          id, name,
+          items: items.map(({ id, name, price, description, photo_url, available }) => ({
+            id, name, price, description, photo_url, available: available !== false,
+          })),
+        })))
+        console.log('[ItemPhoto] saved photo_url for item', itemId, ':', res.url)
       }
     })
   }

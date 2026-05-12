@@ -255,6 +255,10 @@ function MenuItemCard({ item, onView }: MenuItemCardProps) {
     ? item.allergens.split(',').map(a => a.trim()).filter(Boolean)
     : []
 
+  console.log('[MenuPhoto]', item.name, item.photo_url)
+
+  const hasPhoto = !!item.photo_url && item.photo_url !== ''
+
   return (
     <div
       ref={ref}
@@ -262,9 +266,9 @@ function MenuItemCard({ item, onView }: MenuItemCardProps) {
       style={{ background: '#161920', border: '1px solid rgba(255,255,255,0.07)' }}
     >
       {/* Photo or placeholder — always shown */}
-      <div className="w-12 h-12 rounded-lg shrink-0 overflow-hidden flex items-center justify-center bg-[#2a2d35]">
-        {item.photo_url
-          ? <img src={item.photo_url} alt={item.name} className="w-full h-full object-cover" />
+      <div className="w-20 h-20 rounded-lg shrink-0 overflow-hidden flex items-center justify-center bg-[#2a2d35]">
+        {hasPhoto
+          ? <img src={item.photo_url!} alt={item.name} className="w-full h-full object-cover" />
           : <svg width="20" height="20" viewBox="0 0 24 24" fill="none"
               stroke="rgba(255,255,255,0.25)" strokeWidth="1.5"
               strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
