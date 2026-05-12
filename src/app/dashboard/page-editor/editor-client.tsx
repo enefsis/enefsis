@@ -492,7 +492,7 @@ export function PageEditorClient({ initial, slug: initialSlug }: { initial: Page
             <div className="flex items-center justify-between py-1">
               <div>
                 <p className="text-xs font-medium text-white/50">Call Waiter Button</p>
-                <p className="text-[11px] text-white/25 mt-0.5">Show a "Call Waiter" button on the landing page</p>
+                <p className="text-[11px] text-white/25 mt-0.5">Show a &quot;Call Waiter&quot; button on the landing page</p>
               </div>
               <button
                 type="button"
