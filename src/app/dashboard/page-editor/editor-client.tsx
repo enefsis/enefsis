@@ -163,8 +163,17 @@ export function PageEditorClient({ initial, slug: initialSlug }: { initial: Page
         setSections(prev => prev.map(s => s.id !== sectionId ? s : {
           ...s, items: s.items.map(i => i.id !== itemId ? i : { ...i, photo_url: res.url }),
         }))
-        // Direct DB update — reads from DB, patches the item, writes back
-        await updateMenuItemPhotoUrl(itemId, res.url)
+        // Direct DB update — keyed on both user_id and slug
+        if (!currentSlug) {
+          console.error('[ItemPhoto] DB save skipped: no slug available')
+        } else {
+          const saveRes = await updateMenuItemPhotoUrl(itemId, res.url, currentSlug)
+          if (saveRes.error) {
+            console.error('[ItemPhoto] DB save failed:', saveRes.error)
+          } else {
+            console.log('[ItemPhoto] DB save OK for item', itemId, 'slug', currentSlug)
+          }
+        }
       }
     })
   }

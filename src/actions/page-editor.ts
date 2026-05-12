@@ -188,6 +188,7 @@ export async function saveMenuSections(
 export async function updateMenuItemPhotoUrl(
   itemId: string,
   photoUrl: string,
+  slug: string,
 ): Promise<{ error?: string }> {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -195,15 +196,16 @@ export async function updateMenuItemPhotoUrl(
 
   const admin = createAdminClient()
 
-  // Fetch current menu_sections directly from DB — no React state dependency
+  // Fetch the specific page row by both user_id and slug
   const { data: row, error: fetchError } = await admin
     .from('client_pages')
     .select('menu_sections')
     .eq('user_id', user.id)
+    .eq('slug', slug)
     .maybeSingle()
 
   if (fetchError) return { error: fetchError.message }
-  if (!row) return { error: 'Page not found' }
+  if (!row) return { error: `Page not found for slug "${slug}"` }
 
   const sections = (row.menu_sections ?? []) as MenuSectionData[]
   const updated = sections.map(s => ({
@@ -217,10 +219,11 @@ export async function updateMenuItemPhotoUrl(
     .from('client_pages')
     .update({ menu_sections: updated as unknown as Json, updated_at: new Date().toISOString() })
     .eq('user_id', user.id)
+    .eq('slug', slug)
 
   if (updateError) return { error: updateError.message }
 
-  console.log('[ItemPhoto] saved photo_url for item', itemId, ':', photoUrl)
+  console.log('[ItemPhoto] saved photo_url for item', itemId, 'on slug', slug, ':', photoUrl)
   return {}
 }
 
