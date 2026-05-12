@@ -561,7 +561,7 @@ function CallWaiterButton({
 
   const label = notified
     ? 'Waiter notified!'
-    : tableNumber !== null
+    : tableNumber
       ? `Call Waiter to Table ${tableNumber}`
       : 'Call Waiter'
 
@@ -877,13 +877,6 @@ export function LandingClient({
           />
         )}
 
-        {/* ── Call Waiter ──────────────────────────────────────────────────── */}
-        {callWaiterEnabled && (
-          <div className="px-4 pt-4">
-            <CallWaiterButton standId={standId} clientId={clientId} tableNumber={tableNumber} />
-          </div>
-        )}
-
         {/* ── Follow Us ────────────────────────────────────────────────────── */}
         <FollowUsSection
           instagramUrl={instagramUrl}
@@ -904,6 +897,13 @@ export function LandingClient({
           wifiName={wifiName}
           wifiPassword={wifiPassword}
         />
+
+        {/* ── Call Waiter ──────────────────────────────────────────────────── */}
+        {callWaiterEnabled && (
+          <div className="px-4 pt-4">
+            <CallWaiterButton standId={standId} clientId={clientId} tableNumber={tableNumber} />
+          </div>
+        )}
 
         {/* ── Share ────────────────────────────────────────────────────────── */}
         <div className="flex justify-center pt-6 pb-2">
