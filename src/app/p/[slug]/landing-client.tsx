@@ -727,16 +727,9 @@ export function LandingClient({
 
           <div className="relative h-full flex flex-col justify-between px-5 pt-5 pb-8">
 
-            {/* Top bar: logo or Enefsis badge left, table chip right */}
+            {/* Top bar: Enefsis badge left (only when no custom logo), table chip right */}
             <div className="flex items-center justify-between">
-              {logoUrl ? (
-                <img
-                  src={logoUrl}
-                  alt="Logo"
-                  className="rounded-lg object-contain"
-                  style={{ maxHeight: 48, maxWidth: 120, background: 'rgba(255,255,255,0.08)', padding: 4 }}
-                />
-              ) : (
+              {!logoUrl ? (
                 <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full"
                   style={{
                     background: 'rgba(255,255,255,0.1)',
@@ -748,7 +741,7 @@ export function LandingClient({
                   <span className="font-sans font-bold tracking-[0.14em]"
                     style={{ fontSize: 10, color: 'rgba(255,255,255,0.9)' }}>ENEFSIS</span>
                 </div>
-              )}
+              ) : <div />}
               {tableNumber !== null && (
                 <div className="px-3 py-1.5 rounded-full"
                   style={{ background: 'rgba(212,168,83,0.15)', border: '1px solid rgba(212,168,83,0.35)' }}>
@@ -760,6 +753,18 @@ export function LandingClient({
 
             {/* Bottom content */}
             <div>
+              {/* Centered logo above restaurant name */}
+              {logoUrl && (
+                <div className="flex justify-center mb-3">
+                  <img
+                    src={logoUrl}
+                    alt="Logo"
+                    className="object-contain"
+                    style={{ maxHeight: 64, maxWidth: 160 }}
+                  />
+                </div>
+              )}
+
               {/* Category / location tag */}
               {(restaurantType || city) && (
                 <p className="font-sans font-semibold mb-2 leading-none"
