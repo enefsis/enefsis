@@ -168,6 +168,23 @@ export async function savePage(data: PageData): Promise<{ slug?: string; error?:
   return { slug: slug ?? undefined }
 }
 
+export async function saveLogoUrl(url: string): Promise<{ error?: string }> {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: 'Unauthorized' }
+
+  const admin = createAdminClient()
+  const { error } = await admin
+    .from('client_pages')
+    .update({ logo_url: url, updated_at: new Date().toISOString() })
+    .eq('user_id', user.id)
+
+  if (error) return { error: error.message }
+
+  console.log('[LogoUpload] saved logo_url:', url)
+  return {}
+}
+
 export async function uploadImage(
   formData: FormData,
 ): Promise<{ url: string } | { error: string }> {

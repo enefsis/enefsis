@@ -4,6 +4,7 @@ import { createAdminClient } from '@/lib/supabase/admin'
 import { LandingClient } from './landing-client'
 import type { MenuSectionData } from '@/actions/page-editor'
 
+export const revalidate = 0
 export const dynamic = 'force-dynamic'
 
 interface Props {
