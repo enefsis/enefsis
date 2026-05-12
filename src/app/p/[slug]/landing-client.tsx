@@ -308,7 +308,7 @@ function MenuItemCard({ item, onView }: MenuItemCardProps) {
         <div className="flex items-center justify-between gap-2 mt-2">
           {item.price && (
             <p className="font-sans font-bold tabular-nums" style={{ fontSize: 14, color: '#38BEFF' }}>
-              {item.price}
+              €{item.price}
             </p>
           )}
           {allergens.length > 0 && (
@@ -451,19 +451,6 @@ function MenuTabsSection({ sections, standId, clientId }: MenuTabsSectionProps) 
 
 // ─── Info section ────────────────────────────────────────────────────────────
 
-function getOpenStatus(hours: string): 'open' | 'closed' | null {
-  const times = hours.match(/(\d{1,2}):(\d{2})/g)
-  if (!times || times.length < 2) return null
-  const [oh, om] = times[0].split(':').map(Number)
-  const [ch, cm] = times[1].split(':').map(Number)
-  const now = new Date()
-  const nowM = now.getHours() * 60 + now.getMinutes()
-  const openM = oh * 60 + om
-  const closeM = ch * 60 + cm
-  if (closeM <= openM) return (nowM >= openM || nowM < closeM) ? 'open' : 'closed'
-  return (nowM >= openM && nowM < closeM) ? 'open' : 'closed'
-}
-
 function InfoSection({
   openingHours, phone, address, wifiName, wifiPassword,
 }: {
@@ -474,7 +461,6 @@ function InfoSection({
   wifiPassword: string | null
 }) {
   if (!openingHours && !phone && !address && !wifiName && !wifiPassword) return null
-  const openStatus = openingHours ? getOpenStatus(openingHours) : null
 
   const labelCls: React.CSSProperties = {
     fontSize: 10,
@@ -503,20 +489,18 @@ function InfoSection({
         <div style={cardStyle}>
           <div className="flex items-center justify-between mb-1">
             <span style={labelCls}>TODAY</span>
-            {openStatus && (
-              <span
-                className="font-sans font-bold rounded-full"
-                style={{
-                  fontSize: 10,
-                  padding: '2px 8px',
-                  color:       openStatus === 'open' ? '#4ade80' : '#f87171',
-                  background:  openStatus === 'open' ? 'rgba(74,222,128,0.12)' : 'rgba(248,113,113,0.12)',
-                  border: `1px solid ${openStatus === 'open' ? 'rgba(74,222,128,0.25)' : 'rgba(248,113,113,0.25)'}`,
-                }}
-              >
-                {openStatus === 'open' ? '● Open' : '● Closed'}
-              </span>
-            )}
+            <span
+              className="font-sans font-bold rounded-full"
+              style={{
+                fontSize: 10,
+                padding: '2px 8px',
+                color: '#4ade80',
+                background: 'rgba(74,222,128,0.12)',
+                border: '1px solid rgba(74,222,128,0.25)',
+              }}
+            >
+              ● Open
+            </span>
           </div>
           <p className="font-sans" style={{ fontSize: 13, color: '#F0F2F8' }}>{openingHours}</p>
         </div>
@@ -719,6 +703,7 @@ export function LandingClient({
     menuSectionsCount: menuSections.length,
     callWaiterEnabled,
   })
+  console.log('[CallWaiter] enabled:', callWaiterEnabled)
 
   const hasMenu      = menuSections.some(s => s.items.some(i => i.name))
   const whatsappHref = whatsappNumber
@@ -892,15 +877,12 @@ export function LandingClient({
           />
         )}
 
-        {/* ── Call Waiter + Share ──────────────────────────────────────────── */}
-        <div className="px-4 pt-4 space-y-3">
-          {callWaiterEnabled && (
+        {/* ── Call Waiter ──────────────────────────────────────────────────── */}
+        {callWaiterEnabled && (
+          <div className="px-4 pt-4">
             <CallWaiterButton standId={standId} clientId={clientId} tableNumber={tableNumber} />
-          )}
-          <div className="flex justify-center">
-            <ShareButton restaurantName={restaurantName} />
           </div>
-        </div>
+        )}
 
         {/* ── Follow Us ────────────────────────────────────────────────────── */}
         <FollowUsSection
@@ -922,6 +904,11 @@ export function LandingClient({
           wifiName={wifiName}
           wifiPassword={wifiPassword}
         />
+
+        {/* ── Share ────────────────────────────────────────────────────────── */}
+        <div className="flex justify-center pt-6 pb-2">
+          <ShareButton restaurantName={restaurantName} />
+        </div>
 
         {/* ── Footer ───────────────────────────────────────────────────────── */}
         <PoweredByFooter />
