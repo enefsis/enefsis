@@ -6,7 +6,7 @@ import {
   ArrowUp, ArrowDown,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { savePage, uploadImage } from '@/actions/page-editor'
+import { savePage, uploadImage, uploadLogo, uploadMenuItemPhoto } from '@/actions/page-editor'
 import type { PageData, MenuSectionData, MenuItemData } from '@/actions/page-editor'
 import { LandingClient } from '@/app/p/[slug]/landing-client'
 
@@ -142,7 +142,7 @@ export function PageEditorClient({ initial, slug: initialSlug }: { initial: Page
     const fd = new FormData()
     fd.append('file', file)
     startTransition(async () => {
-      const res = await uploadImage(fd)
+      const res = await uploadLogo(fd)
       if ('url' in res) setLogoUrl(res.url)
     })
   }
@@ -154,7 +154,7 @@ export function PageEditorClient({ initial, slug: initialSlug }: { initial: Page
     const fd = new FormData()
     fd.append('file', file)
     startTransition(async () => {
-      const res = await uploadImage(fd)
+      const res = await uploadMenuItemPhoto(fd, itemId)
       if ('url' in res) {
         setSections(prev => prev.map(s => s.id !== sectionId ? s : {
           ...s, items: s.items.map(i => i.id !== itemId ? i : { ...i, photo_url: res.url }),
@@ -478,7 +478,7 @@ export function PageEditorClient({ initial, slug: initialSlug }: { initial: Page
                 )}
               </div>
             </div>
-            <input ref={logoInputRef} type="file" accept="image/*" className="hidden" onChange={handleLogoSelect} />
+            <input ref={logoInputRef} type="file" accept="image/png,image/jpeg,image/svg+xml,image/webp" className="hidden" onChange={handleLogoSelect} />
           </SectionPanel>
 
           {/* Social Links */}
@@ -784,7 +784,7 @@ function MenuItemEditor({ item, isFirst, isLast, onRemove, onUpdate, onMoveUp, o
         <input
           ref={inputRef}
           type="file"
-          accept="image/*"
+          accept="image/jpeg,image/png,image/webp"
           className="hidden"
           onChange={e => { const f = e.target.files?.[0]; if (f) onPhotoSelect(f) }}
         />

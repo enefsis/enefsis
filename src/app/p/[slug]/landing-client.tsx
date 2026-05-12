@@ -685,7 +685,7 @@ interface Props {
 
 export function LandingClient({
   standId, clientId, tableNumber,
-  restaurantName,
+  restaurantName, logoUrl,
   googleReviewUrl, instagramUrl, facebookUrl, tiktokUrl, whatsappNumber,
   menuSections,
   openingHours, phone, address, wifiName, wifiPassword, callWaiterEnabled,
@@ -727,19 +727,28 @@ export function LandingClient({
 
           <div className="relative h-full flex flex-col justify-between px-5 pt-5 pb-8">
 
-            {/* Top bar: Enefsis badge left, table chip right */}
+            {/* Top bar: logo or Enefsis badge left, table chip right */}
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full"
-                style={{
-                  background: 'rgba(255,255,255,0.1)',
-                  backdropFilter: 'blur(12px)',
-                  WebkitBackdropFilter: 'blur(12px)',
-                  border: '1px solid rgba(255,255,255,0.18)',
-                }}>
-                <NfcIcon />
-                <span className="font-sans font-bold tracking-[0.14em]"
-                  style={{ fontSize: 10, color: 'rgba(255,255,255,0.9)' }}>ENEFSIS</span>
-              </div>
+              {logoUrl ? (
+                <img
+                  src={logoUrl}
+                  alt="Logo"
+                  className="rounded-lg object-contain"
+                  style={{ maxHeight: 48, maxWidth: 120, background: 'rgba(255,255,255,0.08)', padding: 4 }}
+                />
+              ) : (
+                <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full"
+                  style={{
+                    background: 'rgba(255,255,255,0.1)',
+                    backdropFilter: 'blur(12px)',
+                    WebkitBackdropFilter: 'blur(12px)',
+                    border: '1px solid rgba(255,255,255,0.18)',
+                  }}>
+                  <NfcIcon />
+                  <span className="font-sans font-bold tracking-[0.14em]"
+                    style={{ fontSize: 10, color: 'rgba(255,255,255,0.9)' }}>ENEFSIS</span>
+                </div>
+              )}
               {tableNumber !== null && (
                 <div className="px-3 py-1.5 rounded-full"
                   style={{ background: 'rgba(212,168,83,0.15)', border: '1px solid rgba(212,168,83,0.35)' }}>

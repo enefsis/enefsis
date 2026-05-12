@@ -4,6 +4,7 @@ import { redirect } from 'next/navigation'
 import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { sendWelcomeEmail } from '@/lib/email'
 import type { Profile } from '@/types/database'
 
 export type CreateClientResult =
@@ -150,5 +151,13 @@ export async function createClientAccount(
   }
 
   revalidatePath('/admin/clients')
+
+  await sendWelcomeEmail({
+    name:         fullName,
+    email,
+    loginUrl:     'https://enefsis.vercel.app/login',
+    tempPassword,
+  })
+
   return { success: true, slug, tempPassword, userId }
 }

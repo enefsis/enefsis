@@ -191,3 +191,52 @@ export async function uploadImage(
   const { data: { publicUrl } } = admin.storage.from('page-assets').getPublicUrl(path)
   return { url: publicUrl }
 }
+
+export async function uploadMenuItemPhoto(
+  formData: FormData,
+  itemId: string,
+): Promise<{ url: string } | { error: string }> {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: 'Unauthorized' }
+
+  const file = formData.get('file') as File | null
+  if (!file || file.size === 0) return { error: 'No file provided' }
+
+  const ext  = file.name.split('.').pop()?.toLowerCase() ?? 'jpg'
+  const path = `${user.id}/menu/${itemId}.${ext}`
+
+  const admin = createAdminClient()
+  const { error: uploadError } = await admin.storage
+    .from('page-assets')
+    .upload(path, file, { upsert: true })
+
+  if (uploadError) return { error: uploadError.message }
+
+  const { data: { publicUrl } } = admin.storage.from('page-assets').getPublicUrl(path)
+  return { url: publicUrl }
+}
+
+export async function uploadLogo(
+  formData: FormData,
+): Promise<{ url: string } | { error: string }> {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: 'Unauthorized' }
+
+  const file = formData.get('file') as File | null
+  if (!file || file.size === 0) return { error: 'No file provided' }
+
+  const ext  = file.name.split('.').pop()?.toLowerCase() ?? 'jpg'
+  const path = `${user.id}/logo.${ext}`
+
+  const admin = createAdminClient()
+  const { error: uploadError } = await admin.storage
+    .from('client-assets')
+    .upload(path, file, { upsert: true })
+
+  if (uploadError) return { error: uploadError.message }
+
+  const { data: { publicUrl } } = admin.storage.from('client-assets').getPublicUrl(path)
+  return { url: publicUrl }
+}
