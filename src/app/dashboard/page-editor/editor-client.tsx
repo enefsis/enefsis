@@ -109,6 +109,8 @@ export function PageEditorClient({ initial, slug: initialSlug }: { initial: Page
   const [tiktokUrl,        setTiktokUrl]         = useState(initial?.tiktok_url        ?? '')
   const [whatsappNumber,   setWhatsappNumber]    = useState(initial?.whatsapp_number   ?? '')
   const [sections,          setSections]          = useState<LocalSection[]>(initSections)
+  const sectionsRef = useRef(sections)
+  sectionsRef.current = sections
   const [openingHours,      setOpeningHours]      = useState(initial?.opening_hours      ?? '')
   const [phone,             setPhone]             = useState(initial?.phone              ?? '')
   const [address,           setAddress]           = useState(initial?.address            ?? '')
@@ -159,15 +161,12 @@ export function PageEditorClient({ initial, slug: initialSlug }: { initial: Page
     startTransition(async () => {
       const res = await uploadMenuItemPhoto(fd, itemId)
       if ('url' in res) {
-        // Update local state
-        setSections(prev => prev.map(s => s.id !== sectionId ? s : {
-          ...s, items: s.items.map(i => i.id !== itemId ? i : { ...i, photo_url: res.url }),
-        }))
-        // Immediately persist to DB — compute updated sections from current closure
-        const updatedSections = sections.map(s => s.id !== sectionId ? s : {
+        // Read latest state from ref (avoids stale closure), apply photo_url
+        const updated = sectionsRef.current.map(s => s.id !== sectionId ? s : {
           ...s, items: s.items.map(i => i.id !== itemId ? i : { ...i, photo_url: res.url }),
         })
-        await saveMenuSections(updatedSections.map(({ id, name, items }) => ({
+        setSections(updated)
+        await saveMenuSections(updated.map(({ id, name, items }) => ({
           id, name,
           items: items.map(({ id, name, price, description, photo_url, available }) => ({
             id, name, price, description, photo_url, available: available !== false,
