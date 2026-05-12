@@ -99,12 +99,13 @@ export default async function LandingPage({ params, searchParams }: Props) {
   }
 
   console.log('[LandingPage] passing to LandingClient:', JSON.stringify({
-    googleReviewUrl: props.googleReviewUrl,
-    instagramUrl:    props.instagramUrl,
-    facebookUrl:     props.facebookUrl,
-    tiktokUrl:       props.tiktokUrl,
-    whatsappNumber:  props.whatsappNumber,
-    menuSectionsLen: props.menuSections.length,
+    googleReviewUrl:   props.googleReviewUrl,
+    instagramUrl:      props.instagramUrl,
+    facebookUrl:       props.facebookUrl,
+    tiktokUrl:         props.tiktokUrl,
+    whatsappNumber:    props.whatsappNumber,
+    menuSectionsLen:   props.menuSections.length,
+    callWaiterEnabled: props.callWaiterEnabled,
   }, null, 2))
 
   return <LandingClient {...props} />

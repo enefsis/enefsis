@@ -262,13 +262,16 @@ function MenuItemCard({ item, onView }: MenuItemCardProps) {
       style={{ background: '#161920', border: '1px solid rgba(255,255,255,0.07)' }}
     >
       {/* Photo or placeholder — always shown */}
-      <div
-        className="w-[62px] h-[62px] rounded-xl shrink-0 overflow-hidden flex items-center justify-center"
-        style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.07)' }}
-      >
+      <div className="w-12 h-12 rounded-lg shrink-0 overflow-hidden flex items-center justify-center bg-[#2a2d35]">
         {item.photo_url
           ? <img src={item.photo_url} alt={item.name} className="w-full h-full object-cover" />
-          : <span style={{ fontSize: 22, opacity: 0.25 }}>🍽</span>}
+          : <svg width="20" height="20" viewBox="0 0 24 24" fill="none"
+              stroke="rgba(255,255,255,0.25)" strokeWidth="1.5"
+              strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <rect x="3" y="3" width="18" height="18" rx="2" />
+              <circle cx="8.5" cy="8.5" r="1.5" />
+              <polyline points="21 15 16 10 5 21" />
+            </svg>}
       </div>
 
       {/* Text */}
@@ -714,6 +717,7 @@ export function LandingClient({
     tiktokUrl,
     whatsappNumber,
     menuSectionsCount: menuSections.length,
+    callWaiterEnabled,
   })
 
   const hasMenu      = menuSections.some(s => s.items.some(i => i.name))
@@ -888,16 +892,14 @@ export function LandingClient({
           />
         )}
 
-        {/* ── Call Waiter ──────────────────────────────────────────────────── */}
-        {callWaiterEnabled && (
-          <div className="px-4 pt-4">
+        {/* ── Call Waiter + Share ──────────────────────────────────────────── */}
+        <div className="px-4 pt-4 space-y-3">
+          {callWaiterEnabled && (
             <CallWaiterButton standId={standId} clientId={clientId} tableNumber={tableNumber} />
+          )}
+          <div className="flex justify-center">
+            <ShareButton restaurantName={restaurantName} />
           </div>
-        )}
-
-        {/* ── Share ────────────────────────────────────────────────────────── */}
-        <div className="flex justify-center pt-4">
-          <ShareButton restaurantName={restaurantName} />
         </div>
 
         {/* ── Follow Us ────────────────────────────────────────────────────── */}

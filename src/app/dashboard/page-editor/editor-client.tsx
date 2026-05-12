@@ -8,6 +8,7 @@ import {
 import { cn } from '@/lib/utils'
 import { savePage, uploadImage } from '@/actions/page-editor'
 import type { PageData, MenuSectionData, MenuItemData } from '@/actions/page-editor'
+import { LandingClient } from '@/app/p/[slug]/landing-client'
 
 // ─── Local types ──────────────────────────────────────────────────────────────
 
@@ -250,6 +251,21 @@ export function PageEditorClient({ initial, slug: initialSlug }: { initial: Page
       }
     })
   }
+
+  // ── Preview sections (LocalSection → MenuSectionData) ──
+
+  const previewSections: MenuSectionData[] = sections.map(s => ({
+    id: s.id,
+    name: s.name,
+    items: s.items.map(i => ({
+      id: i.id, name: i.name, price: i.price,
+      description: i.description,
+      photo_url: i.photoPreview ?? i.photo_url,
+      available: i.available !== false,
+      allergens: i.allergens,
+      is_popular: i.is_popular,
+    })),
+  }))
 
   // ── Render ──
 
@@ -607,18 +623,39 @@ export function PageEditorClient({ initial, slug: initialSlug }: { initial: Page
       <div className="flex-1 overflow-y-auto flex items-start justify-center py-10 bg-[#0D0F14]">
         <div>
           <p className="text-[10px] uppercase tracking-widest text-white/25 text-center mb-5">Live Preview</p>
-          <LandingPreview
-            restaurantName={restaurantName}
-            tagline={tagline}
-            heroBg={heroBg}
-            logoPreview={logoPreview}
-            googleReviewUrl={googleReviewUrl}
-            instagramUrl={instagramUrl}
-            facebookUrl={facebookUrl}
-            tiktokUrl={tiktokUrl}
-            whatsappNumber={whatsappNumber}
-            sections={sections}
-          />
+          <div
+            className="rounded-[40px] overflow-hidden shadow-2xl border-[3px] border-white/[0.08] mx-auto"
+            style={{ width: 375, height: 760, overflowY: 'auto' }}
+          >
+            <LandingClient
+              standId={null}
+              clientId="preview"
+              tableNumber={null}
+              restaurantName={restaurantName}
+              tagline={tagline}
+              logoUrl={logoPreview}
+              googleReviewUrl={googleReviewUrl || null}
+              instagramUrl={instagramUrl || null}
+              facebookUrl={facebookUrl || null}
+              tiktokUrl={tiktokUrl || null}
+              whatsappNumber={whatsappNumber || null}
+              menuSections={previewSections}
+              openingHours={openingHours || null}
+              phone={phone || null}
+              address={address || null}
+              wifiName={wifiName || null}
+              wifiPassword={wifiPassword || null}
+              callWaiterEnabled={callWaiter}
+              restaurantType={restaurantType || null}
+              city={city || null}
+              yearEstablished={yearEstablished || null}
+              rating={rating || null}
+              reviewCount={reviewCount || null}
+              todaysSpecials={todaysSpecials || null}
+              tripAdvisorUrl={tripAdvisorUrl || null}
+              websiteUrl={websiteUrl || null}
+            />
+          </div>
         </div>
       </div>
 
@@ -797,138 +834,4 @@ function MenuItemEditor({ item, isFirst, isLast, onRemove, onUpdate, onMoveUp, o
   )
 }
 
-// ─── Landing page preview ─────────────────────────────────────────────────────
 
-const SOCIAL_BUTTONS = [
-  { key: 'instagram', label: 'Instagram', color: '#E1306C',  emoji: '📷' },
-  { key: 'facebook',  label: 'Facebook',  color: '#1877F2',  emoji: '👍' },
-  { key: 'tiktok',    label: 'TikTok',    color: '#69C9D0',  emoji: '🎵' },
-  { key: 'whatsapp',  label: 'WhatsApp',  color: '#25D366',  emoji: '💬' },
-  { key: 'google',    label: 'Review Us', color: '#EA4335',  emoji: '⭐' },
-  { key: 'menu',      label: 'Menu',      color: '#2B5CE6',  emoji: '📋' },
-]
-
-interface PreviewProps {
-  restaurantName: string
-  tagline: string
-  heroBg: string
-  logoPreview: string | null
-  googleReviewUrl: string
-  instagramUrl: string
-  facebookUrl: string
-  tiktokUrl: string
-  whatsappNumber: string
-  sections: LocalSection[]
-}
-
-function LandingPreview({
-  restaurantName, tagline, heroBg, logoPreview,
-  googleReviewUrl, instagramUrl, facebookUrl, tiktokUrl, whatsappNumber,
-  sections,
-}: PreviewProps) {
-  const hasMenu = sections.some(s => s.items.some(i => i.name))
-
-  const activeButtons = SOCIAL_BUTTONS.filter(b => {
-    if (b.key === 'instagram') return !!instagramUrl
-    if (b.key === 'facebook')  return !!facebookUrl
-    if (b.key === 'tiktok')    return !!tiktokUrl
-    if (b.key === 'whatsapp')  return !!whatsappNumber
-    if (b.key === 'google')    return !!googleReviewUrl
-    if (b.key === 'menu')      return hasMenu
-    return false
-  })
-
-  return (
-    <div
-      className="rounded-[40px] overflow-hidden shadow-2xl border-[3px] border-white/[0.08] mx-auto"
-      style={{ width: 375 }}
-    >
-      {/* Hero */}
-      <div style={{ background: heroBg }} className="px-8 pt-16 pb-12 text-center">
-        {logoPreview ? (
-          <img
-            src={logoPreview}
-            alt="Logo"
-            className="w-20 h-20 mx-auto rounded-2xl object-contain mb-5"
-            style={{ background: 'rgba(255,255,255,0.12)', padding: 6 }}
-          />
-        ) : (
-          <div className="w-20 h-20 mx-auto rounded-2xl bg-white/10 mb-5 flex items-center justify-center text-3xl">
-            🍽️
-          </div>
-        )}
-        <h1 className="text-[22px] font-bold text-white leading-tight">
-          {restaurantName || <span className="opacity-30">Restaurant Name</span>}
-        </h1>
-        {tagline && <p className="text-sm text-white/60 mt-2">{tagline}</p>}
-      </div>
-
-      {/* Body */}
-      <div className="bg-[#0D0F14] px-5 py-7 space-y-7 min-h-[320px]">
-
-        {/* Social buttons */}
-        {activeButtons.length > 0 && (
-          <div className={cn('grid gap-2.5', activeButtons.length <= 3 ? 'grid-cols-3' : 'grid-cols-3')}>
-            {activeButtons.map(btn => (
-              <div
-                key={btn.key}
-                className="flex flex-col items-center gap-1.5 py-3.5 rounded-2xl cursor-default select-none"
-                style={{ background: `${btn.color}15`, border: `1px solid ${btn.color}28` }}
-              >
-                <span className="text-xl">{btn.emoji}</span>
-                <span className="text-[10px] font-medium text-white/65">{btn.label}</span>
-              </div>
-            ))}
-          </div>
-        )}
-
-        {/* Menu */}
-        {sections.map(section => {
-          const visibleItems = section.items.filter(i => i.name)
-          if (!visibleItems.length) return null
-          return (
-            <div key={section.id}>
-              <p className="text-[10px] font-semibold uppercase tracking-widest text-white/30 mb-3">
-                {section.name || 'Section'}
-              </p>
-              <div className="space-y-2">
-                {visibleItems.map(item => {
-                  const photo = item.photoPreview ?? item.photo_url
-                  const avail = item.available !== false
-                  return (
-                    <div key={item.id} className={cn('flex items-center gap-3 bg-white/[0.03] rounded-2xl p-3', !avail && 'opacity-40')}>
-                      {photo && (
-                        <img src={photo} alt="" className="w-11 h-11 rounded-xl object-cover shrink-0" />
-                      )}
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-baseline justify-between gap-2">
-                          <span className="text-xs font-semibold text-white truncate">{item.name}</span>
-                          <div className="flex items-center gap-1.5 shrink-0">
-                            {item.price && (
-                              <span className={cn('text-xs font-medium text-[#2B5CE6]', !avail && 'line-through')}>{item.price}</span>
-                            )}
-                            {!avail && <span className="text-[9px] text-white/30 bg-white/[0.06] rounded px-1 py-0.5">Off</span>}
-                          </div>
-                        </div>
-                        {item.description && (
-                          <p className="text-[10px] text-white/35 mt-0.5 truncate">{item.description}</p>
-                        )}
-                      </div>
-                    </div>
-                  )
-                })}
-              </div>
-            </div>
-          )
-        })}
-
-        {/* Empty state */}
-        {activeButtons.length === 0 && sections.length === 0 && (
-          <div className="py-10 text-center">
-            <p className="text-xs text-white/20">Fill in the fields on the left to see your page</p>
-          </div>
-        )}
-      </div>
-    </div>
-  )
-}
