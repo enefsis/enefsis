@@ -4,7 +4,7 @@ import { useState, useTransition } from 'react'
 import Link from 'next/link'
 import {
   ArrowLeft, Loader2, CheckCircle2, Copy, Check,
-  ExternalLink, User, Mail, Building2, Link2, CreditCard, Wifi, Send,
+  ExternalLink, User, Mail, Building2, Link2, Wifi, Send,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { createClientAccount } from '@/actions/admin-clients'

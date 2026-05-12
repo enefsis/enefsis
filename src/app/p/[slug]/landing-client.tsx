@@ -327,7 +327,7 @@ interface Props {
 
 export function LandingClient({
   standId, clientId, tableNumber,
-  restaurantName, tagline, logoUrl,
+  restaurantName, tagline,
   googleReviewUrl, instagramUrl, facebookUrl, tiktokUrl, whatsappNumber,
   menuSections,
 }: Props) {
