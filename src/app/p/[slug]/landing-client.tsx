@@ -228,9 +228,10 @@ function FollowUsSection({
 interface MenuItemCardProps {
   item: MenuItemData
   onView: () => void
+  onPhotoClick: (url: string) => void
 }
 
-function MenuItemCard({ item, onView }: MenuItemCardProps) {
+function MenuItemCard({ item, onView, onPhotoClick }: MenuItemCardProps) {
   const ref   = useRef<HTMLDivElement>(null)
   const fired = useRef(false)
 
@@ -266,7 +267,11 @@ function MenuItemCard({ item, onView }: MenuItemCardProps) {
       style={{ background: '#161920', border: '1px solid rgba(255,255,255,0.07)' }}
     >
       {/* Photo or placeholder — always shown */}
-      <div className="w-20 h-20 rounded-lg shrink-0 overflow-hidden flex items-center justify-center bg-[#2a2d35]">
+      <div
+        className="w-20 h-20 rounded-lg shrink-0 overflow-hidden flex items-center justify-center bg-[#2a2d35]"
+        onClick={hasPhoto ? () => onPhotoClick(item.photo_url!) : undefined}
+        style={hasPhoto ? { cursor: 'pointer' } : undefined}
+      >
         {hasPhoto
           ? <img src={item.photo_url!} alt={item.name} className="w-full h-full object-cover" />
           : <svg width="20" height="20" viewBox="0 0 24 24" fill="none"
@@ -374,9 +379,10 @@ interface MenuTabsSectionProps {
   sections: MenuSectionData[]
   standId: string | null
   clientId: string
+  onPhotoClick: (url: string) => void
 }
 
-function MenuTabsSection({ sections, standId, clientId }: MenuTabsSectionProps) {
+function MenuTabsSection({ sections, standId, clientId, onPhotoClick }: MenuTabsSectionProps) {
   const visibleSections = sections
     .map(s => ({ ...s, items: s.items.filter(i => i.name && i.available !== false) }))
     .filter(s => s.items.length > 0)
@@ -445,6 +451,7 @@ function MenuTabsSection({ sections, standId, clientId }: MenuTabsSectionProps) 
               key={item.id}
               item={item}
               onView={() => trackMenuView(standId, clientId, item.id, item.name)}
+              onPhotoClick={onPhotoClick}
             />
           ))}
         </div>
@@ -697,6 +704,12 @@ export function LandingClient({
   tripAdvisorUrl, websiteUrl,
 }: Props) {
   const [lang, setLang] = useState('EN')
+  const [lightboxPhoto, setLightboxPhoto] = useState<string | null>(null)
+
+  useEffect(() => {
+    document.body.style.overflow = lightboxPhoto ? 'hidden' : ''
+    return () => { document.body.style.overflow = '' }
+  }, [lightboxPhoto])
 
   console.log('[LandingClient] props:', {
     googleReviewUrl,
@@ -892,6 +905,7 @@ export function LandingClient({
             sections={menuSections}
             standId={standId}
             clientId={clientId}
+            onPhotoClick={url => setLightboxPhoto(url)}
           />
         )}
 
@@ -932,6 +946,41 @@ export function LandingClient({
         <PoweredByFooter />
 
       </div>
+
+      {/* ── Lightbox overlay ─────────────────────────────────────────────── */}
+      {lightboxPhoto && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center"
+          style={{ background: 'rgba(0,0,0,0.9)', animation: 'fadeIn 0.18s ease' }}
+          onClick={() => setLightboxPhoto(null)}
+        >
+          <button
+            type="button"
+            onClick={() => setLightboxPhoto(null)}
+            className="absolute top-4 right-4 flex items-center justify-center rounded-full text-white"
+            style={{
+              width: 36, height: 36,
+              background: 'rgba(255,255,255,0.15)',
+              border: '1px solid rgba(255,255,255,0.25)',
+              fontSize: 20, lineHeight: 1,
+            }}
+            aria-label="Close"
+          >
+            ×
+          </button>
+          <img
+            src={lightboxPhoto}
+            alt=""
+            onClick={e => e.stopPropagation()}
+            style={{
+              maxWidth: '90vw', maxHeight: '80vh',
+              objectFit: 'contain', borderRadius: 12,
+            }}
+          />
+        </div>
+      )}
+
+      <style>{`@keyframes fadeIn { from { opacity:0 } to { opacity:1 } }`}</style>
     </div>
   )
 }
