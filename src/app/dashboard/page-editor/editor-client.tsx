@@ -3,6 +3,7 @@
 import { useState, useRef, useTransition } from 'react'
 import {
   ChevronDown, ChevronRight, Plus, Trash2, Upload, Save, Loader2, ExternalLink,
+  ArrowUp, ArrowDown,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { savePage, uploadImage } from '@/actions/page-editor'
@@ -24,7 +25,7 @@ type HeroBgMode = 'color' | 'gradient'
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 function makeItem(): LocalItem {
-  return { id: crypto.randomUUID(), name: '', price: '', description: '', photo_url: null, photoPreview: null }
+  return { id: crypto.randomUUID(), name: '', price: '', description: '', photo_url: null, available: true, photoPreview: null }
 }
 
 function makeSection(): LocalSection {
@@ -89,7 +90,7 @@ export function PageEditorClient({ initial, slug: initialSlug }: { initial: Page
   const initSections: LocalSection[] = ((initial?.menu_sections ?? []) as MenuSectionData[]).map(s => ({
     ...s,
     expanded: false,
-    items: s.items.map(i => ({ ...i, photoPreview: null })),
+    items: s.items.map(i => ({ ...i, available: i.available !== false, photoPreview: null })),
   }))
 
   const [restaurantName,   setRestaurantName]   = useState(initial?.restaurant_name   ?? '')
@@ -169,6 +170,27 @@ export function PageEditorClient({ initial, slug: initialSlug }: { initial: Page
       ...s, items: s.items.map(i => i.id !== itemId ? i : { ...i, ...patch }),
     }))
   }
+  function moveSection(id: string, dir: -1 | 1) {
+    setSections(prev => {
+      const idx = prev.findIndex(s => s.id === id)
+      const next = [...prev]
+      const swap = idx + dir
+      if (swap < 0 || swap >= next.length) return prev
+      ;[next[idx], next[swap]] = [next[swap], next[idx]]
+      return next
+    })
+  }
+  function moveItem(sectionId: string, itemId: string, dir: -1 | 1) {
+    setSections(prev => prev.map(s => {
+      if (s.id !== sectionId) return s
+      const idx = s.items.findIndex(i => i.id === itemId)
+      const next = [...s.items]
+      const swap = idx + dir
+      if (swap < 0 || swap >= next.length) return s
+      ;[next[idx], next[swap]] = [next[swap], next[idx]]
+      return { ...s, items: next }
+    }))
+  }
 
   // ── Save ──
 
@@ -187,8 +209,8 @@ export function PageEditorClient({ initial, slug: initialSlug }: { initial: Page
         whatsapp_number:   whatsappNumber,
         menu_sections: sections.map(({ id, name, items }) => ({
           id, name,
-          items: items.map(({ id, name, price, description, photo_url }) => ({
-            id, name, price, description, photo_url,
+          items: items.map(({ id, name, price, description, photo_url, available }) => ({
+            id, name, price, description, photo_url, available: available !== false,
           })),
         })),
       }
@@ -411,16 +433,21 @@ export function PageEditorClient({ initial, slug: initialSlug }: { initial: Page
           {/* Menu */}
           <SectionPanel title="Menu Sections">
             <div className="space-y-2.5">
-              {sections.map(section => (
+              {sections.map((section, si) => (
                 <MenuSectionEditor
                   key={section.id}
                   section={section}
+                  isFirst={si === 0}
+                  isLast={si === sections.length - 1}
                   onToggle={() => toggleSection(section.id)}
                   onNameChange={name => updateSectionName(section.id, name)}
                   onRemove={() => removeSection(section.id)}
+                  onMoveUp={() => moveSection(section.id, -1)}
+                  onMoveDown={() => moveSection(section.id, 1)}
                   onAddItem={() => addItem(section.id)}
                   onRemoveItem={itemId => removeItem(section.id, itemId)}
                   onUpdateItem={(itemId, patch) => updateItem(section.id, itemId, patch)}
+                  onMoveItem={(itemId, dir) => moveItem(section.id, itemId, dir)}
                   onItemPhotoSelect={(itemId, file) => handleItemPhotoSelect(section.id, itemId, file)}
                 />
               ))}
@@ -465,21 +492,28 @@ export function PageEditorClient({ initial, slug: initialSlug }: { initial: Page
 
 interface MenuSectionEditorProps {
   section: LocalSection
+  isFirst: boolean
+  isLast: boolean
   onToggle: () => void
   onNameChange: (name: string) => void
   onRemove: () => void
+  onMoveUp: () => void
+  onMoveDown: () => void
   onAddItem: () => void
   onRemoveItem: (itemId: string) => void
   onUpdateItem: (itemId: string, patch: Partial<LocalItem>) => void
+  onMoveItem: (itemId: string, dir: -1 | 1) => void
   onItemPhotoSelect: (itemId: string, file: File) => void
 }
 
 function MenuSectionEditor({
-  section, onToggle, onNameChange, onRemove, onAddItem, onRemoveItem, onUpdateItem, onItemPhotoSelect,
+  section, isFirst, isLast, onToggle, onNameChange, onRemove, onMoveUp, onMoveDown,
+  onAddItem, onRemoveItem, onUpdateItem, onMoveItem, onItemPhotoSelect,
 }: MenuSectionEditorProps) {
+  const btnCls = 'text-white/20 hover:text-white/60 transition-colors disabled:opacity-20 disabled:cursor-not-allowed'
   return (
     <div className="rounded-xl border border-white/[0.07] overflow-hidden">
-      <div className="flex items-center gap-2 px-3 py-2.5 bg-white/[0.025]">
+      <div className="flex items-center gap-1.5 px-3 py-2.5 bg-white/[0.025]">
         <button type="button" onClick={onToggle} className="text-white/30 hover:text-white/60 transition-colors shrink-0">
           {section.expanded ? <ChevronDown size={13} /> : <ChevronRight size={13} />}
         </button>
@@ -490,6 +524,12 @@ function MenuSectionEditor({
           placeholder="Section name"
           className="flex-1 bg-transparent text-sm font-medium text-white/80 focus:outline-none placeholder-white/20 min-w-0"
         />
+        <button type="button" onClick={onMoveUp} disabled={isFirst} className={btnCls}>
+          <ArrowUp size={12} />
+        </button>
+        <button type="button" onClick={onMoveDown} disabled={isLast} className={btnCls}>
+          <ArrowDown size={12} />
+        </button>
         <button type="button" onClick={onRemove} className="text-white/20 hover:text-red-400/70 transition-colors shrink-0">
           <Trash2 size={13} />
         </button>
@@ -497,12 +537,16 @@ function MenuSectionEditor({
 
       {section.expanded && (
         <div className="px-3 pt-1 pb-3 space-y-2">
-          {section.items.map(item => (
+          {section.items.map((item, ii) => (
             <MenuItemEditor
               key={item.id}
               item={item}
+              isFirst={ii === 0}
+              isLast={ii === section.items.length - 1}
               onRemove={() => onRemoveItem(item.id)}
               onUpdate={patch => onUpdateItem(item.id, patch)}
+              onMoveUp={() => onMoveItem(item.id, -1)}
+              onMoveDown={() => onMoveItem(item.id, 1)}
               onPhotoSelect={file => onItemPhotoSelect(item.id, file)}
             />
           ))}
@@ -523,18 +567,34 @@ function MenuSectionEditor({
 
 interface MenuItemEditorProps {
   item: LocalItem
+  isFirst: boolean
+  isLast: boolean
   onRemove: () => void
   onUpdate: (patch: Partial<LocalItem>) => void
+  onMoveUp: () => void
+  onMoveDown: () => void
   onPhotoSelect: (file: File) => void
 }
 
-function MenuItemEditor({ item, onRemove, onUpdate, onPhotoSelect }: MenuItemEditorProps) {
+function MenuItemEditor({ item, isFirst, isLast, onRemove, onUpdate, onMoveUp, onMoveDown, onPhotoSelect }: MenuItemEditorProps) {
   const inputRef = useRef<HTMLInputElement>(null)
   const preview  = item.photoPreview ?? item.photo_url
+  const available = item.available !== false
+  const reorderBtnCls = 'text-white/15 hover:text-white/50 transition-colors disabled:opacity-20 disabled:cursor-not-allowed'
 
   return (
-    <div className="rounded-lg bg-white/[0.03] border border-white/[0.05] p-2.5 space-y-1.5">
-      <div className="flex items-center gap-2">
+    <div className={cn('rounded-lg border p-2.5 space-y-1.5', available ? 'bg-white/[0.03] border-white/[0.05]' : 'bg-white/[0.01] border-white/[0.03] opacity-60')}>
+      <div className="flex items-center gap-1.5">
+        {/* Reorder */}
+        <div className="flex flex-col shrink-0">
+          <button type="button" onClick={onMoveUp} disabled={isFirst} className={reorderBtnCls}>
+            <ArrowUp size={10} />
+          </button>
+          <button type="button" onClick={onMoveDown} disabled={isLast} className={reorderBtnCls}>
+            <ArrowDown size={10} />
+          </button>
+        </div>
+
         {/* Photo thumbnail */}
         <button
           type="button"
@@ -566,19 +626,35 @@ function MenuItemEditor({ item, onRemove, onUpdate, onPhotoSelect }: MenuItemEdi
           value={item.price}
           onChange={e => onUpdate({ price: e.target.value })}
           placeholder="€0.00"
-          className={cn(inputCls, 'w-[72px] py-1.5 text-xs shrink-0')}
+          className={cn(inputCls, 'w-[68px] py-1.5 text-xs shrink-0')}
         />
         <button type="button" onClick={onRemove} className="text-white/20 hover:text-red-400/70 transition-colors shrink-0">
           <Trash2 size={12} />
         </button>
       </div>
-      <input
-        type="text"
-        value={item.description}
-        onChange={e => onUpdate({ description: e.target.value })}
-        placeholder="Description (optional)"
-        className={cn(inputCls, 'py-1.5 text-xs')}
-      />
+      <div className="flex items-center gap-2">
+        <input
+          type="text"
+          value={item.description}
+          onChange={e => onUpdate({ description: e.target.value })}
+          placeholder="Description (optional)"
+          className={cn(inputCls, 'py-1.5 text-xs flex-1')}
+        />
+        {/* Available toggle */}
+        <button
+          type="button"
+          onClick={() => onUpdate({ available: !available })}
+          title={available ? 'Mark unavailable' : 'Mark available'}
+          className={cn(
+            'shrink-0 px-2 py-1.5 rounded-lg text-[10px] font-medium border transition-colors',
+            available
+              ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400 hover:bg-emerald-500/20'
+              : 'bg-white/[0.03] border-white/[0.06] text-white/25 hover:text-white/40',
+          )}
+        >
+          {available ? 'On' : 'Off'}
+        </button>
+      </div>
     </div>
   )
 }
@@ -680,17 +756,21 @@ function LandingPreview({
               <div className="space-y-2">
                 {visibleItems.map(item => {
                   const photo = item.photoPreview ?? item.photo_url
+                  const avail = item.available !== false
                   return (
-                    <div key={item.id} className="flex items-center gap-3 bg-white/[0.03] rounded-2xl p-3">
+                    <div key={item.id} className={cn('flex items-center gap-3 bg-white/[0.03] rounded-2xl p-3', !avail && 'opacity-40')}>
                       {photo && (
                         <img src={photo} alt="" className="w-11 h-11 rounded-xl object-cover shrink-0" />
                       )}
                       <div className="flex-1 min-w-0">
                         <div className="flex items-baseline justify-between gap-2">
                           <span className="text-xs font-semibold text-white truncate">{item.name}</span>
-                          {item.price && (
-                            <span className="text-xs font-medium text-[#2B5CE6] shrink-0">{item.price}</span>
-                          )}
+                          <div className="flex items-center gap-1.5 shrink-0">
+                            {item.price && (
+                              <span className={cn('text-xs font-medium text-[#2B5CE6]', !avail && 'line-through')}>{item.price}</span>
+                            )}
+                            {!avail && <span className="text-[9px] text-white/30 bg-white/[0.06] rounded px-1 py-0.5">Off</span>}
+                          </div>
                         </div>
                         {item.description && (
                           <p className="text-[10px] text-white/35 mt-0.5 truncate">{item.description}</p>

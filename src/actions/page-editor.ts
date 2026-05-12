@@ -22,6 +22,7 @@ export type MenuItemData = {
   price: string
   description: string
   photo_url: string | null
+  available?: boolean
 }
 
 export type MenuSectionData = {

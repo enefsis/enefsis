@@ -232,7 +232,7 @@ interface MenuSectionProps {
 
 function MenuSection({ section, standId, clientId, defaultOpen }: MenuSectionProps) {
   const [open, setOpen]   = useState(defaultOpen)
-  const visibleItems      = section.items.filter(i => i.name)
+  const visibleItems      = section.items.filter(i => i.name && i.available !== false)
   if (!visibleItems.length) return null
 
   return (
