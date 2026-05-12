@@ -185,6 +185,45 @@ export async function saveMenuSections(
   return {}
 }
 
+export async function updateMenuItemPhotoUrl(
+  itemId: string,
+  photoUrl: string,
+): Promise<{ error?: string }> {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: 'Unauthorized' }
+
+  const admin = createAdminClient()
+
+  // Fetch current menu_sections directly from DB — no React state dependency
+  const { data: row, error: fetchError } = await admin
+    .from('client_pages')
+    .select('menu_sections')
+    .eq('user_id', user.id)
+    .maybeSingle()
+
+  if (fetchError) return { error: fetchError.message }
+  if (!row) return { error: 'Page not found' }
+
+  const sections = (row.menu_sections ?? []) as MenuSectionData[]
+  const updated = sections.map(s => ({
+    ...s,
+    items: s.items.map((i: MenuItemData) =>
+      i.id === itemId ? { ...i, photo_url: photoUrl } : i,
+    ),
+  }))
+
+  const { error: updateError } = await admin
+    .from('client_pages')
+    .update({ menu_sections: updated as unknown as Json, updated_at: new Date().toISOString() })
+    .eq('user_id', user.id)
+
+  if (updateError) return { error: updateError.message }
+
+  console.log('[ItemPhoto] saved photo_url for item', itemId, ':', photoUrl)
+  return {}
+}
+
 export async function saveLogoUrl(url: string): Promise<{ error?: string }> {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()

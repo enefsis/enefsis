@@ -6,7 +6,7 @@ import {
   ArrowUp, ArrowDown,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { savePage, saveLogoUrl, saveMenuSections, uploadLogo, uploadMenuItemPhoto } from '@/actions/page-editor'
+import { savePage, saveLogoUrl, updateMenuItemPhotoUrl, uploadLogo, uploadMenuItemPhoto } from '@/actions/page-editor'
 import type { PageData, MenuSectionData, MenuItemData } from '@/actions/page-editor'
 import { LandingClient } from '@/app/p/[slug]/landing-client'
 
@@ -109,8 +109,6 @@ export function PageEditorClient({ initial, slug: initialSlug }: { initial: Page
   const [tiktokUrl,        setTiktokUrl]         = useState(initial?.tiktok_url        ?? '')
   const [whatsappNumber,   setWhatsappNumber]    = useState(initial?.whatsapp_number   ?? '')
   const [sections,          setSections]          = useState<LocalSection[]>(initSections)
-  const sectionsRef = useRef(sections)
-  sectionsRef.current = sections
   const [openingHours,      setOpeningHours]      = useState(initial?.opening_hours      ?? '')
   const [phone,             setPhone]             = useState(initial?.phone              ?? '')
   const [address,           setAddress]           = useState(initial?.address            ?? '')
@@ -161,18 +159,12 @@ export function PageEditorClient({ initial, slug: initialSlug }: { initial: Page
     startTransition(async () => {
       const res = await uploadMenuItemPhoto(fd, itemId)
       if ('url' in res) {
-        // Read latest state from ref (avoids stale closure), apply photo_url
-        const updated = sectionsRef.current.map(s => s.id !== sectionId ? s : {
+        // Update React state for preview only
+        setSections(prev => prev.map(s => s.id !== sectionId ? s : {
           ...s, items: s.items.map(i => i.id !== itemId ? i : { ...i, photo_url: res.url }),
-        })
-        setSections(updated)
-        await saveMenuSections(updated.map(({ id, name, items }) => ({
-          id, name,
-          items: items.map(({ id, name, price, description, photo_url, available }) => ({
-            id, name, price, description, photo_url, available: available !== false,
-          })),
-        })))
-        console.log('[ItemPhoto] saved photo_url for item', itemId, ':', res.url)
+        }))
+        // Direct DB update — reads from DB, patches the item, writes back
+        await updateMenuItemPhotoUrl(itemId, res.url)
       }
     })
   }
@@ -252,8 +244,8 @@ export function PageEditorClient({ initial, slug: initialSlug }: { initial: Page
         website_url:         websiteUrl,
         menu_sections: sections.map(({ id, name, items }) => ({
           id, name,
-          items: items.map(({ id, name, price, description, photo_url, available }) => ({
-            id, name, price, description, photo_url, available: available !== false,
+          items: items.map(({ id, name, price, description, photo_url, available, allergens }) => ({
+            id, name, price, description, photo_url, available: available !== false, allergens,
           })),
         })),
       }
@@ -828,6 +820,13 @@ function MenuItemEditor({ item, isFirst, isLast, onRemove, onUpdate, onMoveUp, o
           onChange={e => onUpdate({ description: e.target.value })}
           placeholder="Description (optional)"
           className={cn(inputCls, 'py-1.5 text-xs flex-1')}
+        />
+        <input
+          type="text"
+          value={item.allergens ?? ''}
+          onChange={e => onUpdate({ allergens: e.target.value })}
+          placeholder="e.g. G, D, A"
+          className={cn(inputCls, 'py-1.5 text-xs w-[96px] shrink-0')}
         />
         {/* Available toggle */}
         <button
