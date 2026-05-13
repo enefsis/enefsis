@@ -33,11 +33,21 @@ export async function POST(req: NextRequest) {
 
   const supabase = createAdminClient()
 
+  let resolvedClientId = typeof client_id === 'string' ? client_id : null
+  if (!resolvedClientId) {
+    const { data: standRow } = await supabase
+      .from('nfc_stands')
+      .select('user_id')
+      .eq('id', stand_id)
+      .maybeSingle()
+    resolvedClientId = (standRow as { user_id: string | null } | null)?.user_id ?? null
+  }
+
   const { error } = await supabase.from('menu_item_views').insert({
     stand_id,
     item_id:      typeof item_id      === 'string' ? item_id      : null,
     item_name:    typeof item_name    === 'string' ? item_name    : null,
-    client_id:    typeof client_id    === 'string' ? client_id    : null,
+    client_id:    resolvedClientId,
     // @ts-expect-error table_number column pending DB migration
     table_number: typeof table_number === 'number' ? table_number : null,
   })

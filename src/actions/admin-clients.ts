@@ -114,8 +114,8 @@ export async function createClientAccount(
 
   // ── 4. Create subscription ──
   const AMOUNTS: Record<string, Record<string, number>> = {
-    basic: { monthly: 49,  yearly: 499 },
-    pro:   { monthly: 100, yearly: 900 },
+    basic: { monthly: 4900,  yearly: 49900 },
+    pro:   { monthly: 10000, yearly: 90000 },
   }
   const amount = AMOUNTS[plan]?.[billing] ?? (plan === 'pro' ? 100 : 49)
   const nextBilling = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
@@ -160,4 +160,69 @@ export async function createClientAccount(
   })
 
   return { success: true, slug, tempPassword, userId }
+}
+
+// ── Update existing client ────────────────────────────────────────────────────
+
+export async function updateClientInfo(
+  formData: FormData,
+): Promise<{ error?: string }> {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) redirect('/login')
+
+  const admin = createAdminClient()
+
+  const { data: callerRaw } = await admin
+    .from('profiles')
+    .select('role')
+    .eq('id', user.id)
+    .maybeSingle()
+  const caller = callerRaw as Pick<Profile, 'role'> | null
+  if (caller?.role !== 'admin') redirect('/dashboard')
+
+  const clientId = (formData.get('clientId') as string | null)?.trim() ?? ''
+  const fullName  = (formData.get('full_name') as string | null)?.trim() ?? ''
+  const email     = (formData.get('email')     as string | null)?.trim().toLowerCase() ?? ''
+  const plan      = (formData.get('plan')      as string | null)?.trim() ?? ''
+  const status    = (formData.get('status')    as string | null)?.trim() ?? ''
+
+  if (!clientId)                                      return { error: 'Client ID missing.' }
+  if (!fullName)                                      return { error: 'Name is required.' }
+  if (!email || !email.includes('@'))                 return { error: 'Valid email is required.' }
+  if (!['basic', 'pro'].includes(plan))               return { error: 'Plan must be basic or pro.' }
+  if (!['active', 'suspended', 'cancelled'].includes(status)) return { error: 'Invalid status.' }
+
+  // Fetch current email to detect changes
+  const { data: currentRaw } = await admin
+    .from('profiles')
+    .select('email')
+    .eq('id', clientId)
+    .maybeSingle()
+  const currentEmail = (currentRaw as { email: string } | null)?.email?.toLowerCase() ?? ''
+
+  // Update profiles row
+  const { error: profileErr } = await admin
+    .from('profiles')
+    .update({ full_name: fullName, email })
+    .eq('id', clientId)
+  if (profileErr) return { error: profileErr.message }
+
+  // Update auth email only if it changed
+  if (email !== currentEmail) {
+    const { error: authErr } = await admin.auth.admin.updateUserById(clientId, { email })
+    if (authErr) return { error: `Auth email update: ${authErr.message}` }
+  }
+
+  // Update subscription plan + status
+  const { error: subErr } = await admin
+    .from('subscriptions')
+    .update({ plan, status })
+    .eq('user_id', clientId)
+  if (subErr) return { error: subErr.message }
+
+  revalidatePath(`/admin/clients/${clientId}`)
+  revalidatePath('/admin/clients')
+  revalidatePath('/admin')
+  return {}
 }

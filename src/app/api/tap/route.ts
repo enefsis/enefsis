@@ -33,7 +33,7 @@ async function handleTap(req: NextRequest): Promise<NextResponse> {
 
   const { data: stand } = await supabase
     .from('nfc_stands')
-    .select('landing_page_url')
+    .select('landing_page_url, user_id')
     .eq('id', standId)
     .maybeSingle()
 
@@ -51,6 +51,7 @@ async function handleTap(req: NextRequest): Promise<NextResponse> {
 
   await supabase.from('tap_events').insert({
     stand_id: standId,
+    user_id: (stand as { landing_page_url: string; user_id: string | null }).user_id ?? null,
     language,
     device_type: deviceType,
     ip_address: ipAddress,

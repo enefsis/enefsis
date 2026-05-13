@@ -136,7 +136,7 @@ export function ClientsTable({ clients }: { clients: ClientRow[] }) {
                 {/* MRR */}
                 <td className="px-4 py-3.5">
                   <span className="font-sans text-white/65 tabular-nums">
-                    {sub?.amount != null ? `€${sub.amount.toLocaleString()}` : '—'}
+                    {sub?.amount != null ? `€${(sub.amount / 100).toLocaleString()}` : '—'}
                   </span>
                 </td>
 

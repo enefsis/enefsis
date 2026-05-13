@@ -1,0 +1,238 @@
+'use client'
+
+import { useState } from 'react'
+import { useRouter } from 'next/navigation'
+import Link from 'next/link'
+import { updateClientInfo } from '@/actions/admin-clients'
+
+// ── Types ─────────────────────────────────────────────────────────────────────
+export type EditFormProps = {
+  clientId:   string
+  fullName:   string
+  email:      string
+  plan:       string
+  status:     string
+  backHref:   string
+}
+
+type PlanKey   = 'basic' | 'pro'
+type StatusKey = 'active' | 'suspended' | 'cancelled'
+
+const PLAN_OPTIONS: { key: PlanKey; label: string; description: string }[] = [
+  { key: 'basic', label: 'Basic', description: '€49/mo · NFC Hub + Digital Menu' },
+  { key: 'pro',   label: 'Pro',   description: '€100/mo · Custom branding + Priority support' },
+]
+
+const STATUS_OPTIONS: { key: StatusKey; label: string; color: string }[] = [
+  { key: 'active',    label: 'Active',    color: '#34D399' },
+  { key: 'suspended', label: 'Suspended', color: '#FBBF24' },
+  { key: 'cancelled', label: 'Cancelled', color: '#F87171' },
+]
+
+// ── Icon ──────────────────────────────────────────────────────────────────────
+function ArrowLeftIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path d="M19 12H5M12 5l-7 7 7 7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  )
+}
+
+// ── Form ──────────────────────────────────────────────────────────────────────
+export function EditForm({
+  clientId, fullName: initName, email: initEmail,
+  plan: initPlan, status: initStatus, backHref,
+}: EditFormProps) {
+  const router = useRouter()
+
+  const [name,    setName]    = useState(initName)
+  const [email,   setEmail]   = useState(initEmail)
+  const [plan,    setPlan]    = useState<PlanKey>(initPlan as PlanKey || 'basic')
+  const [status,  setStatus]  = useState<StatusKey>(initStatus as StatusKey || 'active')
+  const [saving,  setSaving]  = useState(false)
+  const [error,   setError]   = useState<string | null>(null)
+
+  const inputCls = [
+    'w-full h-10 px-3.5 rounded-xl font-sans text-sm text-white placeholder-white/25',
+    'focus:outline-none focus:ring-1 disabled:opacity-50 transition-colors',
+  ].join(' ')
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault()
+    setError(null)
+    setSaving(true)
+
+    const fd = new FormData()
+    fd.set('clientId',  clientId)
+    fd.set('full_name', name.trim())
+    fd.set('email',     email.trim())
+    fd.set('plan',      plan)
+    fd.set('status',    status)
+
+    try {
+      const res = await updateClientInfo(fd)
+      if (res.error) {
+        setError(res.error)
+        return
+      }
+      router.push(backHref)
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  return (
+    <div className="p-6 max-w-xl">
+
+      {/* Back link */}
+      <Link
+        href={backHref}
+        className="inline-flex items-center gap-2 font-sans text-sm text-white/40 hover:text-white/70 transition-colors mb-8"
+      >
+        <ArrowLeftIcon />
+        Back to client
+      </Link>
+
+      {/* Header */}
+      <div className="mb-8">
+        <h1 className="font-display text-2xl font-bold text-white">Edit Client</h1>
+        <p className="font-sans text-sm text-white/40 mt-0.5">Update account details and subscription</p>
+      </div>
+
+      <form onSubmit={handleSubmit} className="space-y-8">
+
+        {/* Account section */}
+        <div className="bg-[#141720] border border-white/[0.06] rounded-2xl p-5 space-y-4">
+          <p className="font-sans text-[11px] font-semibold text-white/35 uppercase tracking-wider pb-1 border-b border-white/[0.05]">
+            Account
+          </p>
+
+          <div>
+            <label className="block font-sans text-[11px] font-semibold text-white/40 uppercase tracking-wider mb-1.5">
+              Full Name
+            </label>
+            <input
+              type="text"
+              value={name}
+              onChange={e => setName(e.target.value)}
+              required
+              disabled={saving}
+              placeholder="Full name"
+              className={inputCls}
+              style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.10)' }}
+            />
+          </div>
+
+          <div>
+            <label className="block font-sans text-[11px] font-semibold text-white/40 uppercase tracking-wider mb-1.5">
+              Email Address
+            </label>
+            <input
+              type="email"
+              value={email}
+              onChange={e => setEmail(e.target.value)}
+              required
+              disabled={saving}
+              placeholder="email@example.com"
+              className={inputCls}
+              style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.10)' }}
+            />
+            <p className="font-sans text-[11px] text-white/25 mt-1.5">
+              Changing the email also updates the login credentials.
+            </p>
+          </div>
+        </div>
+
+        {/* Subscription section */}
+        <div className="bg-[#141720] border border-white/[0.06] rounded-2xl p-5 space-y-5">
+          <p className="font-sans text-[11px] font-semibold text-white/35 uppercase tracking-wider pb-1 border-b border-white/[0.05]">
+            Subscription
+          </p>
+
+          {/* Plan toggle */}
+          <div>
+            <p className="font-sans text-[11px] font-semibold text-white/40 uppercase tracking-wider mb-3">Plan</p>
+            <div className="flex gap-3">
+              {PLAN_OPTIONS.map(opt => (
+                <button
+                  key={opt.key}
+                  type="button"
+                  onClick={() => setPlan(opt.key)}
+                  disabled={saving}
+                  className="flex-1 text-left px-4 py-3.5 rounded-xl border transition-all disabled:opacity-50"
+                  style={plan === opt.key
+                    ? { border: '1px solid rgba(43,92,230,0.7)', background: 'rgba(43,92,230,0.12)' }
+                    : { border: '1px solid rgba(255,255,255,0.08)', background: 'rgba(255,255,255,0.025)' }}
+                >
+                  <div className="flex items-center justify-between mb-1.5">
+                    <span className="font-sans font-semibold text-sm text-white">{opt.label}</span>
+                    <div
+                      className="w-4 h-4 rounded-full border-2 flex items-center justify-center shrink-0"
+                      style={{ borderColor: plan === opt.key ? '#2B5CE6' : 'rgba(255,255,255,0.2)' }}
+                    >
+                      {plan === opt.key && (
+                        <div className="w-2 h-2 rounded-full" style={{ background: '#2B5CE6' }} />
+                      )}
+                    </div>
+                  </div>
+                  <p className="font-sans text-[11px] text-white/35">{opt.description}</p>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Status select */}
+          <div>
+            <p className="font-sans text-[11px] font-semibold text-white/40 uppercase tracking-wider mb-3">Status</p>
+            <div className="flex gap-2">
+              {STATUS_OPTIONS.map(opt => (
+                <button
+                  key={opt.key}
+                  type="button"
+                  onClick={() => setStatus(opt.key)}
+                  disabled={saving}
+                  className="flex items-center gap-2 px-4 py-2 rounded-xl font-sans text-sm font-medium border transition-all disabled:opacity-50"
+                  style={status === opt.key
+                    ? { background: `${opt.color}18`, borderColor: `${opt.color}50`, color: opt.color }
+                    : { background: 'rgba(255,255,255,0.04)', borderColor: 'rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.4)' }}
+                >
+                  <span
+                    className="w-2 h-2 rounded-full shrink-0"
+                    style={{ background: status === opt.key ? opt.color : 'rgba(255,255,255,0.2)' }}
+                  />
+                  {opt.label}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Error */}
+        {error && (
+          <p className="font-sans text-sm text-red-400 bg-red-500/10 border border-red-500/20 rounded-xl px-4 py-3">
+            {error}
+          </p>
+        )}
+
+        {/* Actions */}
+        <div className="flex items-center gap-3">
+          <button
+            type="submit"
+            disabled={saving}
+            className="px-6 py-2.5 rounded-xl font-sans text-sm font-semibold text-white transition-colors disabled:opacity-60"
+            style={{ background: '#2B5CE6' }}
+          >
+            {saving ? 'Saving…' : 'Save Changes'}
+          </button>
+          <Link
+            href={backHref}
+            className="font-sans text-sm text-white/35 hover:text-white/60 transition-colors"
+          >
+            Cancel
+          </Link>
+        </div>
+
+      </form>
+    </div>
+  )
+}
