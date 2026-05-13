@@ -22,7 +22,7 @@ export async function POST(req: NextRequest) {
     )
   }
 
-  const { stand_id, item_id, item_name, client_id } = body as Record<string, unknown>
+  const { stand_id, item_id, item_name, client_id, table_number } = body as Record<string, unknown>
 
   if (!stand_id || typeof stand_id !== 'string') {
     return NextResponse.json(
@@ -35,9 +35,11 @@ export async function POST(req: NextRequest) {
 
   const { error } = await supabase.from('menu_item_views').insert({
     stand_id,
-    item_id:   typeof item_id   === 'string' ? item_id   : null,
-    item_name: typeof item_name === 'string' ? item_name : null,
-    client_id: typeof client_id === 'string' ? client_id : null,
+    item_id:      typeof item_id      === 'string' ? item_id      : null,
+    item_name:    typeof item_name    === 'string' ? item_name    : null,
+    client_id:    typeof client_id    === 'string' ? client_id    : null,
+    // @ts-expect-error table_number column pending DB migration
+    table_number: typeof table_number === 'number' ? table_number : null,
   })
 
   if (error) {

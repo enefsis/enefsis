@@ -185,21 +185,21 @@ function WhatsAppIcon({ size = 24 }: { size?: number }) {
 
 // ─── Tracking helpers ─────────────────────────────────────────────────────────
 
-function trackButton(standId: string | null, clientId: string, buttonType: string) {
+function trackButton(standId: string | null, clientId: string, buttonType: string, tableNumber: number | null = null) {
   if (!standId) return
   fetch('/api/track', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ stand_id: standId, button_type: buttonType, client_id: clientId }),
+    body: JSON.stringify({ stand_id: standId, button_type: buttonType, client_id: clientId, table_number: tableNumber }),
   }).catch(() => {})
 }
 
-function trackMenuView(standId: string | null, clientId: string, itemId: string, itemName: string) {
+function trackMenuView(standId: string | null, clientId: string, itemId: string, itemName: string, tableNumber: number | null = null) {
   if (!standId) return
   fetch('/api/menu-view', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ stand_id: standId, item_id: itemId, item_name: itemName, client_id: clientId }),
+    body: JSON.stringify({ stand_id: standId, item_id: itemId, item_name: itemName, client_id: clientId, table_number: tableNumber }),
   }).catch(() => {})
 }
 
@@ -218,7 +218,7 @@ interface FollowCard {
 
 function FollowUsSection({
   instagramUrl, facebookUrl, tiktokUrl, tripAdvisorUrl, whatsappHref, websiteUrl,
-  standId, clientId, t,
+  standId, clientId, tableNumber, t,
 }: {
   instagramUrl:    string | null
   facebookUrl:     string | null
@@ -228,6 +228,7 @@ function FollowUsSection({
   websiteUrl:      string | null
   standId:         string | null
   clientId:        string
+  tableNumber:     number | null
   t:               (s: string) => string
 }) {
   const cards: FollowCard[] = ([
@@ -257,7 +258,7 @@ function FollowUsSection({
             href={card.href}
             target="_blank"
             rel="noopener noreferrer"
-            onClick={() => trackButton(standId, clientId, card.key)}
+            onClick={() => trackButton(standId, clientId, card.key, tableNumber)}
             className="flex flex-col gap-3 p-4 rounded-2xl active:scale-[0.97] transition-transform"
             style={{ background: card.bg, border: `1px solid ${card.border}` }}
           >
@@ -434,11 +435,12 @@ interface MenuTabsSectionProps {
   sections: MenuSectionData[]
   standId: string | null
   clientId: string
+  tableNumber: number | null
   onPhotoClick: (url: string) => void
   t: (s: string) => string
 }
 
-function MenuTabsSection({ sections, standId, clientId, onPhotoClick, t }: MenuTabsSectionProps) {
+function MenuTabsSection({ sections, standId, clientId, tableNumber, onPhotoClick, t }: MenuTabsSectionProps) {
   const visibleSections = sections
     .map(s => ({ ...s, items: s.items.filter(i => i.name && i.available !== false) }))
     .filter(s => s.items.length > 0)
@@ -506,7 +508,7 @@ function MenuTabsSection({ sections, standId, clientId, onPhotoClick, t }: MenuT
             <MenuItemCard
               key={item.id}
               item={item}
-              onView={() => trackMenuView(standId, clientId, item.id, item.name)}
+              onView={() => trackMenuView(standId, clientId, item.id, item.name, tableNumber)}
               onPhotoClick={onPhotoClick}
               t={t}
             />
@@ -624,7 +626,7 @@ function CallWaiterButton({
 
   function handleCall() {
     if (notified) return
-    trackButton(standId, clientId, 'call_waiter')
+    trackButton(standId, clientId, 'call_waiter', tableNumber)
     setNotified(true)
     setTimeout(() => setNotified(false), 3000)
   }
@@ -1002,7 +1004,7 @@ export function LandingClient({
               href={googleReviewUrl}
               target="_blank"
               rel="noopener noreferrer"
-              onClick={() => trackButton(standId, clientId, 'google_review')}
+              onClick={() => trackButton(standId, clientId, 'google_review', tableNumber)}
               className="flex items-center justify-between w-full px-5 rounded-2xl active:scale-[0.98] transition-transform"
               style={{
                 background: 'linear-gradient(100deg, #F5A623 0%, #E8880A 100%)',
@@ -1040,6 +1042,7 @@ export function LandingClient({
             sections={menuSections}
             standId={standId}
             clientId={clientId}
+            tableNumber={tableNumber}
             onPhotoClick={url => setLightboxPhoto(url)}
             t={t}
           />
@@ -1055,6 +1058,7 @@ export function LandingClient({
           websiteUrl={websiteUrl}
           standId={standId}
           clientId={clientId}
+          tableNumber={tableNumber}
           t={t}
         />
 

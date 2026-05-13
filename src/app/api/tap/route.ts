@@ -46,11 +46,16 @@ async function handleTap(req: NextRequest): Promise<NextResponse> {
   const deviceType = parseDeviceType(ua)
   const ipAddress = parseIp(req)
 
+  const tableParam = req.nextUrl.searchParams.get('table')
+  const tableNumber = tableParam !== null ? parseInt(tableParam, 10) : null
+
   await supabase.from('tap_events').insert({
     stand_id: standId,
     language,
     device_type: deviceType,
     ip_address: ipAddress,
+    // @ts-expect-error table_number column pending DB migration
+    table_number: Number.isFinite(tableNumber) ? tableNumber : null,
   })
 
   return NextResponse.redirect(stand.landing_page_url, { status: 302 })
