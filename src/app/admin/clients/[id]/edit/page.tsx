@@ -28,7 +28,7 @@ export default async function ClientEditPage({
       clientId={id}
       fullName={profile.full_name ?? ''}
       email={profile.email}
-      plan={sub?.plan ?? 'basic'}
+      plan={sub?.plan ?? 'basic_monthly'}
       status={sub?.status ?? 'active'}
       backHref={`/admin/clients/${id}`}
     />

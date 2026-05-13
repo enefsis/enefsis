@@ -29,7 +29,7 @@ export function SubscriptionCard({ data }: { data: SubscriptionData | null }) {
   const isActive    = data.status?.toLowerCase() === 'active'
   const isSuspended = data.status?.toLowerCase() === 'suspended'
   const planLabel   = data.plan
-    ? data.plan.charAt(0).toUpperCase() + data.plan.slice(1).toLowerCase()
+    ? data.plan.split('_').map((w: string) => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')
     : '—'
 
   return (

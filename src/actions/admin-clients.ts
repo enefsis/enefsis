@@ -5,7 +5,16 @@ import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { sendWelcomeEmail } from '@/lib/email'
+import { stripe } from '@/lib/stripe/client'
+import type Stripe from 'stripe'
 import type { Profile } from '@/types/database'
+
+const EDIT_PRICE_IDS: Record<string, string> = {
+  basic_monthly: process.env.STRIPE_BASIC_MONTHLY_PRICE_ID ?? '',
+  basic_yearly:  process.env.STRIPE_BASIC_YEARLY_PRICE_ID  ?? '',
+  pro_monthly:   process.env.STRIPE_PRO_MONTHLY_PRICE_ID   ?? '',
+  pro_yearly:    process.env.STRIPE_PRO_YEARLY_PRICE_ID    ?? '',
+}
 
 export type CreateClientResult =
   | { success: true;  slug: string; tempPassword: string; userId: string }
@@ -190,16 +199,17 @@ export async function updateClientInfo(
   if (!clientId)                                      return { error: 'Client ID missing.' }
   if (!fullName)                                      return { error: 'Name is required.' }
   if (!email || !email.includes('@'))                 return { error: 'Valid email is required.' }
-  if (!['basic', 'pro'].includes(plan))               return { error: 'Plan must be basic or pro.' }
+  if (!['basic_monthly', 'basic_yearly', 'pro_monthly', 'pro_yearly', 'basic', 'pro'].includes(plan)) return { error: 'Invalid plan.' }
   if (!['active', 'suspended', 'cancelled'].includes(status)) return { error: 'Invalid status.' }
 
-  // Fetch current email to detect changes
-  const { data: currentRaw } = await admin
-    .from('profiles')
-    .select('email')
-    .eq('id', clientId)
-    .maybeSingle()
-  const currentEmail = (currentRaw as { email: string } | null)?.email?.toLowerCase() ?? ''
+  // Fetch current email + subscription state to detect changes
+  const [{ data: currentRaw }, { data: currentSubRaw }] = await Promise.all([
+    admin.from('profiles').select('email').eq('id', clientId).maybeSingle(),
+    admin.from('subscriptions').select('plan, status').eq('user_id', clientId).order('created_at', { ascending: false }).limit(1).maybeSingle(),
+  ])
+  const currentEmail  = (currentRaw    as { email: string }              | null)?.email?.toLowerCase() ?? ''
+  const currentPlan   = (currentSubRaw as { plan: string; status: string } | null)?.plan               ?? ''
+  const currentStatus = (currentSubRaw as { plan: string; status: string } | null)?.status             ?? ''
 
   // Update profiles row
   const { error: profileErr } = await admin
@@ -224,5 +234,54 @@ export async function updateClientInfo(
   revalidatePath(`/admin/clients/${clientId}`)
   revalidatePath('/admin/clients')
   revalidatePath('/admin')
+
+  // ── Stripe sync ───────────────────────────────────────────────────────────
+  const planChanged   = plan   !== currentPlan
+  const statusChanged = status !== currentStatus
+
+  if (planChanged || statusChanged) {
+    try {
+      const lookupEmail = currentEmail || email
+      const customers   = await stripe.customers.list({ email: lookupEmail, limit: 1 })
+      const customer    = customers.data[0] ?? null
+
+      if (customer) {
+        const subs     = await stripe.subscriptions.list({ customer: customer.id, status: 'active', limit: 1 })
+        const stripeSub = subs.data[0] ?? null
+
+        if (stripeSub) {
+          if (status === 'cancelled') {
+            await stripe.subscriptions.cancel(stripeSub.id)
+          } else {
+            if (planChanged) {
+              const newPriceId = EDIT_PRICE_IDS[plan]
+              if (newPriceId) {
+                const item = stripeSub.items.data[0]
+                await stripe.subscriptions.update(stripeSub.id, {
+                  items: [{ id: item.id, price: newPriceId }],
+                  proration_behavior: 'create_prorations',
+                })
+              }
+            }
+            if (statusChanged) {
+              if (status === 'suspended') {
+                await stripe.subscriptions.update(stripeSub.id, {
+                  pause_collection: { behavior: 'void' },
+                })
+              } else if (status === 'active') {
+                await stripe.subscriptions.update(stripeSub.id, {
+                  pause_collection: '' as unknown as Stripe.SubscriptionUpdateParams.PauseCollection,
+                })
+              }
+            }
+          }
+        }
+      }
+    } catch (stripeErr) {
+      const msg = stripeErr instanceof Error ? stripeErr.message : 'Stripe sync failed'
+      return { error: `Saved to DB but Stripe sync failed: ${msg}` }
+    }
+  }
+
   return {}
 }

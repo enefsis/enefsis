@@ -26,9 +26,13 @@ function avatarColor(id: string) {
 }
 
 // ── Inline badges ─────────────────────────────────────────────────────────────
+function fmtPlan(plan: string) {
+  return plan.split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')
+}
+
 function PlanBadge({ plan }: { plan: string | null }) {
   if (!plan) return <span className="font-sans text-xs text-white/25">—</span>
-  const isPro = plan.toLowerCase() === 'pro'
+  const isPro = plan.toLowerCase().startsWith('pro')
   return (
     <span
       className="inline-flex text-[11px] font-sans font-semibold px-2.5 py-0.5 rounded-full border"
@@ -211,7 +215,7 @@ export default async function ClientDetailPage({
           {[
             { label: 'Email',        value: profile.email },
             { label: 'Joined',       value: fmt(profile.created_at) },
-            { label: 'Plan',         value: sub?.plan ? (sub.plan.charAt(0).toUpperCase() + sub.plan.slice(1)) : '—' },
+            { label: 'Plan',         value: sub?.plan ? fmtPlan(sub.plan) : '—' },
             { label: 'Next Billing', value: sub?.next_billing_date ? fmt(sub.next_billing_date) : '—' },
             { label: 'Sub ID',       value: sub?.id ? sub.id.substring(0, 8) + '…' : '—', mono: true },
           ].map(row => (

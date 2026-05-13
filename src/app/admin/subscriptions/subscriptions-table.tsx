@@ -32,8 +32,12 @@ function fmtAmount(amount: number | null) {
   return `€${amount.toFixed(2)}`
 }
 
+function fmtPlan(plan: string) {
+  return plan.split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')
+}
+
 function PlanBadge({ plan }: { plan: string | null }) {
-  const isPro = plan?.toLowerCase() === 'pro'
+  const isPro = plan?.toLowerCase().startsWith('pro')
   return (
     <span className={cn(
       'inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold border font-sans',
@@ -41,7 +45,7 @@ function PlanBadge({ plan }: { plan: string | null }) {
         ? 'bg-[#2B5CE6]/15 text-[#6B8FF0] border-[#2B5CE6]/25'
         : 'bg-white/[0.05] text-white/50 border-white/[0.08]',
     )}>
-      {plan ?? 'Unknown'}
+      {plan ? fmtPlan(plan) : 'Unknown'}
     </span>
   )
 }

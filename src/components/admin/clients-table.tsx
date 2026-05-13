@@ -20,9 +20,13 @@ function initials(name: string | null, email: string): string {
   return (name ?? email).charAt(0).toUpperCase()
 }
 
+function fmtPlan(plan: string) {
+  return plan.split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')
+}
+
 function PlanBadge({ plan }: { plan: string | null }) {
   if (!plan) return <span className="font-sans text-xs text-white/25">—</span>
-  const isPro = plan.toLowerCase() === 'pro'
+  const isPro = plan.toLowerCase().startsWith('pro')
   return (
     <span
       className={cn(
@@ -32,7 +36,7 @@ function PlanBadge({ plan }: { plan: string | null }) {
           : 'bg-white/[0.05] text-white/55 border-white/[0.08]',
       )}
     >
-      {plan.charAt(0).toUpperCase() + plan.slice(1).toLowerCase()}
+      {fmtPlan(plan)}
     </span>
   )
 }

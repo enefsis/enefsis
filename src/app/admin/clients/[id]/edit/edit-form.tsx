@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
+import { toast } from 'sonner'
 import { updateClientInfo } from '@/actions/admin-clients'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -15,13 +16,22 @@ export type EditFormProps = {
   backHref:   string
 }
 
-type PlanKey   = 'basic' | 'pro'
+type PlanKey   = 'basic_monthly' | 'basic_yearly' | 'pro_monthly' | 'pro_yearly'
 type StatusKey = 'active' | 'suspended' | 'cancelled'
 
-const PLAN_OPTIONS: { key: PlanKey; label: string; description: string }[] = [
-  { key: 'basic', label: 'Basic', description: '€49/mo · NFC Hub + Digital Menu' },
-  { key: 'pro',   label: 'Pro',   description: '€100/mo · Custom branding + Priority support' },
+const PLAN_OPTIONS: { key: PlanKey; label: string; price: string; description: string; badge?: string }[] = [
+  { key: 'basic_monthly', label: 'Basic Monthly', price: '€49/mo',  description: 'NFC Hub + Digital Menu' },
+  { key: 'basic_yearly',  label: 'Basic Yearly',  price: '€499/yr', description: 'NFC Hub + Digital Menu',            badge: 'Save 15%' },
+  { key: 'pro_monthly',   label: 'Pro Monthly',   price: '€100/mo', description: 'Custom branding + Priority support' },
+  { key: 'pro_yearly',    label: 'Pro Yearly',    price: '€900/yr', description: 'Custom branding + Priority support', badge: 'Save 25%' },
 ]
+
+const VALID_PLANS = PLAN_OPTIONS.map(o => o.key)
+function normalizePlan(p: string): PlanKey {
+  if ((VALID_PLANS as string[]).includes(p)) return p as PlanKey
+  if (p === 'pro') return 'pro_monthly'
+  return 'basic_monthly'
+}
 
 const STATUS_OPTIONS: { key: StatusKey; label: string; color: string }[] = [
   { key: 'active',    label: 'Active',    color: '#34D399' },
@@ -47,7 +57,7 @@ export function EditForm({
 
   const [name,    setName]    = useState(initName)
   const [email,   setEmail]   = useState(initEmail)
-  const [plan,    setPlan]    = useState<PlanKey>(initPlan as PlanKey || 'basic')
+  const [plan,    setPlan]    = useState<PlanKey>(normalizePlan(initPlan))
   const [status,  setStatus]  = useState<StatusKey>(initStatus as StatusKey || 'active')
   const [saving,  setSaving]  = useState(false)
   const [error,   setError]   = useState<string | null>(null)
@@ -75,6 +85,7 @@ export function EditForm({
         setError(res.error)
         return
       }
+      toast.success('Client updated successfully')
       router.push(backHref)
     } finally {
       setSaving(false)
@@ -149,35 +160,50 @@ export function EditForm({
             Subscription
           </p>
 
-          {/* Plan toggle */}
+          {/* Plan selector — 2×2 grid */}
           <div>
             <p className="font-sans text-[11px] font-semibold text-white/40 uppercase tracking-wider mb-3">Plan</p>
-            <div className="flex gap-3">
-              {PLAN_OPTIONS.map(opt => (
-                <button
-                  key={opt.key}
-                  type="button"
-                  onClick={() => setPlan(opt.key)}
-                  disabled={saving}
-                  className="flex-1 text-left px-4 py-3.5 rounded-xl border transition-all disabled:opacity-50"
-                  style={plan === opt.key
-                    ? { border: '1px solid rgba(43,92,230,0.7)', background: 'rgba(43,92,230,0.12)' }
-                    : { border: '1px solid rgba(255,255,255,0.08)', background: 'rgba(255,255,255,0.025)' }}
-                >
-                  <div className="flex items-center justify-between mb-1.5">
-                    <span className="font-sans font-semibold text-sm text-white">{opt.label}</span>
-                    <div
-                      className="w-4 h-4 rounded-full border-2 flex items-center justify-center shrink-0"
-                      style={{ borderColor: plan === opt.key ? '#2B5CE6' : 'rgba(255,255,255,0.2)' }}
-                    >
-                      {plan === opt.key && (
-                        <div className="w-2 h-2 rounded-full" style={{ background: '#2B5CE6' }} />
-                      )}
+            <div className="grid grid-cols-2 gap-3">
+              {PLAN_OPTIONS.map(opt => {
+                const selected = plan === opt.key
+                return (
+                  <button
+                    key={opt.key}
+                    type="button"
+                    onClick={() => setPlan(opt.key)}
+                    disabled={saving}
+                    className="text-left px-4 py-3.5 rounded-xl border transition-all disabled:opacity-50"
+                    style={selected
+                      ? { border: '1px solid rgba(43,92,230,0.7)', background: 'rgba(43,92,230,0.12)' }
+                      : { border: '1px solid rgba(255,255,255,0.08)', background: 'rgba(255,255,255,0.025)' }}
+                  >
+                    {/* Label row */}
+                    <div className="flex items-start justify-between gap-2 mb-1.5">
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <span className="font-sans font-semibold text-sm text-white leading-tight">{opt.label}</span>
+                        {opt.badge && (
+                          <span
+                            className="font-sans text-[10px] font-bold px-1.5 py-0.5 rounded-md leading-tight"
+                            style={{ background: 'rgba(52,211,153,0.15)', color: '#34D399' }}
+                          >
+                            {opt.badge}
+                          </span>
+                        )}
+                      </div>
+                      <div
+                        className="w-4 h-4 rounded-full border-2 flex items-center justify-center shrink-0 mt-0.5"
+                        style={{ borderColor: selected ? '#2B5CE6' : 'rgba(255,255,255,0.2)' }}
+                      >
+                        {selected && <div className="w-2 h-2 rounded-full" style={{ background: '#2B5CE6' }} />}
+                      </div>
                     </div>
-                  </div>
-                  <p className="font-sans text-[11px] text-white/35">{opt.description}</p>
-                </button>
-              ))}
+                    {/* Price */}
+                    <p className="font-sans text-sm font-bold text-white/80 mb-1">{opt.price}</p>
+                    {/* Description */}
+                    <p className="font-sans text-[11px] text-white/35">{opt.description}</p>
+                  </button>
+                )
+              })}
             </div>
           </div>
 

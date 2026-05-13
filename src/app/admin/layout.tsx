@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { Sidebar } from '@/components/layout/sidebar'
+import { Toaster } from 'sonner'
 import type { Profile } from '@/types/database'
 
 const navItems = [
@@ -46,6 +47,7 @@ export default async function AdminLayout({
       <main className="flex-1 overflow-y-auto">
         {children}
       </main>
+      <Toaster position="top-right" richColors />
     </div>
   )
 }
