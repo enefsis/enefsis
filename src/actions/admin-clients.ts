@@ -17,6 +17,15 @@ const EDIT_PRICE_IDS: Record<string, string> = {
   pro_yearly:    process.env.STRIPE_PRO_YEARLY_PRICE_ID    ?? '',
 }
 
+const PLAN_AMOUNTS: Record<string, number> = {
+  basic_monthly: 49,
+  basic_yearly:  499,
+  pro_monthly:   100,
+  pro_yearly:    900,
+  basic:         49,
+  pro:           100,
+}
+
 export type CreateClientResult =
   | { success: true;  slug: string; tempPassword: string; userId: string }
   | { success: false; error: string }
@@ -233,6 +242,8 @@ export async function updateClientInfo(
   }
 
   // Update subscription plan + status + payment fields
+  // Only sync amount from plan default when no custom_amount is set
+  const planAmount = customAmount === null ? (PLAN_AMOUNTS[plan] ?? null) : null
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { error: subErr } = await (admin.from('subscriptions') as any)
     .update({
@@ -241,6 +252,7 @@ export async function updateClientInfo(
       payment_method: paymentMethod,
       custom_amount:  customAmount,
       payment_notes:  paymentNotes || null,
+      ...(planAmount !== null ? { amount: planAmount } : {}),
     })
     .eq('user_id', clientId)
   if (subErr) return { error: (subErr as { message: string }).message }

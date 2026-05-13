@@ -16,6 +16,7 @@ export type SubRow = {
   plan: string | null
   status: string | null
   amount: number | null
+  customAmount: number | null
   nextBillingDate: string | null
   createdAt: string
   profile: { fullName: string | null; email: string } | null
@@ -30,6 +31,30 @@ function fmtDate(iso: string | null) {
 function fmtAmount(amount: number | null) {
   if (amount === null) return '—'
   return `€${amount.toFixed(2)}`
+}
+
+const PLAN_DISPLAY: Record<string, { amount: number; period: string }> = {
+  basic_monthly: { amount: 49,  period: '/mo' },
+  basic_yearly:  { amount: 499, period: '/yr' },
+  pro_monthly:   { amount: 100, period: '/mo' },
+  pro_yearly:    { amount: 900, period: '/yr' },
+  basic:         { amount: 49,  period: '/mo' },
+  pro:           { amount: 100, period: '/mo' },
+}
+
+function effectiveAmount(sub: SubRow): number {
+  if (sub.customAmount != null) return sub.customAmount
+  return sub.plan ? (PLAN_DISPLAY[sub.plan]?.amount ?? sub.amount ?? 0) : (sub.amount ?? 0)
+}
+
+function fmtSubAmount(sub: SubRow): string {
+  const isYearly = sub.plan?.endsWith('_yearly') ?? false
+  if (sub.customAmount != null) {
+    return `€${sub.customAmount.toFixed(2)}${isYearly ? '/yr' : '/mo'}`
+  }
+  const d = sub.plan ? PLAN_DISPLAY[sub.plan] : null
+  if (d) return `€${d.amount.toFixed(2)}${d.period}`
+  return fmtAmount(sub.amount)
 }
 
 function fmtPlan(plan: string) {
@@ -66,7 +91,7 @@ function RefundModal({
   onClose: () => void
   onSuccess: () => void
 }) {
-  const maxEuros = sub.amount ?? 0
+  const maxEuros = effectiveAmount(sub)
   const [amountStr, setAmountStr] = useState(maxEuros.toFixed(2))
   const [busy, setBusy] = useState(false)
   const [err,  setErr]  = useState<string | null>(null)
@@ -252,7 +277,7 @@ export function SubscriptionsTable({ subs }: { subs: SubRow[] }) {
                     {/* Amount */}
                     <td className="px-5 py-3.5 whitespace-nowrap">
                       <span className="font-sans text-xs font-semibold text-white/80 tabular-nums">
-                        {fmtAmount(sub.amount)}
+                        {fmtSubAmount(sub)}
                       </span>
                     </td>
 
@@ -271,7 +296,7 @@ export function SubscriptionsTable({ subs }: { subs: SubRow[] }) {
                     {/* Actions */}
                     <td className="px-5 py-3.5 whitespace-nowrap">
                       <div className="flex items-center gap-2">
-                        {sub.amount != null && sub.amount > 0 && (
+                        {effectiveAmount(sub) > 0 && (
                           <button
                             type="button"
                             disabled={isBusy}
