@@ -53,7 +53,7 @@ export async function createClientAccount(
   const plan      = (formData.get('plan')           as string | null)?.trim() ?? 'basic'
   const billing   = (formData.get('billing')        as string | null)?.trim() ?? 'monthly'
   const slug      = (formData.get('slug')           as string | null)?.trim() ?? ''
-  const nfcCount  = Math.min(20, Math.max(1, parseInt(
+  const nfcCount  = Math.min(100, Math.max(1, parseInt(
     (formData.get('nfc_count') as string | null) ?? '1', 10,
   )))
 

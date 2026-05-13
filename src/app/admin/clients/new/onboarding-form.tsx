@@ -182,7 +182,7 @@ function NfcCounter({ value, onChange }: { value: number; onChange: (n: number) 
       <span className="w-8 text-center font-semibold text-white tabular-nums">{value}</span>
       <button
         type="button"
-        onClick={() => onChange(Math.min(20, value + 1))}
+        onClick={() => onChange(Math.min(100, value + 1))}
         className="w-8 h-8 rounded-lg border border-white/[0.08] text-white/50 hover:text-white hover:border-white/20 flex items-center justify-center text-lg leading-none transition-colors"
       >
         +
