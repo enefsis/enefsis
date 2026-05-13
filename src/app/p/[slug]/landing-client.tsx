@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import type { MenuSectionData, MenuItemData } from '@/actions/page-editor'
 
 // ─── Language data ────────────────────────────────────────────────────────────
@@ -781,7 +781,7 @@ export function LandingClient({
     return () => { document.body.style.overflow = '' }
   }, [lightboxPhoto])
 
-  async function selectLang(code: string) {
+  const selectLang = useCallback(async (code: string) => {
     setLang(code)
     localStorage.setItem('enefsis_lang', code)
     setLangOpen(false)
@@ -829,9 +829,8 @@ export function LandingClient({
     } finally {
       setIsTranslating(false)
     }
-  }
+  }, [restaurantName, tagline, restaurantType, todaysSpecials, openingHours, menuSections])
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     const stored = localStorage.getItem('enefsis_lang')
     if (stored && LANGUAGES.some(l => l.code === stored)) {
