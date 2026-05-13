@@ -342,6 +342,9 @@ export async function impersonateClient(
   const { data, error } = await admin.auth.admin.generateLink({
     type: 'magiclink',
     email: clientProfile.email,
+    options: {
+      redirectTo: `${process.env.NEXT_PUBLIC_APP_URL}/dashboard`,
+    },
   })
   if (error || !data?.properties?.action_link) {
     return { error: error?.message ?? 'Failed to generate magic link' }
