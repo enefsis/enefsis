@@ -27,6 +27,7 @@ export default async function DashboardPage() {
   const supabase = await createClient()
 
   const { data: { user } } = await supabase.auth.getUser()
+  console.log('[dashboard] session user.id:', user?.id, 'email:', user?.email)
 
   const now    = new Date()
   const d30    = new Date(now.getTime() - 30 * 86_400_000).toISOString()
@@ -48,18 +49,18 @@ export default async function DashboardPage() {
     { data: rawLanguages },
     { data: rawSubscription },
   ] = await Promise.all([
-    supabase.from('tap_events').select('*', { count: 'exact', head: true }).gte('created_at', d30).lte('created_at', nowIso),
-    supabase.from('tap_events').select('*', { count: 'exact', head: true }).gte('created_at', d60).lt('created_at', d30),
-    supabase.from('menu_item_views').select('*', { count: 'exact', head: true }).gte('created_at', d30).lte('created_at', nowIso),
-    supabase.from('menu_item_views').select('*', { count: 'exact', head: true }).gte('created_at', d60).lt('created_at', d30),
-    supabase.from('button_clicks').select('*', { count: 'exact', head: true }).gte('created_at', d30).lte('created_at', nowIso),
-    supabase.from('button_clicks').select('*', { count: 'exact', head: true }).gte('created_at', d60).lt('created_at', d30),
-    supabase.from('subscriptions').select('*', { count: 'exact', head: true }).gte('created_at', d30).lte('created_at', nowIso),
-    supabase.from('subscriptions').select('*', { count: 'exact', head: true }).gte('created_at', d60).lt('created_at', d30),
-    supabase.from('tap_events').select('created_at').gte('created_at', d30).lte('created_at', nowIso),
-    supabase.from('menu_item_views').select('item_name').gte('created_at', d30).lte('created_at', nowIso),
-    supabase.from('button_clicks').select('button_type').gte('created_at', d30).lte('created_at', nowIso),
-    supabase.from('tap_events').select('language').gte('created_at', d30).lte('created_at', nowIso),
+    supabase.from('tap_events').select('*', { count: 'exact', head: true }).eq('user_id', user!.id).gte('created_at', d30).lte('created_at', nowIso),
+    supabase.from('tap_events').select('*', { count: 'exact', head: true }).eq('user_id', user!.id).gte('created_at', d60).lt('created_at', d30),
+    supabase.from('menu_item_views').select('*', { count: 'exact', head: true }).eq('client_id', user!.id).gte('created_at', d30).lte('created_at', nowIso),
+    supabase.from('menu_item_views').select('*', { count: 'exact', head: true }).eq('client_id', user!.id).gte('created_at', d60).lt('created_at', d30),
+    supabase.from('button_clicks').select('*', { count: 'exact', head: true }).eq('client_id', user!.id).gte('created_at', d30).lte('created_at', nowIso),
+    supabase.from('button_clicks').select('*', { count: 'exact', head: true }).eq('client_id', user!.id).gte('created_at', d60).lt('created_at', d30),
+    supabase.from('subscriptions').select('*', { count: 'exact', head: true }).eq('user_id', user!.id).gte('created_at', d30).lte('created_at', nowIso),
+    supabase.from('subscriptions').select('*', { count: 'exact', head: true }).eq('user_id', user!.id).gte('created_at', d60).lt('created_at', d30),
+    supabase.from('tap_events').select('created_at').eq('user_id', user!.id).gte('created_at', d30).lte('created_at', nowIso),
+    supabase.from('menu_item_views').select('item_name').eq('client_id', user!.id).gte('created_at', d30).lte('created_at', nowIso),
+    supabase.from('button_clicks').select('button_type').eq('client_id', user!.id).gte('created_at', d30).lte('created_at', nowIso),
+    supabase.from('tap_events').select('language').eq('user_id', user!.id).gte('created_at', d30).lte('created_at', nowIso),
     user
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       ? (supabase.from('subscriptions') as any).select('plan, status, next_billing_date, amount, payment_method, custom_amount').eq('user_id', user.id).order('created_at', { ascending: false }).limit(1).maybeSingle()
