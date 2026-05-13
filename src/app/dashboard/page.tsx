@@ -33,6 +33,8 @@ export default async function DashboardPage() {
   const d60    = new Date(now.getTime() - 60 * 86_400_000).toISOString()
   const nowIso = now.toISOString()
 
+  console.log('[Dashboard] session user.id:', user?.id)
+
   const [
     { count: tapsCur },
     { count: tapsPrev },
@@ -46,7 +48,6 @@ export default async function DashboardPage() {
     { data: rawMenuViews },
     { data: rawSocialClicks },
     { data: rawLanguages },
-    { data: rawSubscription },
   ] = await Promise.all([
     supabase.from('tap_events').select('*', { count: 'exact', head: true }).eq('user_id', user!.id).gte('created_at', d30).lte('created_at', nowIso),
     supabase.from('tap_events').select('*', { count: 'exact', head: true }).eq('user_id', user!.id).gte('created_at', d60).lt('created_at', d30),
@@ -60,11 +61,20 @@ export default async function DashboardPage() {
     supabase.from('menu_item_views').select('item_name').eq('client_id', user!.id).gte('created_at', d30).lte('created_at', nowIso),
     supabase.from('button_clicks').select('button_type').eq('client_id', user!.id).gte('created_at', d30).lte('created_at', nowIso),
     supabase.from('tap_events').select('language').eq('user_id', user!.id).gte('created_at', d30).lte('created_at', nowIso),
-    user
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      ? (supabase.from('subscriptions') as any).select('*').eq('user_id', user.id).order('created_at', { ascending: false }).limit(1).maybeSingle()
-      : Promise.resolve({ data: null }),
   ])
+
+  // Subscription fetched separately so we can log the error if it fails
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data: rawSubscription, error: subError } = user
+    ? await (supabase.from('subscriptions') as any)
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle()
+    : { data: null, error: null }
+
+  console.log('[Dashboard] subscription data:', rawSubscription, 'error:', subError)
 
   // ── Daily taps chart ──────────────────────────────────────────────────────
   const tapsMap: Record<string, number> = {}

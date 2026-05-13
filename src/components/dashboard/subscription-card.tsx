@@ -107,7 +107,7 @@ export function SubscriptionCard({ data }: { data: SubscriptionData | null }) {
       <div className="flex items-start justify-between gap-3">
         <span className="font-sans text-sm text-white/50 shrink-0">Next billing</span>
         <span className="font-sans text-sm text-white/80 text-right">
-          {formatBillingDate(data.next_billing_date)}
+          {isManual ? 'Manual billing' : formatBillingDate(data.next_billing_date)}
         </span>
       </div>
 
