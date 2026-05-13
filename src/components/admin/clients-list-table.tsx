@@ -180,6 +180,13 @@ export function ClientsListTable({ clients }: { clients: ClientListRow[] }) {
                 {/* Actions */}
                 <td className="px-4 py-3.5">
                   <div className="flex items-center gap-2 whitespace-nowrap">
+                    <Link
+                      href={`/admin/clients/${client.id}`}
+                      className="px-2.5 py-1 rounded-md text-xs font-sans font-medium text-white/45 border border-white/[0.08] hover:text-white/75 hover:border-white/[0.16] transition-colors"
+                    >
+                      View
+                    </Link>
+
                     {client.landingUrl && (
                       <a
                         href={client.landingUrl}

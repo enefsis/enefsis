@@ -1,4 +1,4 @@
-import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 import { StatCard } from '@/components/dashboard/stat-card'
 import { ClientsTable, type ClientRow } from '@/components/admin/clients-table'
 
@@ -34,7 +34,7 @@ type RawMrrRow = {
 }
 
 export default async function AdminPage() {
-  const supabase = await createClient()
+  const supabase = createAdminClient()
 
   const now    = new Date()
   const d30    = new Date(now.getTime() - 30 * 86_400_000).toISOString()
