@@ -13,6 +13,7 @@ export interface ClientRow {
     plan: string | null
     status: string | null
     amount: number | null
+    custom_amount: number | null
   } | null
 }
 
@@ -140,7 +141,10 @@ export function ClientsTable({ clients }: { clients: ClientRow[] }) {
                 {/* MRR */}
                 <td className="px-4 py-3.5">
                   <span className="font-sans text-white/65 tabular-nums">
-                    {sub?.amount != null ? `€${sub.amount.toLocaleString()}` : '—'}
+                    {(() => {
+                      const v = sub?.custom_amount ?? sub?.amount
+                      return v != null ? `€${v.toLocaleString()}` : '—'
+                    })()}
                   </span>
                 </td>
 

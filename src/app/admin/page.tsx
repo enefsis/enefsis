@@ -22,6 +22,7 @@ type RawSubscription = {
   plan: string | null
   status: string | null
   amount: number | null
+  custom_amount: number | null
   created_at: string
 }
 
@@ -31,6 +32,7 @@ type RawTapEvent = {
 
 type RawMrrRow = {
   amount: number | null
+  custom_amount: number | null
 }
 
 export default async function AdminPage() {
@@ -61,20 +63,22 @@ export default async function AdminPage() {
     supabase.from('subscriptions').select('*', { count: 'exact', head: true }).eq('status', 'active'),
     supabase.from('subscriptions').select('*', { count: 'exact', head: true }).eq('status', 'active').gte('created_at', d30).lte('created_at', nowIso),
     supabase.from('subscriptions').select('*', { count: 'exact', head: true }).eq('status', 'active').gte('created_at', d60).lt('created_at', d30),
-    supabase.from('subscriptions').select('amount').eq('status', 'active'),
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (supabase.from('subscriptions') as any).select('amount, custom_amount').eq('status', 'active'),
     supabase.from('tap_events').select('*', { count: 'exact', head: true }).gte('created_at', d30).lte('created_at', nowIso),
     supabase.from('tap_events').select('*', { count: 'exact', head: true }).gte('created_at', d60).lt('created_at', d30),
     // Clients table: full profile list
     supabase.from('profiles').select('id, full_name, email, created_at').neq('role', 'admin').order('created_at', { ascending: false }),
     // Clients table: all subscriptions (latest per user resolved in JS)
-    supabase.from('subscriptions').select('id, user_id, plan, status, amount, created_at').order('created_at', { ascending: false }),
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (supabase.from('subscriptions') as any).select('id, user_id, plan, status, amount, custom_amount, created_at').order('created_at', { ascending: false }),
     // Clients table: per-user tap counts for last 30 days
     supabase.from('tap_events').select('user_id').gte('created_at', d30).lte('created_at', nowIso),
   ])
 
   // ── Stat card values ──────────────────────────────────────────────────────
   const mrr = (mrrRaw as RawMrrRow[] | null)
-    ?.reduce((sum, row) => sum + (row.amount ?? 0), 0) ?? 0
+    ?.reduce((sum, row) => sum + (row.custom_amount ?? row.amount ?? 0), 0) ?? 0
 
   const stats = [
     { label: 'Total Clients',             value: totalClients ?? 0, change: calcChange(newClientsCur ?? 0, newClientsPrev ?? 0), icon: 'clients'       as const },
@@ -110,7 +114,7 @@ export default async function AdminPage() {
       joined: p.created_at,
       taps30d: tapsByUser[p.id] ?? 0,
       subscription: sub
-        ? { id: sub.id, plan: sub.plan, status: sub.status, amount: sub.amount }
+        ? { id: sub.id, plan: sub.plan, status: sub.status, amount: sub.amount, custom_amount: sub.custom_amount }
         : null,
     }
   }) ?? []
