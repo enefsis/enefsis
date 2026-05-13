@@ -190,17 +190,24 @@ export async function updateClientInfo(
   const caller = callerRaw as Pick<Profile, 'role'> | null
   if (caller?.role !== 'admin') redirect('/dashboard')
 
-  const clientId = (formData.get('clientId') as string | null)?.trim() ?? ''
-  const fullName  = (formData.get('full_name') as string | null)?.trim() ?? ''
-  const email     = (formData.get('email')     as string | null)?.trim().toLowerCase() ?? ''
-  const plan      = (formData.get('plan')      as string | null)?.trim() ?? ''
-  const status    = (formData.get('status')    as string | null)?.trim() ?? ''
+  const clientId      = (formData.get('clientId')       as string | null)?.trim() ?? ''
+  const fullName      = (formData.get('full_name')      as string | null)?.trim() ?? ''
+  const email         = (formData.get('email')          as string | null)?.trim().toLowerCase() ?? ''
+  const plan          = (formData.get('plan')           as string | null)?.trim() ?? ''
+  const status        = (formData.get('status')         as string | null)?.trim() ?? ''
+  const paymentMethod = (formData.get('payment_method') as string | null)?.trim() ?? 'stripe'
+  const customAmountStr = (formData.get('custom_amount') as string | null)?.trim() ?? ''
+  const paymentNotes  = (formData.get('payment_notes')  as string | null)?.trim() ?? ''
+
+  const customAmount = customAmountStr !== '' ? parseInt(customAmountStr, 10) : null
 
   if (!clientId)                                      return { error: 'Client ID missing.' }
   if (!fullName)                                      return { error: 'Name is required.' }
   if (!email || !email.includes('@'))                 return { error: 'Valid email is required.' }
   if (!['basic_monthly', 'basic_yearly', 'pro_monthly', 'pro_yearly', 'basic', 'pro'].includes(plan)) return { error: 'Invalid plan.' }
   if (!['active', 'suspended', 'cancelled'].includes(status)) return { error: 'Invalid status.' }
+  if (!['stripe', 'cash', 'bank_transfer'].includes(paymentMethod)) return { error: 'Invalid payment method.' }
+  if (customAmountStr !== '' && (isNaN(customAmount!) || customAmount! < 0)) return { error: 'Custom amount must be a positive number.' }
 
   // Fetch current email + subscription state to detect changes
   const [{ data: currentRaw }, { data: currentSubRaw }] = await Promise.all([
@@ -224,12 +231,18 @@ export async function updateClientInfo(
     if (authErr) return { error: `Auth email update: ${authErr.message}` }
   }
 
-  // Update subscription plan + status
-  const { error: subErr } = await admin
-    .from('subscriptions')
-    .update({ plan, status })
+  // Update subscription plan + status + payment fields
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { error: subErr } = await (admin.from('subscriptions') as any)
+    .update({
+      plan,
+      status,
+      payment_method: paymentMethod,
+      custom_amount:  customAmount,
+      payment_notes:  paymentNotes || null,
+    })
     .eq('user_id', clientId)
-  if (subErr) return { error: subErr.message }
+  if (subErr) return { error: (subErr as { message: string }).message }
 
   revalidatePath(`/admin/clients/${clientId}`)
   revalidatePath('/admin/clients')

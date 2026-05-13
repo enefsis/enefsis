@@ -5,6 +5,24 @@ export interface SubscriptionData {
   plan: string | null
   status: string | null
   next_billing_date: string | null
+  amount: number | null
+  payment_method: string | null
+  custom_amount: number | null
+}
+
+const PLAN_AMOUNTS: Record<string, string> = {
+  basic_monthly: '€49/mo',
+  basic_yearly:  '€499/yr',
+  pro_monthly:   '€100/mo',
+  pro_yearly:    '€900/yr',
+  basic:         '€49/mo',
+  pro:           '€100/mo',
+}
+
+const PAYMENT_LABELS: Record<string, string> = {
+  stripe:        'Stripe',
+  cash:          'Cash',
+  bank_transfer: 'Bank Transfer',
 }
 
 function formatBillingDate(iso: string | null): string {
@@ -26,11 +44,21 @@ export function SubscriptionCard({ data }: { data: SubscriptionData | null }) {
     )
   }
 
-  const isActive    = data.status?.toLowerCase() === 'active'
-  const isSuspended = data.status?.toLowerCase() === 'suspended'
-  const planLabel   = data.plan
+  const isActive       = data.status?.toLowerCase() === 'active'
+  const isSuspended    = data.status?.toLowerCase() === 'suspended'
+  const isManual       = data.payment_method === 'cash' || data.payment_method === 'bank_transfer'
+  const planLabel      = data.plan
     ? data.plan.split('_').map((w: string) => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')
     : '—'
+  const amountLabel    = data.custom_amount != null
+    ? `€${data.custom_amount}`
+    : data.plan && PLAN_AMOUNTS[data.plan]
+      ? PLAN_AMOUNTS[data.plan]
+      : data.amount != null
+        ? `€${data.amount}`
+        : '—'
+  const paymentLabel   = data.payment_method ? (PAYMENT_LABELS[data.payment_method] ?? data.payment_method) : '—'
+  const iban           = process.env.NEXT_PUBLIC_PAYMENT_IBAN ?? ''
 
   return (
     <div className="space-y-5">
@@ -63,6 +91,18 @@ export function SubscriptionCard({ data }: { data: SubscriptionData | null }) {
         </span>
       </div>
 
+      {/* Amount */}
+      <div className="flex items-center justify-between">
+        <span className="font-sans text-sm text-white/50">Amount</span>
+        <span className="font-sans text-sm font-semibold text-white/80">{amountLabel}</span>
+      </div>
+
+      {/* Payment method */}
+      <div className="flex items-center justify-between">
+        <span className="font-sans text-sm text-white/50">Payment</span>
+        <span className="font-sans text-sm text-white/80">{paymentLabel}</span>
+      </div>
+
       {/* Next billing */}
       <div className="flex items-start justify-between gap-3">
         <span className="font-sans text-sm text-white/50 shrink-0">Next billing</span>
@@ -70,6 +110,24 @@ export function SubscriptionCard({ data }: { data: SubscriptionData | null }) {
           {formatBillingDate(data.next_billing_date)}
         </span>
       </div>
+
+      {/* Manual payment instructions */}
+      {isManual && (
+        <div className="mt-1 px-3 py-3 rounded-lg bg-blue-500/[0.07] border border-blue-500/20 space-y-1">
+          <p className="font-sans text-xs font-semibold text-blue-400 uppercase tracking-wider">Payment Instructions</p>
+          {iban && (
+            <p className="font-sans text-xs text-white/60">
+              IBAN: <span className="font-mono text-white/80">{iban}</span>
+            </p>
+          )}
+          <p className="font-sans text-xs text-white/60">
+            Contact:{' '}
+            <a href="mailto:gniokos@gmail.com" className="text-blue-400 hover:text-blue-300 transition-colors">
+              gniokos@gmail.com
+            </a>
+          </p>
+        </div>
+      )}
 
       {/* Suspended warning */}
       {isSuspended && (

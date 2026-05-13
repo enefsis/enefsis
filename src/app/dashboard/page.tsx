@@ -61,7 +61,8 @@ export default async function DashboardPage() {
     supabase.from('button_clicks').select('button_type').gte('created_at', d30).lte('created_at', nowIso),
     supabase.from('tap_events').select('language').gte('created_at', d30).lte('created_at', nowIso),
     user
-      ? supabase.from('subscriptions').select('plan, status, next_billing_date').eq('user_id', user.id).order('created_at', { ascending: false }).limit(1).maybeSingle()
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      ? (supabase.from('subscriptions') as any).select('plan, status, next_billing_date, amount, payment_method, custom_amount').eq('user_id', user.id).order('created_at', { ascending: false }).limit(1).maybeSingle()
       : Promise.resolve({ data: null }),
   ])
 
@@ -115,6 +116,9 @@ export default async function DashboardPage() {
     plan: string | null
     status: string | null
     next_billing_date: string | null
+    amount: number | null
+    payment_method: string | null
+    custom_amount: number | null
   } | null)
 
   // ── Stat cards ────────────────────────────────────────────────────────────

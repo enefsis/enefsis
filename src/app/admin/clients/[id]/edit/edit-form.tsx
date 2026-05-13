@@ -8,16 +8,26 @@ import { updateClientInfo } from '@/actions/admin-clients'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 export type EditFormProps = {
-  clientId:   string
-  fullName:   string
-  email:      string
-  plan:       string
-  status:     string
-  backHref:   string
+  clientId:      string
+  fullName:      string
+  email:         string
+  plan:          string
+  status:        string
+  paymentMethod: string
+  customAmount:  number | null
+  paymentNotes:  string
+  backHref:      string
 }
 
-type PlanKey   = 'basic_monthly' | 'basic_yearly' | 'pro_monthly' | 'pro_yearly'
-type StatusKey = 'active' | 'suspended' | 'cancelled'
+type PlanKey          = 'basic_monthly' | 'basic_yearly' | 'pro_monthly' | 'pro_yearly'
+type StatusKey        = 'active' | 'suspended' | 'cancelled'
+type PaymentMethodKey = 'stripe' | 'cash' | 'bank_transfer'
+
+const PAYMENT_OPTIONS: { key: PaymentMethodKey; label: string }[] = [
+  { key: 'stripe',        label: 'Stripe' },
+  { key: 'cash',          label: 'Cash' },
+  { key: 'bank_transfer', label: 'Bank Transfer' },
+]
 
 const PLAN_OPTIONS: { key: PlanKey; label: string; price: string; description: string; badge?: string }[] = [
   { key: 'basic_monthly', label: 'Basic Monthly', price: '€49/mo',  description: 'NFC Hub + Digital Menu' },
@@ -51,16 +61,23 @@ function ArrowLeftIcon() {
 // ── Form ──────────────────────────────────────────────────────────────────────
 export function EditForm({
   clientId, fullName: initName, email: initEmail,
-  plan: initPlan, status: initStatus, backHref,
+  plan: initPlan, status: initStatus,
+  paymentMethod: initPaymentMethod, customAmount: initCustomAmount, paymentNotes: initPaymentNotes,
+  backHref,
 }: EditFormProps) {
   const router = useRouter()
 
-  const [name,    setName]    = useState(initName)
-  const [email,   setEmail]   = useState(initEmail)
-  const [plan,    setPlan]    = useState<PlanKey>(normalizePlan(initPlan))
-  const [status,  setStatus]  = useState<StatusKey>(initStatus as StatusKey || 'active')
-  const [saving,  setSaving]  = useState(false)
-  const [error,   setError]   = useState<string | null>(null)
+  const [name,          setName]          = useState(initName)
+  const [email,         setEmail]         = useState(initEmail)
+  const [plan,          setPlan]          = useState<PlanKey>(normalizePlan(initPlan))
+  const [status,        setStatus]        = useState<StatusKey>(initStatus as StatusKey || 'active')
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethodKey>(initPaymentMethod as PaymentMethodKey || 'stripe')
+  const [customAmount,  setCustomAmount]  = useState(initCustomAmount !== null ? String(initCustomAmount) : '')
+  const [paymentNotes,  setPaymentNotes]  = useState(initPaymentNotes)
+  const [saving,        setSaving]        = useState(false)
+  const [error,         setError]         = useState<string | null>(null)
+
+  const isManualPayment = paymentMethod !== 'stripe'
 
   const inputCls = [
     'w-full h-10 px-3.5 rounded-xl font-sans text-sm text-white placeholder-white/25',
@@ -73,11 +90,14 @@ export function EditForm({
     setSaving(true)
 
     const fd = new FormData()
-    fd.set('clientId',  clientId)
-    fd.set('full_name', name.trim())
-    fd.set('email',     email.trim())
-    fd.set('plan',      plan)
-    fd.set('status',    status)
+    fd.set('clientId',       clientId)
+    fd.set('full_name',      name.trim())
+    fd.set('email',          email.trim())
+    fd.set('plan',           plan)
+    fd.set('status',         status)
+    fd.set('payment_method', paymentMethod)
+    fd.set('custom_amount',  customAmount.trim())
+    fd.set('payment_notes',  paymentNotes.trim())
 
     try {
       const res = await updateClientInfo(fd)
@@ -230,6 +250,70 @@ export function EditForm({
                 </button>
               ))}
             </div>
+          </div>
+        </div>
+
+        {/* Payment section */}
+        <div className="bg-[#141720] border border-white/[0.06] rounded-2xl p-5 space-y-5">
+          <p className="font-sans text-[11px] font-semibold text-white/35 uppercase tracking-wider pb-1 border-b border-white/[0.05]">
+            Payment
+          </p>
+
+          {/* Payment method toggle */}
+          <div>
+            <p className="font-sans text-[11px] font-semibold text-white/40 uppercase tracking-wider mb-3">Payment Method</p>
+            <div className="flex gap-2">
+              {PAYMENT_OPTIONS.map(opt => (
+                <button
+                  key={opt.key}
+                  type="button"
+                  onClick={() => setPaymentMethod(opt.key)}
+                  disabled={saving}
+                  className="flex items-center gap-2 px-4 py-2 rounded-xl font-sans text-sm font-medium border transition-all disabled:opacity-50"
+                  style={paymentMethod === opt.key
+                    ? { background: 'rgba(43,92,230,0.12)', borderColor: 'rgba(43,92,230,0.55)', color: '#6B90F5' }
+                    : { background: 'rgba(255,255,255,0.04)', borderColor: 'rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.4)' }}
+                >
+                  {opt.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Custom amount — only for manual payments */}
+          {isManualPayment && (
+            <div>
+              <label className="block font-sans text-[11px] font-semibold text-white/40 uppercase tracking-wider mb-1.5">
+                Custom Amount (€)
+              </label>
+              <input
+                type="number"
+                min="0"
+                step="1"
+                value={customAmount}
+                onChange={e => setCustomAmount(e.target.value)}
+                disabled={saving}
+                placeholder="Leave empty to use plan default"
+                className={inputCls}
+                style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.10)' }}
+              />
+            </div>
+          )}
+
+          {/* Notes */}
+          <div>
+            <label className="block font-sans text-[11px] font-semibold text-white/40 uppercase tracking-wider mb-1.5">
+              Notes
+            </label>
+            <textarea
+              value={paymentNotes}
+              onChange={e => setPaymentNotes(e.target.value)}
+              disabled={saving}
+              placeholder='e.g. "Discount as first client"'
+              rows={3}
+              className="w-full px-3.5 py-2.5 rounded-xl font-sans text-sm text-white placeholder-white/25 focus:outline-none focus:ring-1 disabled:opacity-50 transition-colors resize-none"
+              style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.10)' }}
+            />
           </div>
         </div>
 

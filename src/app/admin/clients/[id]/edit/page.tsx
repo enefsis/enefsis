@@ -3,7 +3,13 @@ import { createAdminClient } from '@/lib/supabase/admin'
 import { EditForm } from './edit-form'
 
 type Profile = { full_name: string | null; email: string }
-type Sub     = { plan: string | null; status: string | null }
+type Sub     = {
+  plan:            string | null
+  status:          string | null
+  payment_method:  string | null
+  custom_amount:   number | null
+  payment_notes:   string | null
+}
 
 export default async function ClientEditPage({
   params,
@@ -15,7 +21,13 @@ export default async function ClientEditPage({
 
   const [profileRes, subRes] = await Promise.all([
     admin.from('profiles').select('full_name, email').eq('id', id).maybeSingle(),
-    admin.from('subscriptions').select('plan, status').eq('user_id', id).order('created_at', { ascending: false }).limit(1).maybeSingle(),
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (admin.from('subscriptions') as any)
+      .select('plan, status, payment_method, custom_amount, payment_notes')
+      .eq('user_id', id)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle(),
   ])
 
   const profile = profileRes.data as Profile | null
@@ -30,6 +42,9 @@ export default async function ClientEditPage({
       email={profile.email}
       plan={sub?.plan ?? 'basic_monthly'}
       status={sub?.status ?? 'active'}
+      paymentMethod={sub?.payment_method ?? 'stripe'}
+      customAmount={sub?.custom_amount ?? null}
+      paymentNotes={sub?.payment_notes ?? ''}
       backHref={`/admin/clients/${id}`}
     />
   )

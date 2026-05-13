@@ -5,7 +5,7 @@ import { CopyButton } from '@/components/admin/copy-button'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 type Profile  = { id: string; full_name: string | null; email: string; created_at: string }
-type Sub      = { id: string; plan: string | null; status: string | null; amount: number | null; next_billing_date: string | null }
+type Sub      = { id: string; plan: string | null; status: string | null; amount: number | null; next_billing_date: string | null; payment_method: string | null; custom_amount: number | null }
 type Page     = { slug: string | null; restaurant_name: string | null }
 type Stand    = { id: string; name: string | null; landing_page_url: string; created_at: string }
 
@@ -30,6 +30,20 @@ function fmtPlan(plan: string) {
   return plan.split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')
 }
 
+const PLAN_AMOUNTS: Record<string, string> = {
+  basic_monthly: '€49/mo',
+  basic_yearly:  '€499/yr',
+  pro_monthly:   '€100/mo',
+  pro_yearly:    '€900/yr',
+  basic:         '€49/mo',
+  pro:           '€100/mo',
+}
+
+function fmtPaymentMethod(pm: string | null) {
+  const map: Record<string, string> = { stripe: 'Stripe', cash: 'Cash', bank_transfer: 'Bank Transfer' }
+  return pm ? (map[pm] ?? pm) : '—'
+}
+
 function PlanBadge({ plan }: { plan: string | null }) {
   if (!plan) return <span className="font-sans text-xs text-white/25">—</span>
   const isPro = plan.toLowerCase().startsWith('pro')
@@ -40,7 +54,7 @@ function PlanBadge({ plan }: { plan: string | null }) {
         ? { background: 'rgba(43,92,230,0.14)', color: '#6B90F5', border: '1px solid rgba(43,92,230,0.25)' }
         : { background: 'rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.5)', border: '1px solid rgba(255,255,255,0.1)' }}
     >
-      {plan.charAt(0).toUpperCase() + plan.slice(1)}
+      {fmtPlan(plan)}
     </span>
   )
 }
@@ -108,7 +122,8 @@ export default async function ClientDetailPage({
   // ── Fetch all data ────────────────────────────────────────────────────────
   const [profileRes, subRes, pageRes, standsRes] = await Promise.all([
     admin.from('profiles').select('id, full_name, email, created_at').eq('id', id).maybeSingle(),
-    admin.from('subscriptions').select('id, plan, status, amount, next_billing_date').eq('user_id', id).order('created_at', { ascending: false }).limit(1).maybeSingle(),
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (admin.from('subscriptions') as any).select('id, plan, status, amount, next_billing_date, payment_method, custom_amount').eq('user_id', id).order('created_at', { ascending: false }).limit(1).maybeSingle(),
     admin.from('client_pages').select('slug, restaurant_name').eq('user_id', id).maybeSingle(),
     admin.from('nfc_stands').select('id, name, landing_page_url, created_at').eq('user_id', id).order('created_at', { ascending: true }),
   ])
@@ -216,6 +231,17 @@ export default async function ClientDetailPage({
             { label: 'Email',        value: profile.email },
             { label: 'Joined',       value: fmt(profile.created_at) },
             { label: 'Plan',         value: sub?.plan ? fmtPlan(sub.plan) : '—' },
+            {
+              label: 'Amount',
+              value: sub?.custom_amount != null
+                ? `€${sub.custom_amount} (custom)`
+                : sub?.plan && PLAN_AMOUNTS[sub.plan]
+                  ? PLAN_AMOUNTS[sub.plan]
+                  : sub?.amount != null
+                    ? `€${sub.amount}`
+                    : '—',
+            },
+            { label: 'Payment',      value: fmtPaymentMethod(sub?.payment_method ?? null) },
             { label: 'Next Billing', value: sub?.next_billing_date ? fmt(sub.next_billing_date) : '—' },
             { label: 'Sub ID',       value: sub?.id ? sub.id.substring(0, 8) + '…' : '—', mono: true },
           ].map(row => (
