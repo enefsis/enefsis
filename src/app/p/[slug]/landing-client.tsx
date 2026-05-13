@@ -412,7 +412,7 @@ function TodaysSpecialsBanner({ specials, t }: { specials: string; t: (s: string
     >
       <div className="px-4 py-3.5">
         <div className="flex items-center gap-2 mb-1.5">
-          <span style={{ fontSize: 14, lineHeight: 1 }}>✨</span>
+          <span style={{ color: '#D4A853' }}><UtensilsIcon /></span>
           <span
             className="font-display font-bold tracking-widest"
             style={{ fontSize: 10, color: '#D4A853', letterSpacing: '0.16em' }}
@@ -1009,7 +1009,10 @@ export function LandingClient({
               }}
             >
               <div className="flex items-center gap-2.5">
-                <UtensilsIcon />
+                <div className="flex items-center justify-center rounded-full shrink-0"
+                  style={{ width: 28, height: 28, background: 'white' }}>
+                  <span className="font-sans font-bold" style={{ fontSize: 16, color: '#4285F4', lineHeight: 1 }}>G</span>
+                </div>
                 <span className="font-display font-bold text-white" style={{ fontSize: 15 }}>
                   {t('Review us on Google')}
                 </span>
