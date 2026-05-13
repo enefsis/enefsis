@@ -328,7 +328,10 @@ export async function impersonateClient(
     .eq('id', user.id)
     .maybeSingle()
   const caller = callerRaw as Pick<Profile, 'role'> | null
-  if (caller?.role !== 'admin') return { error: 'Not authorized' }
+  console.log('[Impersonate] requesting user:', user.email, 'role:', caller?.role)
+  if (user.email !== process.env.ADMIN_EMAIL && caller?.role !== 'admin') {
+    return { error: 'Not authorized' }
+  }
 
   const { data: profileRaw } = await admin
     .from('profiles')
