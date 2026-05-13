@@ -841,7 +841,7 @@ export function LandingClient({
     const nav = navigator.language.slice(0, 2).toLowerCase()
     const match = LANGUAGES.find(l => l.nav === nav)
     if (match) void selectLang(match.code)
-  }, [])
+  }, [selectLang])
 
   const t = (text: string) => translated[text] ?? text
 

@@ -4,7 +4,6 @@ import { NextRequest, NextResponse } from 'next/server'
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url)
   const tokenHash = searchParams.get('token')
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? ''
 
   if (!tokenHash) {
     return NextResponse.redirect(new URL('/admin/clients', request.url))
