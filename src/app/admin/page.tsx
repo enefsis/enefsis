@@ -1,3 +1,6 @@
+export const revalidate = 0
+export const dynamic = 'force-dynamic'
+
 import { createAdminClient } from '@/lib/supabase/admin'
 import { StatCard } from '@/components/dashboard/stat-card'
 import { ClientsTable, type ClientRow } from '@/components/admin/clients-table'

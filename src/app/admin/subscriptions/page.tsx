@@ -1,3 +1,6 @@
+export const revalidate = 0
+export const dynamic = 'force-dynamic'
+
 import { createAdminClient } from '@/lib/supabase/admin'
 import { SubscriptionsTable, type SubRow } from './subscriptions-table'
 
