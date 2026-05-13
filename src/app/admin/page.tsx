@@ -31,8 +31,24 @@ type RawTapEvent = {
 }
 
 type RawMrrRow = {
+  plan: string | null
   amount: number | null
   custom_amount: number | null
+}
+
+const PLAN_MONTHLY: Record<string, number> = {
+  basic_monthly: 49,
+  basic_yearly:  499 / 12,
+  pro_monthly:   100,
+  pro_yearly:    900 / 12,
+  basic:         49,
+  pro:           100,
+}
+
+function rowMonthly(row: RawMrrRow): number {
+  if (row.custom_amount != null) return row.custom_amount
+  if (row.plan && PLAN_MONTHLY[row.plan] !== undefined) return PLAN_MONTHLY[row.plan]
+  return row.amount ?? 0
 }
 
 export default async function AdminPage() {
@@ -64,7 +80,7 @@ export default async function AdminPage() {
     supabase.from('subscriptions').select('*', { count: 'exact', head: true }).eq('status', 'active').gte('created_at', d30).lte('created_at', nowIso),
     supabase.from('subscriptions').select('*', { count: 'exact', head: true }).eq('status', 'active').gte('created_at', d60).lt('created_at', d30),
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    (supabase.from('subscriptions') as any).select('amount, custom_amount').eq('status', 'active'),
+    (supabase.from('subscriptions') as any).select('plan, amount, custom_amount').eq('status', 'active'),
     supabase.from('tap_events').select('*', { count: 'exact', head: true }).gte('created_at', d30).lte('created_at', nowIso),
     supabase.from('tap_events').select('*', { count: 'exact', head: true }).gte('created_at', d60).lt('created_at', d30),
     // Clients table: full profile list
@@ -77,8 +93,10 @@ export default async function AdminPage() {
   ])
 
   // ── Stat card values ──────────────────────────────────────────────────────
-  const mrr = (mrrRaw as RawMrrRow[] | null)
-    ?.reduce((sum, row) => sum + (row.custom_amount ?? row.amount ?? 0), 0) ?? 0
+  const mrr = Math.round(
+    (mrrRaw as RawMrrRow[] | null)
+      ?.reduce((sum, row) => sum + rowMonthly(row), 0) ?? 0,
+  )
 
   const stats = [
     { label: 'Total Clients',             value: totalClients ?? 0, change: calcChange(newClientsCur ?? 0, newClientsPrev ?? 0), icon: 'clients'       as const },
