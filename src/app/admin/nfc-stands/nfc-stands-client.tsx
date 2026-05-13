@@ -206,7 +206,7 @@ export function NfcStandsClient({
                       {group.name ?? group.email}
                     </p>
                     {group.name && (
-                      <p className="font-sans text-[12px] text-white/38 mt-0.5 truncate">
+                      <p className="font-sans text-[12px] text-gray-400 mt-0.5 truncate">
                         {group.email}
                       </p>
                     )}
@@ -272,14 +272,14 @@ export function NfcStandsClient({
 
                             {/* URL + copy */}
                             <div className="flex-1 flex items-center gap-1.5 min-w-0">
-                              <span className="font-mono text-[11px] text-white/38 truncate">
+                              <span className="font-mono text-[11px] text-gray-400 truncate">
                                 {stand.landingPageUrl}
                               </span>
                               <CopyButton text={stand.landingPageUrl} />
                             </div>
 
                             {/* Created date */}
-                            <span className="font-sans text-xs text-white/28 shrink-0 w-24 text-right">
+                            <span className="font-sans text-xs text-gray-400 shrink-0 w-24 text-right">
                               {fmt(stand.createdAt)}
                             </span>
 
