@@ -1009,10 +1009,7 @@ export function LandingClient({
               }}
             >
               <div className="flex items-center gap-2.5">
-                <div className="flex items-center justify-center rounded-full shrink-0"
-                  style={{ width: 28, height: 28, background: 'white' }}>
-                  <span className="font-sans font-bold" style={{ fontSize: 16, color: '#4285F4', lineHeight: 1 }}>G</span>
-                </div>
+                <img src="/google-logo.webp" alt="Google" style={{ width: 28, height: 28, objectFit: 'contain' }} />
                 <span className="font-display font-bold text-white" style={{ fontSize: 15 }}>
                   {t('Review us on Google')}
                 </span>
