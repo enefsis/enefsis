@@ -1,18 +1,71 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
-import { cn } from '@/lib/utils'
 import type { MenuSectionData, MenuItemData } from '@/actions/page-editor'
 
 // ─── Language data ────────────────────────────────────────────────────────────
 
 const LANGUAGES = [
-  { code: 'EN', flag: '🇬🇧', name: 'English'    },
-  { code: 'EL', flag: '🇬🇷', name: 'Ελληνικά'  },
-  { code: 'DE', flag: '🇩🇪', name: 'Deutsch'    },
-  { code: 'FR', flag: '🇫🇷', name: 'Français'   },
-  { code: 'IT', flag: '🇮🇹', name: 'Italiano'   },
-  { code: 'RU', flag: '🇷🇺', name: 'Русский'    },
+  { code: 'EN', flag: '🇬🇧', name: 'English',     nav: 'en' },
+  { code: 'EL', flag: '🇬🇷', name: 'Ελληνικά',   nav: 'el' },
+  { code: 'DE', flag: '🇩🇪', name: 'Deutsch',     nav: 'de' },
+  { code: 'FR', flag: '🇫🇷', name: 'Français',    nav: 'fr' },
+  { code: 'IT', flag: '🇮🇹', name: 'Italiano',    nav: 'it' },
+  { code: 'ES', flag: '🇪🇸', name: 'Español',     nav: 'es' },
+  { code: 'PT', flag: '🇵🇹', name: 'Português',   nav: 'pt' },
+  { code: 'RU', flag: '🇷🇺', name: 'Русский',     nav: 'ru' },
+  { code: 'UK', flag: '🇺🇦', name: 'Українська',  nav: 'uk' },
+  { code: 'PL', flag: '🇵🇱', name: 'Polski',      nav: 'pl' },
+  { code: 'NL', flag: '🇳🇱', name: 'Nederlands',  nav: 'nl' },
+  { code: 'SV', flag: '🇸🇪', name: 'Svenska',     nav: 'sv' },
+  { code: 'NO', flag: '🇳🇴', name: 'Norsk',       nav: 'no' },
+  { code: 'DA', flag: '🇩🇰', name: 'Dansk',       nav: 'da' },
+  { code: 'FI', flag: '🇫🇮', name: 'Suomi',       nav: 'fi' },
+  { code: 'CS', flag: '🇨🇿', name: 'Čeština',     nav: 'cs' },
+  { code: 'SK', flag: '🇸🇰', name: 'Slovenčina',  nav: 'sk' },
+  { code: 'HU', flag: '🇭🇺', name: 'Magyar',      nav: 'hu' },
+  { code: 'RO', flag: '🇷🇴', name: 'Română',      nav: 'ro' },
+  { code: 'BG', flag: '🇧🇬', name: 'Български',   nav: 'bg' },
+  { code: 'HR', flag: '🇭🇷', name: 'Hrvatski',    nav: 'hr' },
+  { code: 'SL', flag: '🇸🇮', name: 'Slovenščina', nav: 'sl' },
+  { code: 'TR', flag: '🇹🇷', name: 'Türkçe',      nav: 'tr' },
+  { code: 'AR', flag: '🇸🇦', name: 'العربية',     nav: 'ar' },
+  { code: 'HE', flag: '🇮🇱', name: 'עברית',       nav: 'he' },
+  { code: 'HI', flag: '🇮🇳', name: 'हिन्दी',      nav: 'hi' },
+  { code: 'ZH', flag: '🇨🇳', name: '中文',         nav: 'zh' },
+  { code: 'JA', flag: '🇯🇵', name: '日本語',       nav: 'ja' },
+  { code: 'KO', flag: '🇰🇷', name: '한국어',       nav: 'ko' },
+  { code: 'TH', flag: '🇹🇭', name: 'ภาษาไทย',    nav: 'th' },
+  { code: 'VI', flag: '🇻🇳', name: 'Tiếng Việt',  nav: 'vi' },
+  { code: 'ID', flag: '🇮🇩', name: 'Indonesia',   nav: 'id' },
+  { code: 'MS', flag: '🇲🇾', name: 'Melayu',      nav: 'ms' },
+]
+
+// Static UI strings sent to DeepL when translating
+const UI_KEYS = [
+  'Review us on Google',
+  'Our Menu',
+  'Follow Us',
+  'Follow us',
+  'Like us',
+  'Watch us',
+  'Review us',
+  'Message us',
+  'Visit us',
+  'Info',
+  'Today',
+  'Open',
+  'Reservations',
+  'Address',
+  'Free WiFi',
+  "Today's Specials",
+  'Call Waiter',
+  'Call Waiter to Table',
+  'Waiter notified!',
+  'Share this restaurant',
+  'Link copied!',
+  'Since',
+  'Table',
 ]
 
 // ─── SVG icons ────────────────────────────────────────────────────────────────
@@ -165,7 +218,7 @@ interface FollowCard {
 
 function FollowUsSection({
   instagramUrl, facebookUrl, tiktokUrl, tripAdvisorUrl, whatsappHref, websiteUrl,
-  standId, clientId,
+  standId, clientId, t,
 }: {
   instagramUrl:    string | null
   facebookUrl:     string | null
@@ -175,14 +228,15 @@ function FollowUsSection({
   websiteUrl:      string | null
   standId:         string | null
   clientId:        string
+  t:               (s: string) => string
 }) {
   const cards: FollowCard[] = ([
-    instagramUrl   && { key: 'instagram',   href: instagramUrl,   label: 'Instagram',   subtitle: 'Follow us',  icon: <InstagramIcon size={22} />,    color: '#E1306C', bg: 'rgba(225,48,108,0.10)',  border: 'rgba(225,48,108,0.22)'  },
-    facebookUrl    && { key: 'facebook',    href: facebookUrl,    label: 'Facebook',    subtitle: 'Like us',    icon: <FacebookIcon size={22} />,     color: '#1877F2', bg: 'rgba(24,119,242,0.10)',  border: 'rgba(24,119,242,0.22)'  },
-    tiktokUrl      && { key: 'tiktok',      href: tiktokUrl,      label: 'TikTok',      subtitle: 'Watch us',   icon: <TikTokIcon size={22} />,       color: '#ffffff', bg: 'rgba(255,255,255,0.06)', border: 'rgba(255,255,255,0.12)' },
-    tripAdvisorUrl && { key: 'tripadvisor', href: tripAdvisorUrl, label: 'TripAdvisor', subtitle: 'Review us',  icon: <TripAdvisorIcon size={22} />,  color: '#00AF87', bg: 'rgba(0,175,135,0.10)',   border: 'rgba(0,175,135,0.22)'   },
-    whatsappHref   && { key: 'whatsapp',    href: whatsappHref,   label: 'WhatsApp',    subtitle: 'Message us', icon: <WhatsAppIcon size={22} />,     color: '#25D366', bg: 'rgba(37,211,102,0.10)',  border: 'rgba(37,211,102,0.22)'  },
-    websiteUrl     && { key: 'website',     href: websiteUrl,     label: 'Website',     subtitle: 'Visit us',   icon: <GlobeIcon size={22} />,        color: '#38BEFF', bg: 'rgba(56,190,255,0.10)',  border: 'rgba(56,190,255,0.22)'  },
+    instagramUrl   && { key: 'instagram',   href: instagramUrl,   label: 'Instagram',   subtitle: t('Follow us'),  icon: <InstagramIcon size={22} />,    color: '#E1306C', bg: 'rgba(225,48,108,0.10)',  border: 'rgba(225,48,108,0.22)'  },
+    facebookUrl    && { key: 'facebook',    href: facebookUrl,    label: 'Facebook',    subtitle: t('Like us'),    icon: <FacebookIcon size={22} />,     color: '#1877F2', bg: 'rgba(24,119,242,0.10)',  border: 'rgba(24,119,242,0.22)'  },
+    tiktokUrl      && { key: 'tiktok',      href: tiktokUrl,      label: 'TikTok',      subtitle: t('Watch us'),   icon: <TikTokIcon size={22} />,       color: '#ffffff', bg: 'rgba(255,255,255,0.06)', border: 'rgba(255,255,255,0.12)' },
+    tripAdvisorUrl && { key: 'tripadvisor', href: tripAdvisorUrl, label: 'TripAdvisor', subtitle: t('Review us'),  icon: <TripAdvisorIcon size={22} />,  color: '#00AF87', bg: 'rgba(0,175,135,0.10)',   border: 'rgba(0,175,135,0.22)'   },
+    whatsappHref   && { key: 'whatsapp',    href: whatsappHref,   label: 'WhatsApp',    subtitle: t('Message us'), icon: <WhatsAppIcon size={22} />,     color: '#25D366', bg: 'rgba(37,211,102,0.10)',  border: 'rgba(37,211,102,0.22)'  },
+    websiteUrl     && { key: 'website',     href: websiteUrl,     label: 'Website',     subtitle: t('Visit us'),   icon: <GlobeIcon size={22} />,        color: '#38BEFF', bg: 'rgba(56,190,255,0.10)',  border: 'rgba(56,190,255,0.22)'  },
   ] as (FollowCard | false)[]).filter((c): c is FollowCard => !!c)
 
   if (!cards.length) return null
@@ -191,7 +245,7 @@ function FollowUsSection({
     <div className="px-4 pt-6 pb-2">
       {/* Header */}
       <div className="flex items-center gap-2 mb-4">
-        <h2 className="font-display font-bold text-white" style={{ fontSize: 20 }}>Follow Us</h2>
+        <h2 className="font-display font-bold text-white" style={{ fontSize: 20 }}>{t('Follow Us')}</h2>
         <span style={{ color: 'rgba(255,255,255,0.3)' }}><ShareIcon /></span>
       </div>
 
@@ -229,9 +283,10 @@ interface MenuItemCardProps {
   item: MenuItemData
   onView: () => void
   onPhotoClick: (url: string) => void
+  t: (s: string) => string
 }
 
-function MenuItemCard({ item, onView, onPhotoClick }: MenuItemCardProps) {
+function MenuItemCard({ item, onView, onPhotoClick, t }: MenuItemCardProps) {
   const ref   = useRef<HTMLDivElement>(null)
   const fired = useRef(false)
 
@@ -288,7 +343,7 @@ function MenuItemCard({ item, onView, onPhotoClick }: MenuItemCardProps) {
         {/* Name + Popular badge */}
         <div className="flex items-start justify-between gap-1.5 mb-0.5">
           <p className="font-sans font-semibold leading-snug flex-1 min-w-0" style={{ fontSize: 14, color: '#F0F2F8' }}>
-            {item.name}
+            {t(item.name)}
           </p>
           {item.is_popular && (
             <span
@@ -309,7 +364,7 @@ function MenuItemCard({ item, onView, onPhotoClick }: MenuItemCardProps) {
 
         {item.description && (
           <p className="font-sans line-clamp-2" style={{ fontSize: 12, color: '#8A90A0', lineHeight: 1.45 }}>
-            {item.description}
+            {t(item.description)}
           </p>
         )}
 
@@ -347,7 +402,7 @@ function MenuItemCard({ item, onView, onPhotoClick }: MenuItemCardProps) {
 
 // ─── Today's specials banner ──────────────────────────────────────────────────
 
-function TodaysSpecialsBanner({ specials }: { specials: string }) {
+function TodaysSpecialsBanner({ specials, t }: { specials: string; t: (s: string) => string }) {
   const items = specials.split(',').map(s => s.trim()).filter(Boolean)
   if (!items.length) return null
   return (
@@ -362,7 +417,7 @@ function TodaysSpecialsBanner({ specials }: { specials: string }) {
             className="font-display font-bold tracking-widest"
             style={{ fontSize: 10, color: '#D4A853', letterSpacing: '0.16em' }}
           >
-            TODAY&apos;S SPECIALS
+            {t("Today's Specials").toUpperCase()}
           </span>
         </div>
         <p className="font-sans leading-relaxed" style={{ fontSize: 13, color: 'rgba(212,168,83,0.72)' }}>
@@ -380,9 +435,10 @@ interface MenuTabsSectionProps {
   standId: string | null
   clientId: string
   onPhotoClick: (url: string) => void
+  t: (s: string) => string
 }
 
-function MenuTabsSection({ sections, standId, clientId, onPhotoClick }: MenuTabsSectionProps) {
+function MenuTabsSection({ sections, standId, clientId, onPhotoClick, t }: MenuTabsSectionProps) {
   const visibleSections = sections
     .map(s => ({ ...s, items: s.items.filter(i => i.name && i.available !== false) }))
     .filter(s => s.items.length > 0)
@@ -399,7 +455,7 @@ function MenuTabsSection({ sections, standId, clientId, onPhotoClick }: MenuTabs
 
       {/* Header */}
       <div className="flex items-center gap-2.5 mb-4">
-        <h2 className="font-display font-bold text-white" style={{ fontSize: 22 }}>Our Menu</h2>
+        <h2 className="font-display font-bold text-white" style={{ fontSize: 22 }}>{t('Our Menu')}</h2>
         <span
           className="font-sans font-semibold rounded-full px-2.5 py-0.5"
           style={{
@@ -436,7 +492,7 @@ function MenuTabsSection({ sections, standId, clientId, onPhotoClick }: MenuTabs
                 }}
               >
                 {section.emoji && <span style={{ fontSize: 15, lineHeight: 1 }}>{section.emoji}</span>}
-                <span>{section.name}</span>
+                <span>{t(section.name)}</span>
               </button>
             )
           })}
@@ -452,6 +508,7 @@ function MenuTabsSection({ sections, standId, clientId, onPhotoClick }: MenuTabs
               item={item}
               onView={() => trackMenuView(standId, clientId, item.id, item.name)}
               onPhotoClick={onPhotoClick}
+              t={t}
             />
           ))}
         </div>
@@ -463,13 +520,14 @@ function MenuTabsSection({ sections, standId, clientId, onPhotoClick }: MenuTabs
 // ─── Info section ────────────────────────────────────────────────────────────
 
 function InfoSection({
-  openingHours, phone, address, wifiName, wifiPassword,
+  openingHours, phone, address, wifiName, wifiPassword, t,
 }: {
   openingHours: string | null
   phone:        string | null
   address:      string | null
   wifiName:     string | null
   wifiPassword: string | null
+  t:            (s: string) => string
 }) {
   if (!openingHours && !phone && !address && !wifiName && !wifiPassword) return null
 
@@ -492,14 +550,14 @@ function InfoSection({
     <div className="px-4 pt-4 pb-2 space-y-2.5">
       {/* Header */}
       <div className="flex items-center gap-2 mb-2">
-        <h2 className="font-display font-bold text-white" style={{ fontSize: 20 }}>Info</h2>
+        <h2 className="font-display font-bold text-white" style={{ fontSize: 20 }}>{t('Info')}</h2>
       </div>
 
       {/* TODAY — opening hours */}
       {openingHours && (
         <div style={cardStyle}>
           <div className="flex items-center justify-between mb-1">
-            <span style={labelCls}>TODAY</span>
+            <span style={labelCls}>{t('Today')}</span>
             <span
               className="font-sans font-bold rounded-full"
               style={{
@@ -510,7 +568,7 @@ function InfoSection({
                 border: '1px solid rgba(74,222,128,0.25)',
               }}
             >
-              ● Open
+              ● {t('Open')}
             </span>
           </div>
           <p className="font-sans" style={{ fontSize: 13, color: '#F0F2F8' }}>{openingHours}</p>
@@ -520,7 +578,7 @@ function InfoSection({
       {/* RESERVATIONS — phone */}
       {phone && (
         <div style={cardStyle}>
-          <p style={labelCls}>RESERVATIONS</p>
+          <p style={labelCls}>{t('Reservations')}</p>
           <a
             href={`tel:${phone.replace(/\s/g, '')}`}
             className="font-sans font-semibold"
@@ -534,7 +592,7 @@ function InfoSection({
       {/* ADDRESS */}
       {address && (
         <div style={cardStyle}>
-          <p style={labelCls}>ADDRESS</p>
+          <p style={labelCls}>{t('Address')}</p>
           <p className="font-sans" style={{ fontSize: 13, color: '#F0F2F8' }}>{address}</p>
         </div>
       )}
@@ -542,7 +600,7 @@ function InfoSection({
       {/* FREE WIFI */}
       {(wifiName || wifiPassword) && (
         <div style={cardStyle}>
-          <p style={labelCls}>FREE WIFI</p>
+          <p style={labelCls}>{t('Free WiFi')}</p>
           <p className="font-sans" style={{ fontSize: 13, color: '#F0F2F8' }}>
             {[wifiName, wifiPassword].filter(Boolean).join(' · ')}
           </p>
@@ -555,11 +613,12 @@ function InfoSection({
 // ─── Call Waiter button ───────────────────────────────────────────────────────
 
 function CallWaiterButton({
-  standId, clientId, tableNumber,
+  standId, clientId, tableNumber, t,
 }: {
   standId: string | null
   clientId: string
   tableNumber: number | null
+  t: (s: string) => string
 }) {
   const [notified, setNotified] = useState(false)
 
@@ -571,10 +630,10 @@ function CallWaiterButton({
   }
 
   const label = notified
-    ? 'Waiter notified!'
+    ? t('Waiter notified!')
     : tableNumber
-      ? `Call Waiter to Table ${tableNumber}`
-      : 'Call Waiter'
+      ? `${t('Call Waiter to Table')} ${tableNumber}`
+      : t('Call Waiter')
 
   return (
     <button
@@ -603,7 +662,7 @@ function CallWaiterButton({
 
 // ─── Share button ─────────────────────────────────────────────────────────────
 
-function ShareButton({ restaurantName }: { restaurantName: string }) {
+function ShareButton({ restaurantName, t }: { restaurantName: string; t: (s: string) => string }) {
   const [copied, setCopied] = useState(false)
 
   async function handleShare() {
@@ -628,7 +687,7 @@ function ShareButton({ restaurantName }: { restaurantName: string }) {
     >
       <ShareIcon />
       <span className="font-sans" style={{ fontSize: 13 }}>
-        {copied ? 'Link copied!' : 'Share this restaurant'}
+        {copied ? t('Link copied!') : t('Share this restaurant')}
       </span>
     </button>
   )
@@ -639,25 +698,30 @@ function ShareButton({ restaurantName }: { restaurantName: string }) {
 function PoweredByFooter() {
   return (
     <div className="flex justify-center py-10">
-      <div className="flex items-center gap-2">
-        <span className="font-sans" style={{ fontSize: 12, color: 'rgba(255,255,255,0.25)' }}>
-          Powered by
-        </span>
-        <span className="font-display font-bold" style={{ fontSize: 13, color: 'rgba(240,242,248,0.55)' }}>
-          Enefsis
-        </span>
-        <span
-          className="font-sans font-semibold px-2 py-0.5 rounded-full"
-          style={{
-            fontSize: 9,
-            letterSpacing: '0.08em',
-            color: '#38BEFF',
-            background: 'rgba(56,190,255,0.10)',
-            border: '1px solid rgba(56,190,255,0.22)',
-          }}
-        >
-          NFC Smart Hub
-        </span>
+      <div className="flex flex-col items-center gap-2">
+        <div className="flex items-center gap-2">
+          <span className="font-sans" style={{ fontSize: 12, color: 'rgba(255,255,255,0.25)' }}>
+            Powered by
+          </span>
+          <span className="font-display font-bold" style={{ fontSize: 13, color: 'rgba(240,242,248,0.55)' }}>
+            Enefsis
+          </span>
+          <span
+            className="font-sans font-semibold px-2 py-0.5 rounded-full"
+            style={{
+              fontSize: 9,
+              letterSpacing: '0.08em',
+              color: '#38BEFF',
+              background: 'rgba(56,190,255,0.10)',
+              border: '1px solid rgba(56,190,255,0.22)',
+            }}
+          >
+            NFC Smart Hub
+          </span>
+        </div>
+        <p className="font-sans font-semibold" style={{ fontSize: 9, letterSpacing: '0.14em', color: 'rgba(255,255,255,0.18)', textTransform: 'uppercase' }}>
+          Connect with one tap
+        </p>
       </div>
     </div>
   )
@@ -696,7 +760,7 @@ interface Props {
 
 export function LandingClient({
   standId, clientId, tableNumber,
-  restaurantName, logoUrl,
+  restaurantName, tagline, logoUrl,
   googleReviewUrl, instagramUrl, facebookUrl, tiktokUrl, whatsappNumber,
   menuSections,
   openingHours, phone, address, wifiName, wifiPassword, callWaiterEnabled,
@@ -704,12 +768,80 @@ export function LandingClient({
   tripAdvisorUrl, websiteUrl,
 }: Props) {
   const [lang, setLang] = useState('EN')
+  const [langOpen, setLangOpen] = useState(false)
+  const [langSearch, setLangSearch] = useState('')
   const [lightboxPhoto, setLightboxPhoto] = useState<string | null>(null)
+  const [translated, setTranslated] = useState<Record<string, string>>({})
+  const [isTranslating, setIsTranslating] = useState(false)
+  const translationCache = useRef<Record<string, Record<string, string>>>({})
 
   useEffect(() => {
     document.body.style.overflow = lightboxPhoto ? 'hidden' : ''
     return () => { document.body.style.overflow = '' }
   }, [lightboxPhoto])
+
+  async function selectLang(code: string) {
+    setLang(code)
+    localStorage.setItem('enefsis_lang', code)
+    setLangOpen(false)
+    setLangSearch('')
+
+    if (code === 'EN') {
+      setTranslated({})
+      return
+    }
+
+    if (translationCache.current[code]) {
+      setTranslated(translationCache.current[code])
+      return
+    }
+
+    setIsTranslating(true)
+    try {
+      const strings = [
+        ...UI_KEYS,
+        restaurantName,
+        ...(tagline        ? [tagline]        : []),
+        ...(restaurantType ? [restaurantType] : []),
+        ...menuSections.flatMap(s => [
+          s.name,
+          ...s.items.flatMap(i =>
+            [i.name, i.description].filter((x): x is string => Boolean(x)),
+          ),
+        ]),
+      ]
+
+      const res = await fetch('/api/translate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text: strings, targetLang: code }),
+      })
+
+      if (res.ok) {
+        const { translations }: { translations: string[] } = await res.json()
+        const map: Record<string, string> = {}
+        strings.forEach((orig, i) => { map[orig] = translations[i] })
+        translationCache.current[code] = map
+        setTranslated(map)
+      }
+    } finally {
+      setIsTranslating(false)
+    }
+  }
+
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    const stored = localStorage.getItem('enefsis_lang')
+    if (stored && LANGUAGES.some(l => l.code === stored)) {
+      void selectLang(stored)
+      return
+    }
+    const nav = navigator.language.slice(0, 2).toLowerCase()
+    const match = LANGUAGES.find(l => l.nav === nav)
+    if (match) void selectLang(match.code)
+  }, [])
+
+  const t = (text: string) => translated[text] ?? text
 
   console.log('[LandingClient] props:', {
     googleReviewUrl,
@@ -763,7 +895,7 @@ export function LandingClient({
                 <div className="px-3 py-1.5 rounded-full"
                   style={{ background: 'rgba(212,168,83,0.15)', border: '1px solid rgba(212,168,83,0.35)' }}>
                   <span className="font-sans font-bold tracking-wide"
-                    style={{ fontSize: 11, color: '#D4A853' }}>Table {tableNumber}</span>
+                    style={{ fontSize: 11, color: '#D4A853' }}>{t('Table')} {tableNumber}</span>
                 </div>
               )}
             </div>
@@ -786,14 +918,19 @@ export function LandingClient({
               {(restaurantType || city) && (
                 <p className="font-sans font-semibold mb-2 leading-none"
                   style={{ fontSize: 12, color: 'rgba(255,255,255,0.50)', letterSpacing: '0.03em' }}>
-                  {[restaurantType, city].filter(Boolean).join(' · ')}
+                  {[restaurantType && t(restaurantType), city].filter(Boolean).join(' · ')}
                 </p>
               )}
 
               {/* Restaurant name */}
               <h1 className="font-display font-bold text-white leading-tight" style={{ fontSize: 34 }}>
-                {restaurantName}
+                {t(restaurantName)}
               </h1>
+              {tagline && (
+                <p className="font-sans mt-1.5 leading-snug" style={{ fontSize: 13, color: 'rgba(255,255,255,0.55)' }}>
+                  {t(tagline)}
+                </p>
+              )}
 
               {/* Meta row */}
               <div className="flex items-center gap-2.5 mt-2.5 flex-wrap">
@@ -813,7 +950,7 @@ export function LandingClient({
                 )}
                 {yearEstablished && (
                   <span className="font-sans text-xs" style={{ color: '#8A90A0' }}>
-                    Est. {yearEstablished}
+                    {t('Since')} {yearEstablished}
                   </span>
                 )}
                 {city && (yearEstablished || rating || reviewCount) && (
@@ -838,31 +975,23 @@ export function LandingClient({
           </div>
         </div>
 
-        {/* ── Language bar ──────────────────────────────────────────────────── */}
-        <div
-          className="flex gap-2 overflow-x-auto px-4 pt-5 pb-1"
-          style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' } as React.CSSProperties}
-        >
-          {LANGUAGES.map(l => (
-            <button
-              key={l.code}
-              type="button"
-              onClick={() => setLang(l.code)}
-              className={cn(
-                'flex items-center gap-1.5 px-3 py-1.5 rounded-full font-sans font-semibold shrink-0 transition-all',
-                lang === l.code ? 'text-white' : 'text-white/45 hover:text-white/65',
-              )}
-              style={{
-                fontSize: 12,
-                background: lang === l.code ? '#2B65F0' : 'rgba(255,255,255,0.065)',
-                border: lang === l.code ? '1px solid rgba(43,101,240,0.5)' : '1px solid rgba(255,255,255,0.07)',
-                boxShadow: lang === l.code ? '0 2px 12px rgba(43,101,240,0.35)' : 'none',
-              }}
-            >
-              <span style={{ fontSize: 14 }}>{l.flag}</span>
-              <span>{l.name}</span>
-            </button>
-          ))}
+        {/* ── Language picker trigger ───────────────────────────────────────── */}
+        <div className="flex justify-end px-4 pt-4">
+          <button
+            type="button"
+            onClick={() => !isTranslating && setLangOpen(true)}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full transition-all active:scale-95"
+            style={{
+              background: 'rgba(255,255,255,0.06)',
+              border: '1px solid rgba(255,255,255,0.10)',
+              opacity: isTranslating ? 0.55 : 1,
+            }}
+          >
+            <GlobeIcon size={13} />
+            <span className="font-sans text-xs font-medium" style={{ color: 'rgba(255,255,255,0.55)' }}>
+              {isTranslating ? '···' : LANGUAGES.find(l => l.code === lang)?.name ?? lang}
+            </span>
+          </button>
         </div>
 
         {/* ── Google Review ─────────────────────────────────────────────────── */}
@@ -884,7 +1013,7 @@ export function LandingClient({
               <div className="flex items-center gap-2.5">
                 <UtensilsIcon />
                 <span className="font-display font-bold text-white" style={{ fontSize: 15 }}>
-                  Leave a Google Review
+                  {t('Review us on Google')}
                 </span>
               </div>
               <div className="flex items-center gap-[3px] shrink-0">
@@ -897,7 +1026,7 @@ export function LandingClient({
         )}
 
         {/* ── Today's specials ─────────────────────────────────────────────── */}
-        {todaysSpecials && <div className="pt-4"><TodaysSpecialsBanner specials={todaysSpecials} /></div>}
+        {todaysSpecials && <div className="pt-4"><TodaysSpecialsBanner specials={todaysSpecials} t={t} /></div>}
 
         {/* ── Menu tabs ─────────────────────────────────────────────────────── */}
         {hasMenu && (
@@ -906,6 +1035,7 @@ export function LandingClient({
             standId={standId}
             clientId={clientId}
             onPhotoClick={url => setLightboxPhoto(url)}
+            t={t}
           />
         )}
 
@@ -919,6 +1049,7 @@ export function LandingClient({
           websiteUrl={websiteUrl}
           standId={standId}
           clientId={clientId}
+          t={t}
         />
 
         {/* ── Info ─────────────────────────────────────────────────────────── */}
@@ -928,24 +1059,87 @@ export function LandingClient({
           address={address}
           wifiName={wifiName}
           wifiPassword={wifiPassword}
+          t={t}
         />
 
         {/* ── Call Waiter ──────────────────────────────────────────────────── */}
         {callWaiterEnabled && (
           <div className="px-4 pt-4">
-            <CallWaiterButton standId={standId} clientId={clientId} tableNumber={tableNumber} />
+            <CallWaiterButton standId={standId} clientId={clientId} tableNumber={tableNumber} t={t} />
           </div>
         )}
 
         {/* ── Share ────────────────────────────────────────────────────────── */}
         <div className="flex justify-center pt-6 pb-2">
-          <ShareButton restaurantName={restaurantName} />
+          <ShareButton restaurantName={restaurantName} t={t} />
         </div>
 
         {/* ── Footer ───────────────────────────────────────────────────────── */}
         <PoweredByFooter />
 
       </div>
+
+      {/* ── Language picker modal ────────────────────────────────────────── */}
+      {langOpen && (
+        <div
+          className="fixed inset-0 z-50 flex flex-col justify-end"
+          style={{ background: 'rgba(0,0,0,0.6)', animation: 'fadeIn 0.15s ease' }}
+          onClick={() => { setLangOpen(false); setLangSearch('') }}
+        >
+          <div
+            className="rounded-t-3xl overflow-hidden"
+            style={{ background: '#161920', maxHeight: '75vh', display: 'flex', flexDirection: 'column' }}
+            onClick={e => e.stopPropagation()}
+          >
+            {/* Handle bar */}
+            <div className="flex justify-center pt-3 pb-1">
+              <div className="w-10 h-1 rounded-full" style={{ background: 'rgba(255,255,255,0.15)' }} />
+            </div>
+
+            {/* Header + search */}
+            <div className="px-4 pt-2 pb-3">
+              <p className="font-display font-bold text-white mb-3" style={{ fontSize: 17 }}>Select Language</p>
+              <input
+                type="text"
+                value={langSearch}
+                onChange={e => setLangSearch(e.target.value)}
+                placeholder="Search language…"
+                autoFocus
+                className="w-full rounded-xl text-sm text-white placeholder-white/25 px-3.5 py-2.5 focus:outline-none"
+                style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)' }}
+              />
+            </div>
+
+            {/* Language list */}
+            <div className="overflow-y-auto px-2 pb-8" style={{ flex: 1 }}>
+              {LANGUAGES
+                .filter(l =>
+                  l.name.toLowerCase().includes(langSearch.toLowerCase()) ||
+                  l.code.toLowerCase().includes(langSearch.toLowerCase()),
+                )
+                .map(l => (
+                  <button
+                    key={l.code}
+                    type="button"
+                    onClick={() => selectLang(l.code)}
+                    className="w-full flex items-center gap-3 px-3 py-3 rounded-xl text-left transition-colors active:scale-[0.98]"
+                    style={{
+                      background: l.code === lang ? 'rgba(43,101,240,0.15)' : 'transparent',
+                      border: l.code === lang ? '1px solid rgba(43,101,240,0.3)' : '1px solid transparent',
+                      marginBottom: 2,
+                    }}
+                  >
+                    <span style={{ fontSize: 22, lineHeight: 1 }}>{l.flag}</span>
+                    <span className="font-sans font-medium text-sm text-white">{l.name}</span>
+                    {l.code === lang && (
+                      <span className="ml-auto font-sans text-xs font-semibold" style={{ color: '#2B65F0' }}>✓</span>
+                    )}
+                  </button>
+                ))}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* ── Lightbox overlay ─────────────────────────────────────────────── */}
       {lightboxPhoto && (
