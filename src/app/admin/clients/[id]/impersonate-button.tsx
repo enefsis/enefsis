@@ -24,7 +24,8 @@ export function ImpersonateButton({ clientId }: { clientId: string }) {
       setLoading(false)
       return
     }
-    window.location.href = result.url!
+    window.open(result.url!, '_blank')
+    setLoading(false)
   }
 
   return (
