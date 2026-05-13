@@ -6,8 +6,8 @@ import { createAdminClient } from '@/lib/supabase/admin'
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 const AMOUNTS: Record<string, Record<string, number>> = {
-  basic: { monthly: 4900,  yearly: 49900 },
-  pro:   { monthly: 10000, yearly: 90000 },
+  basic: { monthly: 49,  yearly: 499 },
+  pro:   { monthly: 100, yearly: 900 },
 }
 
 async function findUserIdByEmail(email: string): Promise<string | null> {

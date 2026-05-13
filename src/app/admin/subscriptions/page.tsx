@@ -6,9 +6,9 @@ export const metadata = { title: 'Admin — Subscriptions' }
 type RawSub     = { id: string; created_at: string; status: string | null; plan: string | null; next_billing_date: string | null; user_id: string | null; amount: number | null }
 type RawProfile = { id: string; full_name: string | null; email: string }
 
-function fmtAmount(cents: number | null) {
-  if (cents === null) return '—'
-  return `€${(cents / 100).toFixed(2)}`
+function fmtAmount(amount: number | null) {
+  if (amount === null) return '—'
+  return `€${amount.toFixed(2)}`
 }
 
 export default async function AdminSubscriptionsPage() {

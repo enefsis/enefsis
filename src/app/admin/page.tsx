@@ -79,7 +79,7 @@ export default async function AdminPage() {
   const stats = [
     { label: 'Total Clients',             value: totalClients ?? 0, change: calcChange(newClientsCur ?? 0, newClientsPrev ?? 0), icon: 'clients'       as const },
     { label: 'Active Subscriptions',      value: activeSubs   ?? 0, change: calcChange(newSubsCur    ?? 0, newSubsPrev    ?? 0), icon: 'subscriptions' as const },
-    { label: 'Monthly Recurring Revenue', value: Math.round(mrr / 100), change: 0,                                             icon: 'revenue'       as const, prefix: '€' },
+    { label: 'Monthly Recurring Revenue', value: mrr,                   change: 0,                                             icon: 'revenue'       as const, prefix: '€' },
     { label: 'Total Taps — Last 30 Days', value: tapsCur      ?? 0, change: calcChange(tapsCur       ?? 0, tapsPrev       ?? 0), icon: 'tap'           as const },
   ]
 

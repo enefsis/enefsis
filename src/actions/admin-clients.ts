@@ -114,8 +114,8 @@ export async function createClientAccount(
 
   // ── 4. Create subscription ──
   const AMOUNTS: Record<string, Record<string, number>> = {
-    basic: { monthly: 4900,  yearly: 49900 },
-    pro:   { monthly: 10000, yearly: 90000 },
+    basic: { monthly: 49,  yearly: 499 },
+    pro:   { monthly: 100, yearly: 900 },
   }
   const amount = AMOUNTS[plan]?.[billing] ?? (plan === 'pro' ? 100 : 49)
   const nextBilling = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)

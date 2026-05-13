@@ -27,9 +27,9 @@ function fmtDate(iso: string | null) {
   return new Date(iso).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
 }
 
-function fmtAmount(cents: number | null) {
-  if (cents === null) return '—'
-  return `€${(cents / 100).toFixed(2)}`
+function fmtAmount(amount: number | null) {
+  if (amount === null) return '—'
+  return `€${amount.toFixed(2)}`
 }
 
 function PlanBadge({ plan }: { plan: string | null }) {
@@ -62,8 +62,8 @@ function RefundModal({
   onClose: () => void
   onSuccess: () => void
 }) {
-  const maxCents = sub.amount ?? 0
-  const [amountStr, setAmountStr] = useState(fmtAmount(maxCents).replace('€', ''))
+  const maxEuros = sub.amount ?? 0
+  const [amountStr, setAmountStr] = useState(maxEuros.toFixed(2))
   const [busy, setBusy] = useState(false)
   const [err,  setErr]  = useState<string | null>(null)
 
@@ -71,8 +71,8 @@ function RefundModal({
     if (!sub.userId) return
     const euros = parseFloat(amountStr)
     if (!isFinite(euros) || euros <= 0) { setErr('Enter a valid amount'); return }
+    if (euros > maxEuros) { setErr(`Max refundable: ${fmtAmount(maxEuros)}`); return }
     const cents = Math.round(euros * 100)
-    if (cents > maxCents) { setErr(`Max refundable: ${fmtAmount(maxCents)}`); return }
 
     setBusy(true)
     setErr(null)
