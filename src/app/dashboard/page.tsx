@@ -65,8 +65,9 @@ export default async function DashboardPage() {
 
   // Subscription fetched separately so we can log the error if it fails
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const subsTable = supabase.from('subscriptions') as any
   const { data: rawSubscription, error: subError } = user
-    ? await (supabase.from('subscriptions') as any)
+    ? await subsTable
         .select('*')
         .eq('user_id', user.id)
         .order('created_at', { ascending: false })
