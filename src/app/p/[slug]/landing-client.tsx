@@ -769,7 +769,6 @@ export function LandingClient({
 }: Props) {
   const [lang, setLang] = useState('EN')
   const [langOpen, setLangOpen] = useState(false)
-  const [langSearch, setLangSearch] = useState('')
   const [lightboxPhoto, setLightboxPhoto] = useState<string | null>(null)
   const [translated, setTranslated] = useState<Record<string, string>>({})
   const [isTranslating, setIsTranslating] = useState(false)
@@ -784,7 +783,6 @@ export function LandingClient({
     setLang(code)
     localStorage.setItem('enefsis_lang', code)
     setLangOpen(false)
-    setLangSearch('')
 
     if (code === 'EN') {
       setTranslated({})
@@ -1083,59 +1081,50 @@ export function LandingClient({
       {langOpen && (
         <div
           className="fixed inset-0 z-50 flex flex-col justify-end"
-          style={{ background: 'rgba(0,0,0,0.6)', animation: 'fadeIn 0.15s ease' }}
-          onClick={() => { setLangOpen(false); setLangSearch('') }}
+          style={{ background: 'rgba(0,0,0,0.55)', animation: 'fadeIn 0.15s ease' }}
+          onClick={() => setLangOpen(false)}
         >
           <div
-            className="rounded-t-3xl overflow-hidden"
-            style={{ background: '#161920', maxHeight: '75vh', display: 'flex', flexDirection: 'column' }}
+            style={{
+              background: '#161920',
+              borderRadius: '20px 20px 0 0',
+              maxHeight: '60vh',
+              display: 'flex',
+              flexDirection: 'column',
+            }}
             onClick={e => e.stopPropagation()}
           >
-            {/* Handle bar */}
-            <div className="flex justify-center pt-3 pb-1">
-              <div className="w-10 h-1 rounded-full" style={{ background: 'rgba(255,255,255,0.15)' }} />
+            {/* Drag handle */}
+            <div className="flex justify-center pt-3 pb-2">
+              <div className="w-9 h-1 rounded-full" style={{ background: 'rgba(255,255,255,0.18)' }} />
             </div>
 
-            {/* Header + search */}
-            <div className="px-4 pt-2 pb-3">
-              <p className="font-display font-bold text-white mb-3" style={{ fontSize: 17 }}>Select Language</p>
-              <input
-                type="text"
-                value={langSearch}
-                onChange={e => setLangSearch(e.target.value)}
-                placeholder="Search language…"
-                autoFocus
-                className="w-full rounded-xl text-sm text-white placeholder-white/25 px-3.5 py-2.5 focus:outline-none"
-                style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)' }}
-              />
-            </div>
+            {/* Title */}
+            <p className="font-display font-bold text-white text-center pb-3" style={{ fontSize: 16 }}>
+              Select Language
+            </p>
 
-            {/* Language list */}
-            <div className="overflow-y-auto px-2 pb-8" style={{ flex: 1 }}>
-              {LANGUAGES
-                .filter(l =>
-                  l.name.toLowerCase().includes(langSearch.toLowerCase()) ||
-                  l.code.toLowerCase().includes(langSearch.toLowerCase()),
-                )
-                .map(l => (
-                  <button
-                    key={l.code}
-                    type="button"
-                    onClick={() => selectLang(l.code)}
-                    className="w-full flex items-center gap-3 px-3 py-3 rounded-xl text-left transition-colors active:scale-[0.98]"
-                    style={{
-                      background: l.code === lang ? 'rgba(43,101,240,0.15)' : 'transparent',
-                      border: l.code === lang ? '1px solid rgba(43,101,240,0.3)' : '1px solid transparent',
-                      marginBottom: 2,
-                    }}
-                  >
-                    <span style={{ fontSize: 22, lineHeight: 1 }}>{l.flag}</span>
-                    <span className="font-sans font-medium text-sm text-white">{l.name}</span>
-                    {l.code === lang && (
-                      <span className="ml-auto font-sans text-xs font-semibold" style={{ color: '#2B65F0' }}>✓</span>
-                    )}
-                  </button>
-                ))}
+            {/* Scrollable list — no search, just tap */}
+            <div className="overflow-y-auto pb-8" style={{ flex: 1 }}>
+              {LANGUAGES.map(l => (
+                <button
+                  key={l.code}
+                  type="button"
+                  onClick={() => selectLang(l.code)}
+                  className="w-full flex items-center gap-3 px-5 active:bg-white/5"
+                  style={{
+                    height: 52,
+                    background: l.code === lang ? 'rgba(43,101,240,0.14)' : 'transparent',
+                    borderLeft: l.code === lang ? '3px solid #2B65F0' : '3px solid transparent',
+                  }}
+                >
+                  <span style={{ fontSize: 22, lineHeight: 1, width: 28, flexShrink: 0 }}>{l.flag}</span>
+                  <span className="font-sans font-medium text-white" style={{ fontSize: 15 }}>{l.name}</span>
+                  {l.code === lang && (
+                    <span className="ml-auto font-sans font-bold" style={{ fontSize: 14, color: '#2B65F0' }}>✓</span>
+                  )}
+                </button>
+              ))}
             </div>
           </div>
         </div>
