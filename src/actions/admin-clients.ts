@@ -2,7 +2,6 @@
 
 import { redirect } from 'next/navigation'
 import { revalidatePath } from 'next/cache'
-import { cookies } from 'next/headers'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { sendWelcomeEmail } from '@/lib/email'
@@ -342,22 +341,15 @@ export async function impersonateClient(
   const { data, error } = await admin.auth.admin.generateLink({
     type: 'magiclink',
     email: clientProfile.email,
-    options: {
-      redirectTo: `${process.env.NEXT_PUBLIC_APP_URL}/dashboard`,
-    },
   })
-  if (error || !data?.properties?.action_link) {
+  if (error || !data?.properties?.hashed_token) {
     return { error: error?.message ?? 'Failed to generate magic link' }
   }
 
-  const cookieStore = await cookies()
-  cookieStore.set('admin_impersonating', 'true', {
-    path:     '/',
-    httpOnly: true,
-    sameSite: 'lax',
-    secure:   process.env.NODE_ENV === 'production',
-    maxAge:   60 * 60 * 2, // 2 hours
-  })
-
-  return { url: data.properties.action_link }
+  // Send the hashed_token to our own API route which calls verifyOtp
+  // and sets the session cookies server-side — bypassing the fragment-based
+  // flow that Next.js SSR never sees.
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? ''
+  const url = `${appUrl}/api/admin/impersonate?token=${encodeURIComponent(data.properties.hashed_token)}&t=${Date.now()}`
+  return { url }
 }
