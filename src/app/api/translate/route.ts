@@ -12,13 +12,17 @@ const DEEPL_LANG: Record<string, string> = {
   UK: 'UK',    ZH: 'ZH-HANS',
 }
 
+// DeepL target languages that accept the formality parameter.
+// Restaurant menus use informal tone, so we pass formality="less" for these.
+const FORMALITY_LANGS = new Set(['DE', 'FR', 'ES', 'IT', 'PT-BR', 'NL', 'RU', 'PL'])
+
 export async function POST(req: NextRequest) {
   let text: string[]
   let targetLang: string
 
   try {
     const body = await req.json() as { text: unknown; targetLang: unknown }
-    text      = body.text      as string[]
+    text       = body.text      as string[]
     targetLang = body.targetLang as string
   } catch {
     return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 })
@@ -30,7 +34,7 @@ export async function POST(req: NextRequest) {
 
   const deeplLang = DEEPL_LANG[targetLang.toUpperCase()]
   if (!deeplLang) {
-    // Unsupported language — return originals so the client gracefully falls back
+    // Unsupported language — return originals so the client falls back gracefully
     return NextResponse.json({ translations: text })
   }
 
@@ -44,6 +48,19 @@ export async function POST(req: NextRequest) {
     ? 'https://api-free.deepl.com/v2/translate'
     : 'https://api.deepl.com/v2/translate'
 
+  const requestBody: Record<string, unknown> = {
+    text,
+    target_lang: deeplLang,
+    // Guides DeepL to favour food/restaurant terminology when disambiguating
+    context: 'Restaurant menu items and food dishes',
+  }
+
+  // Only send formality for languages that support the parameter — DeepL returns
+  // an error if formality is sent for an unsupported target language (e.g. EL, AR).
+  if (FORMALITY_LANGS.has(deeplLang)) {
+    requestBody.formality = 'less'
+  }
+
   try {
     const resp = await fetch(baseUrl, {
       method: 'POST',
@@ -51,7 +68,7 @@ export async function POST(req: NextRequest) {
         'Authorization': `DeepL-Auth-Key ${apiKey}`,
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ text, target_lang: deeplLang }),
+      body: JSON.stringify(requestBody),
     })
 
     if (!resp.ok) {
@@ -60,7 +77,12 @@ export async function POST(req: NextRequest) {
     }
 
     const data = await resp.json() as { translations: { text: string }[] }
-    return NextResponse.json({ translations: data.translations.map(t => t.text) })
+
+    // Per-string fallback: if DeepL returns an empty string for any item,
+    // keep the original so the UI never shows a blank label.
+    const translations = data.translations.map((t, i) => t.text.trim() || text[i])
+
+    return NextResponse.json({ translations })
   } catch (err) {
     console.error('[translate] fetch error:', err)
     return NextResponse.json({ translations: text })
