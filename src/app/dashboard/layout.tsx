@@ -1,7 +1,11 @@
 import { redirect } from 'next/navigation'
+import { cookies } from 'next/headers'
 import { createClient } from '@/lib/supabase/server'
 import { Sidebar } from '@/components/layout/sidebar'
+import { exitImpersonation } from '@/actions/impersonation'
 import type { Profile } from '@/types/database'
+
+const ADMIN_EMAIL = 'gniokos@gmail.com'
 
 const navItems = [
   { label: 'Dashboard',   href: '/dashboard',               icon: 'dashboard'    as const },
@@ -29,18 +33,47 @@ export default async function DashboardLayout({
 
   const profile = profileRaw as Pick<Profile, 'full_name' | 'email'> | null
 
+  const cookieStore    = await cookies()
+  const isImpersonating =
+    cookieStore.get('admin_impersonating')?.value === 'true' &&
+    (user.email ?? '').toLowerCase() !== ADMIN_EMAIL.toLowerCase()
+
+  const clientName = profile?.full_name || profile?.email || user.email || 'Client'
+
   return (
-    <div className="flex h-screen bg-[#0D0F14] overflow-hidden">
-      <Sidebar
-        navItems={navItems}
-        user={{
-          name:  profile?.full_name ?? null,
-          email: profile?.email ?? user.email ?? null,
-        }}
-      />
-      <main className="flex-1 overflow-y-auto">
-        {children}
-      </main>
+    <div className="flex flex-col h-screen bg-[#0D0F14]">
+
+      {isImpersonating && (
+        <div
+          className="flex items-center justify-center gap-3 px-4 py-2.5 shrink-0 font-sans text-sm font-semibold"
+          style={{ background: '#F97316', color: '#fff' }}
+        >
+          <span>⚠️ ADMIN MODE — Viewing as {clientName}</span>
+          <span className="opacity-50">—</span>
+          <form action={exitImpersonation}>
+            <button
+              type="submit"
+              className="underline underline-offset-2 hover:opacity-80 transition-opacity font-bold"
+            >
+              Exit
+            </button>
+          </form>
+        </div>
+      )}
+
+      <div className="flex flex-1 overflow-hidden">
+        <Sidebar
+          navItems={navItems}
+          user={{
+            name:  profile?.full_name ?? null,
+            email: profile?.email ?? user.email ?? null,
+          }}
+        />
+        <main className="flex-1 overflow-y-auto">
+          {children}
+        </main>
+      </div>
+
     </div>
   )
 }

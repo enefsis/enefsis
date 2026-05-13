@@ -2,6 +2,7 @@ import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { CopyButton } from '@/components/admin/copy-button'
+import { ImpersonateButton } from './impersonate-button'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 type Profile  = { id: string; full_name: string | null; email: string; created_at: string }
@@ -202,6 +203,7 @@ export default async function ClientDetailPage({
                 View Page
               </a>
             )}
+            <ImpersonateButton clientId={id} />
             <Link
               href={`/admin/clients/${id}/edit`}
               className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl font-sans text-sm font-semibold transition-colors"

@@ -2,6 +2,7 @@
 
 import { redirect } from 'next/navigation'
 import { revalidatePath } from 'next/cache'
+import { cookies } from 'next/headers'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { sendWelcomeEmail } from '@/lib/email'
@@ -297,4 +298,51 @@ export async function updateClientInfo(
   }
 
   return {}
+}
+
+// ── Impersonate client ────────────────────────────────────────────────────────
+
+export async function impersonateClient(
+  userId: string,
+): Promise<{ url?: string; error?: string }> {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: 'Not authenticated' }
+
+  const admin = createAdminClient()
+
+  const { data: callerRaw } = await admin
+    .from('profiles')
+    .select('role')
+    .eq('id', user.id)
+    .maybeSingle()
+  const caller = callerRaw as Pick<Profile, 'role'> | null
+  if (caller?.role !== 'admin') return { error: 'Not authorized' }
+
+  const { data: profileRaw } = await admin
+    .from('profiles')
+    .select('email')
+    .eq('id', userId)
+    .maybeSingle()
+  const clientProfile = profileRaw as { email: string } | null
+  if (!clientProfile) return { error: 'Client not found' }
+
+  const { data, error } = await admin.auth.admin.generateLink({
+    type: 'magiclink',
+    email: clientProfile.email,
+  })
+  if (error || !data?.properties?.action_link) {
+    return { error: error?.message ?? 'Failed to generate magic link' }
+  }
+
+  const cookieStore = await cookies()
+  cookieStore.set('admin_impersonating', 'true', {
+    path:     '/',
+    httpOnly: true,
+    sameSite: 'lax',
+    secure:   process.env.NODE_ENV === 'production',
+    maxAge:   60 * 60 * 2, // 2 hours
+  })
+
+  return { url: data.properties.action_link }
 }
