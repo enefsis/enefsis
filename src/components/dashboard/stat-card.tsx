@@ -1,4 +1,4 @@
-import { TrendingUp, TrendingDown, Minus, Zap, BookOpen, Star, UserPlus, Users, CreditCard, Euro } from 'lucide-react'
+import { TrendingUp, TrendingDown, Minus, Zap, BookOpen, Star, UserPlus, Users, CreditCard, Euro, CalendarDays } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 const icons = {
@@ -9,6 +9,7 @@ const icons = {
   clients:       Users,
   subscriptions: CreditCard,
   revenue:       Euro,
+  arr:           CalendarDays,
 }
 
 interface StatCardProps {

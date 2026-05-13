@@ -45,10 +45,26 @@ const PLAN_MONTHLY: Record<string, number> = {
   pro:           100,
 }
 
+const PLAN_YEARLY: Record<string, number> = {
+  basic_monthly: 49 * 12,
+  basic_yearly:  499,
+  pro_monthly:   100 * 12,
+  pro_yearly:    900,
+  basic:         49 * 12,
+  pro:           100 * 12,
+}
+
 function rowMonthly(row: RawMrrRow): number {
   if (row.custom_amount != null) return row.custom_amount
   if (row.plan && PLAN_MONTHLY[row.plan] !== undefined) return PLAN_MONTHLY[row.plan]
   return row.amount ?? 0
+}
+
+function rowAnnual(row: RawMrrRow): number {
+  const isYearly = row.plan?.endsWith('_yearly') ?? false
+  if (row.custom_amount != null) return isYearly ? row.custom_amount : row.custom_amount * 12
+  if (row.plan && PLAN_YEARLY[row.plan] !== undefined) return PLAN_YEARLY[row.plan]
+  return (row.amount ?? 0) * 12
 }
 
 export default async function AdminPage() {
@@ -93,16 +109,17 @@ export default async function AdminPage() {
   ])
 
   // ── Stat card values ──────────────────────────────────────────────────────
-  const mrr = Math.round(
-    (mrrRaw as RawMrrRow[] | null)
-      ?.reduce((sum, row) => sum + rowMonthly(row), 0) ?? 0,
-  )
+  const mrrRows = mrrRaw as RawMrrRow[] | null
+
+  const mrr = Math.round(mrrRows?.reduce((sum, row) => sum + rowMonthly(row), 0) ?? 0)
+  const arr = Math.round(mrrRows?.reduce((sum, row) => sum + rowAnnual(row),  0) ?? 0)
 
   const stats = [
     { label: 'Total Clients',             value: totalClients ?? 0, change: calcChange(newClientsCur ?? 0, newClientsPrev ?? 0), icon: 'clients'       as const },
     { label: 'Active Subscriptions',      value: activeSubs   ?? 0, change: calcChange(newSubsCur    ?? 0, newSubsPrev    ?? 0), icon: 'subscriptions' as const },
-    { label: 'Monthly Recurring Revenue', value: mrr,                   change: 0,                                             icon: 'revenue'       as const, prefix: '€' },
-    { label: 'Total Taps — Last 30 Days', value: tapsCur      ?? 0, change: calcChange(tapsCur       ?? 0, tapsPrev       ?? 0), icon: 'tap'           as const },
+    { label: 'Monthly Recurring Revenue', value: mrr,               change: 0,                                                  icon: 'revenue'       as const, prefix: '€' },
+    { label: 'Annual Recurring Revenue',  value: arr,               change: 0,                                                  icon: 'arr'           as const, prefix: '€' },
+    { label: 'Total Taps — Last 30 Days', value: tapsCur ?? 0,      change: calcChange(tapsCur ?? 0, tapsPrev ?? 0),            icon: 'tap'           as const },
   ]
 
   // ── Clients table data ────────────────────────────────────────────────────
@@ -146,7 +163,7 @@ export default async function AdminPage() {
       </div>
 
       {/* Stat cards */}
-      <div className="grid grid-cols-2 xl:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 xl:grid-cols-5 gap-4">
         {stats.map(s => (
           <StatCard key={s.label} {...s} />
         ))}
