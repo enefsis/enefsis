@@ -27,7 +27,6 @@ export default async function DashboardPage() {
   const supabase = await createClient()
 
   const { data: { user } } = await supabase.auth.getUser()
-  console.log('[dashboard] session user.id:', user?.id, 'email:', user?.email)
 
   const now    = new Date()
   const d30    = new Date(now.getTime() - 30 * 86_400_000).toISOString()
@@ -63,7 +62,7 @@ export default async function DashboardPage() {
     supabase.from('tap_events').select('language').eq('user_id', user!.id).gte('created_at', d30).lte('created_at', nowIso),
     user
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      ? (supabase.from('subscriptions') as any).select('plan, status, next_billing_date, amount, payment_method, custom_amount').eq('user_id', user.id).order('created_at', { ascending: false }).limit(1).maybeSingle()
+      ? (supabase.from('subscriptions') as any).select('*').eq('user_id', user.id).order('created_at', { ascending: false }).limit(1).maybeSingle()
       : Promise.resolve({ data: null }),
   ])
 
