@@ -571,7 +571,7 @@ function InfoSection({
               ● {t('Open')}
             </span>
           </div>
-          <p className="font-sans" style={{ fontSize: 13, color: '#F0F2F8' }}>{openingHours}</p>
+          <p className="font-sans" style={{ fontSize: 13, color: '#F0F2F8' }}>{t(openingHours)}</p>
         </div>
       )}
 
@@ -801,6 +801,8 @@ export function LandingClient({
         restaurantName,
         ...(tagline        ? [tagline]        : []),
         ...(restaurantType ? [restaurantType] : []),
+        ...(todaysSpecials ? [todaysSpecials] : []),
+        ...(openingHours   ? [openingHours]   : []),
         ...menuSections.flatMap(s => [
           s.name,
           ...s.items.flatMap(i =>
@@ -1029,7 +1031,7 @@ export function LandingClient({
         )}
 
         {/* ── Today's specials ─────────────────────────────────────────────── */}
-        {todaysSpecials && <div className="pt-4"><TodaysSpecialsBanner specials={todaysSpecials} t={t} /></div>}
+        {todaysSpecials && <div className="pt-4"><TodaysSpecialsBanner specials={t(todaysSpecials)} t={t} /></div>}
 
         {/* ── Menu tabs ─────────────────────────────────────────────────────── */}
         {hasMenu && (
