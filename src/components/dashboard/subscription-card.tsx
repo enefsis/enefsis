@@ -20,7 +20,7 @@ const PLAN_AMOUNTS: Record<string, string> = {
 }
 
 const PAYMENT_LABELS: Record<string, string> = {
-  stripe:        'Stripe',
+  stripe:        'Card',
   cash:          'Cash',
   bank_transfer: 'Bank Transfer',
 }

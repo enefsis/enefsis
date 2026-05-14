@@ -5,7 +5,8 @@
       "Bash(npm install *)",
       "Bash(npx tsc *)",
       "Bash(dir D:\\\\PROJECT_ENEFSIS\\\\src\\\\app\\\\api *)",
-      "Bash(dir D:\\\\PROJECT_ENEFSIS\\\\src\\\\app\\\\api\\\\translate *)"
+      "Bash(dir D:\\\\PROJECT_ENEFSIS\\\\src\\\\app\\\\api\\\\translate *)",
+      "PowerShell($content = Get-Content \"D:\\\\PROJECT_ENEFSIS\\\\src\\\\app\\\\p\\\\[slug]\\\\landing-client.tsx\" -Raw; $lines = $content -split \"`n\"; \"Total lines: $\\($lines.Count\\)\"; $lines[828..835] | ForEach-Object { $i++; \"$\\($i+828\\): $_\" })"
     ]
   }
 }
