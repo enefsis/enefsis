@@ -20,9 +20,9 @@ const PLAN_AMOUNTS: Record<string, string> = {
 }
 
 const PAYMENT_LABELS: Record<string, string> = {
-  stripe:        'Card',
-  cash:          'Cash',
-  bank_transfer: 'Bank Transfer',
+  'stripe':        'Card',
+  'cash':          'Cash',
+  'bank_transfer': 'Bank Transfer',
 }
 
 function formatBillingDate(iso: string | null): string {
