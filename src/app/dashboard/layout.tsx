@@ -2,7 +2,6 @@ import { redirect } from 'next/navigation'
 import { cookies } from 'next/headers'
 import { createClient } from '@/lib/supabase/server'
 import { Sidebar } from '@/components/layout/sidebar'
-import { ExitImpersonationButton } from '@/components/dashboard/exit-impersonation-button'
 import type { Profile } from '@/types/database'
 
 const ADMIN_EMAIL = 'gniokos@gmail.com'
@@ -50,7 +49,12 @@ export default async function DashboardLayout({
         >
           <span>⚠️ ADMIN MODE — Viewing as {clientName}</span>
           <span className="opacity-50">—</span>
-          <ExitImpersonationButton />
+          <a
+            href="/api/admin/exit-impersonation"
+            className="underline underline-offset-2 hover:opacity-80 transition-opacity font-bold"
+          >
+            Exit
+          </a>
         </div>
       )}
 
