@@ -8,6 +8,7 @@ import { TopMenuItems, type MenuItem } from '@/components/dashboard/top-menu-ite
 import { SocialChart, type SocialEntry } from '@/components/dashboard/social-chart'
 import { LanguagePrefs, type LangEntry } from '@/components/dashboard/language-prefs'
 import { SubscriptionCard, type SubscriptionData } from '@/components/dashboard/subscription-card'
+import { getSubscription } from '@/actions/dashboard'
 
 const SOCIAL_PLATFORMS = ['instagram', 'google', 'whatsapp', 'facebook', 'tiktok']
 
@@ -92,11 +93,7 @@ export default function DashboardPage() {
         supabase.from('tap_events').select('language').eq('user_id', user.id).gte('created_at', d30).lte('created_at', nowIso),
       ])
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { data: sub } = await (supabase.from('subscriptions') as any)
-        .select('*')
-        .eq('user_id', user.id)
-        .maybeSingle()
+      const sub = await getSubscription(user.id)
       console.log('[Dashboard] subscription:', sub)
 
       // ── Daily taps chart ────────────────────────────────────────────────────
@@ -157,7 +154,7 @@ export default function DashboardPage() {
         topItems,
         socialData,
         langData,
-        subscription: sub as SubscriptionData | null,
+        subscription: sub,
       })
       setLoading(false)
     }
