@@ -27,6 +27,7 @@ export default async function DashboardPage() {
   const supabase = await createClient()
 
   const { data: { user } } = await supabase.auth.getUser()
+  console.log('[Dashboard] validated user:', user?.email, user?.id)
 
   const now    = new Date()
   const d30    = new Date(now.getTime() - 30 * 86_400_000).toISOString()
