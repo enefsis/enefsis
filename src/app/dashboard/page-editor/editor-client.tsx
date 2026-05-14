@@ -86,7 +86,23 @@ function SectionPanel({
 
 // ─── Main editor ──────────────────────────────────────────────────────────────
 
-export function PageEditorClient({ initial, slug: initialSlug }: { initial: PageData | null; slug: string | null }) {
+export function PageEditorClient({
+  initial,
+  slug: initialSlug,
+  backHref,
+  savePageFn,
+  saveLogoUrlFn,
+  uploadLogoFn,
+  uploadItemPhotoFn,
+}: {
+  initial: PageData | null
+  slug: string | null
+  backHref?: string
+  savePageFn?: (data: PageData) => Promise<{ slug?: string; error?: string }>
+  saveLogoUrlFn?: (url: string) => Promise<{ error?: string }>
+  uploadLogoFn?: (fd: FormData) => Promise<{ url: string } | { error: string }>
+  uploadItemPhotoFn?: (itemId: string, fd: FormData) => Promise<{ url: string } | { error: string }>
+}) {
   const supabase = createClient()
   const hero0 = parseHeroBg(initial?.hero_bg ?? null)
 
@@ -144,10 +160,10 @@ export function PageEditorClient({ initial, slug: initialSlug }: { initial: Page
     const fd = new FormData()
     fd.append('file', file)
     startTransition(async () => {
-      const res = await uploadLogo(fd)
+      const res = await (uploadLogoFn ?? uploadLogo)(fd)
       if ('url' in res) {
         setLogoUrl(res.url)
-        await saveLogoUrl(res.url)
+        await (saveLogoUrlFn ?? saveLogoUrl)(res.url)
       }
     })
   }
@@ -158,23 +174,30 @@ export function PageEditorClient({ initial, slug: initialSlug }: { initial: Page
       ...s, items: s.items.map(i => i.id !== itemId ? i : { ...i, photoPreview: URL.createObjectURL(file) }),
     }))
     startTransition(async () => {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) { console.error('[ItemPhoto] not authenticated'); return }
+      let publicUrl: string
 
-      const path = `${user.id}/menu/${itemId}`
+      if (uploadItemPhotoFn) {
+        const fd = new FormData()
+        fd.append('file', file)
+        const res = await uploadItemPhotoFn(itemId, fd)
+        if ('error' in res) { console.error('[ItemPhoto] upload failed:', res.error); return }
+        publicUrl = res.url
+      } else {
+        const { data: { user } } = await supabase.auth.getUser()
+        if (!user) { console.error('[ItemPhoto] not authenticated'); return }
 
-      const { error: uploadError } = await supabase.storage
-        .from('client-assets')
-        .upload(path, file, { upsert: true })
+        const path = `${user.id}/menu/${itemId}`
+        const { error: uploadError } = await supabase.storage
+          .from('client-assets')
+          .upload(path, file, { upsert: true })
 
-      if (uploadError) {
-        console.error('[ItemPhoto] upload failed:', uploadError.message)
-        return
+        if (uploadError) { console.error('[ItemPhoto] upload failed:', uploadError.message); return }
+
+        const { data: { publicUrl: url } } = supabase.storage
+          .from('client-assets')
+          .getPublicUrl(path)
+        publicUrl = url
       }
-
-      const { data: { publicUrl } } = supabase.storage
-        .from('client-assets')
-        .getPublicUrl(path)
 
       // Compute updated sections directly — do not rely on React state commit timing
       const updatedSections = sections.map(s => s.id !== sectionId ? s : {
@@ -268,7 +291,7 @@ export function PageEditorClient({ initial, slug: initialSlug }: { initial: Page
         })),
       })),
     }
-    const res = await savePage(data)
+    const res = await (savePageFn ?? savePage)(data)
     setSaveMsg(res.error ? `Error: ${res.error}` : 'Saved!')
     if (!res.error) {
       if (res.slug) setCurrentSlug(res.slug)
@@ -306,7 +329,20 @@ export function PageEditorClient({ initial, slug: initialSlug }: { initial: Page
 
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-white/[0.06] shrink-0">
-          <h1 className="text-sm font-semibold text-white">Page Editor</h1>
+          <div className="flex items-center gap-2.5">
+            {backHref && (
+              <a
+                href={backHref}
+                className="text-white/30 hover:text-white/70 transition-colors"
+                aria-label="Back"
+              >
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                  <path d="M19 12H5M12 5l-7 7 7 7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              </a>
+            )}
+            <h1 className="text-sm font-semibold text-white">Page Editor</h1>
+          </div>
           <div className="flex items-center gap-3">
             {saveMsg && (
               <span className={cn('text-xs', saveMsg.startsWith('Error') ? 'text-red-400' : 'text-emerald-400')}>

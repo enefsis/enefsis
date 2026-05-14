@@ -111,6 +111,15 @@ function PencilIcon() {
   )
 }
 
+function LayoutIcon() {
+  return (
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <rect x="3" y="3" width="18" height="18" rx="2" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M3 9h18M9 21V9" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  )
+}
+
 // ── Page ──────────────────────────────────────────────────────────────────────
 export default async function ClientDetailPage({
   params,
@@ -203,6 +212,14 @@ export default async function ClientDetailPage({
                 View Page
               </a>
             )}
+            <Link
+              href={`/admin/clients/${id}/page-editor`}
+              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl font-sans text-sm font-medium transition-colors"
+              style={{ background: 'rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.6)', border: '1px solid rgba(255,255,255,0.09)' }}
+            >
+              <LayoutIcon />
+              Edit Page
+            </Link>
             <ImpersonateButton clientId={id} />
             <Link
               href={`/admin/clients/${id}/edit`}
