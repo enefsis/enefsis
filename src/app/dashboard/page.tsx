@@ -29,6 +29,14 @@ export default async function DashboardPage() {
   const { data: { user } } = await supabase.auth.getUser()
   console.log('[Dashboard] validated user:', user?.email, user?.id)
 
+  console.log('[SUB DEBUG] user.id:', user?.id)
+  const { data: subDebug, error: subErr } = await supabase
+    .from('subscriptions')
+    .select('*')
+    .eq('user_id', user?.id ?? '')
+  console.log('[SUB DEBUG] all rows found:', subDebug)
+  console.log('[SUB DEBUG] error:', subErr)
+
   const now    = new Date()
   const d30    = new Date(now.getTime() - 30 * 86_400_000).toISOString()
   const d60    = new Date(now.getTime() - 60 * 86_400_000).toISOString()

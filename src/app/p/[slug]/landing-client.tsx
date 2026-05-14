@@ -781,55 +781,59 @@ export function LandingClient({
     return () => { document.body.style.overflow = '' }
   }, [lightboxPhoto])
 
-  const selectLang = useCallback(async (code: string) => {
-    setLang(code)
-    localStorage.setItem('enefsis_lang', code)
-    setLangOpen(false)
+  const selectLang = useCallback(
+    async (code: string) => {
+      setLang(code)
+      localStorage.setItem('enefsis_lang', code)
+      setLangOpen(false)
 
-    if (code === 'EN') {
-      setTranslated({})
-      return
-    }
+      if (code === 'EN') {
+        setTranslated({})
+        return
+      }
 
-    if (translationCache.current[code]) {
-      setTranslated(translationCache.current[code])
-      return
-    }
+      if (translationCache.current[code]) {
+        setTranslated(translationCache.current[code])
+        return
+      }
 
-    setIsTranslating(true)
-    try {
-      const strings = [
-        ...UI_KEYS,
-        restaurantName,
-        ...(tagline        ? [tagline]        : []),
-        ...(restaurantType ? [restaurantType] : []),
-        ...(todaysSpecials ? [todaysSpecials] : []),
-        ...(openingHours   ? [openingHours]   : []),
-        ...menuSections.flatMap(s => [
+      setIsTranslating(true)
+      try {
+        const menuStrings = menuSections.flatMap(s => [
           s.name,
           ...s.items.flatMap(i =>
-            [i.name, i.description].filter((x): x is string => Boolean(x)),
+            [i.name, i.description].filter((x): x is string => !!x),
           ),
-        ]),
-      ]
+        ])
+        const strings = [
+          ...UI_KEYS,
+          restaurantName,
+          ...(tagline        ? [tagline]        : []),
+          ...(restaurantType ? [restaurantType] : []),
+          ...(todaysSpecials ? [todaysSpecials] : []),
+          ...(openingHours   ? [openingHours]   : []),
+          ...menuStrings,
+        ]
 
-      const res = await fetch('/api/translate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text: strings, targetLang: code }),
-      })
+        const res = await fetch('/api/translate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ text: strings, targetLang: code }),
+        })
 
-      if (res.ok) {
-        const { translations }: { translations: string[] } = await res.json()
-        const map: Record<string, string> = {}
-        strings.forEach((orig, i) => { map[orig] = translations[i] })
-        translationCache.current[code] = map
-        setTranslated(map)
+        if (res.ok) {
+          const { translations }: { translations: string[] } = await res.json()
+          const map: Record<string, string> = {}
+          strings.forEach((orig, i) => { map[orig] = translations[i] })
+          translationCache.current[code] = map
+          setTranslated(map)
+        }
+      } finally {
+        setIsTranslating(false)
       }
-    } finally {
-      setIsTranslating(false)
-    }
-  }, [restaurantName, tagline, restaurantType, todaysSpecials, openingHours, menuSections])
+    },
+    [restaurantName, tagline, restaurantType, todaysSpecials, openingHours, menuSections],
+  )
 
   useEffect(() => {
     const stored = localStorage.getItem('enefsis_lang')
