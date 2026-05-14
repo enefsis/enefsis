@@ -1,12 +1,13 @@
-import { createClient } from '@/lib/supabase/server'
+'use client'
+
+import { useState, useEffect } from 'react'
+import { createBrowserClient } from '@supabase/ssr'
 import { StatCard } from '@/components/dashboard/stat-card'
 import { TapsChart, type ChartDay } from '@/components/dashboard/taps-chart'
 import { TopMenuItems, type MenuItem } from '@/components/dashboard/top-menu-items'
 import { SocialChart, type SocialEntry } from '@/components/dashboard/social-chart'
 import { LanguagePrefs, type LangEntry } from '@/components/dashboard/language-prefs'
-import { SubscriptionCard } from '@/components/dashboard/subscription-card'
-
-export const metadata = { title: 'Dashboard' }
+import { SubscriptionCard, type SubscriptionData } from '@/components/dashboard/subscription-card'
 
 const SOCIAL_PLATFORMS = ['instagram', 'google', 'whatsapp', 'facebook', 'tiktok']
 
@@ -23,124 +24,160 @@ function buildDateRange(days: number): string[] {
   })
 }
 
-export default async function DashboardPage() {
-  const supabase = await createClient()
+interface DashboardData {
+  tapsCur: number
+  tapsPrev: number
+  viewsCur: number
+  viewsPrev: number
+  reviewsCur: number
+  reviewsPrev: number
+  followersCur: number
+  followersPrev: number
+  chartData: ChartDay[]
+  topItems: MenuItem[]
+  socialData: SocialEntry[]
+  langData: LangEntry[]
+  subscription: SubscriptionData | null
+}
 
-  const { data: { user } } = await supabase.auth.getUser()
-  console.log('[Dashboard] validated user:', user?.email, user?.id)
+export default function DashboardPage() {
+  const [data, setData]       = useState<DashboardData | null>(null)
+  const [loading, setLoading] = useState(true)
 
-  console.log('[SUB DEBUG] user.id:', user?.id)
-  const { data: subDebug, error: subErr } = await supabase
-    .from('subscriptions')
-    .select('*')
-    .eq('user_id', user?.id ?? '')
-  console.log('[SUB DEBUG] all rows found:', subDebug)
-  console.log('[SUB DEBUG] error:', subErr)
+  useEffect(() => {
+    const supabase = createBrowserClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    )
 
-  const now    = new Date()
-  const d30    = new Date(now.getTime() - 30 * 86_400_000).toISOString()
-  const d60    = new Date(now.getTime() - 60 * 86_400_000).toISOString()
-  const nowIso = now.toISOString()
+    async function load() {
+      const { data: { user } } = await supabase.auth.getUser()
+      console.log('[Dashboard] validated user:', user?.email, user?.id)
 
-  console.log('[Dashboard] user.id:', user?.id)
+      if (!user) {
+        setLoading(false)
+        return
+      }
 
-  const [
-    { count: tapsCur },
-    { count: tapsPrev },
-    { count: viewsCur },
-    { count: viewsPrev },
-    { count: reviewsCur },
-    { count: reviewsPrev },
-    { count: followersCur },
-    { count: followersPrev },
-    { data: rawTaps },
-    { data: rawMenuViews },
-    { data: rawSocialClicks },
-    { data: rawLanguages },
-  ] = await Promise.all([
-    supabase.from('tap_events').select('*', { count: 'exact', head: true }).eq('user_id', user!.id).gte('created_at', d30).lte('created_at', nowIso),
-    supabase.from('tap_events').select('*', { count: 'exact', head: true }).eq('user_id', user!.id).gte('created_at', d60).lt('created_at', d30),
-    supabase.from('menu_item_views').select('*', { count: 'exact', head: true }).eq('client_id', user!.id).gte('created_at', d30).lte('created_at', nowIso),
-    supabase.from('menu_item_views').select('*', { count: 'exact', head: true }).eq('client_id', user!.id).gte('created_at', d60).lt('created_at', d30),
-    supabase.from('button_clicks').select('*', { count: 'exact', head: true }).eq('client_id', user!.id).gte('created_at', d30).lte('created_at', nowIso),
-    supabase.from('button_clicks').select('*', { count: 'exact', head: true }).eq('client_id', user!.id).gte('created_at', d60).lt('created_at', d30),
-    supabase.from('subscriptions').select('*', { count: 'exact', head: true }).eq('user_id', user!.id).gte('created_at', d30).lte('created_at', nowIso),
-    supabase.from('subscriptions').select('*', { count: 'exact', head: true }).eq('user_id', user!.id).gte('created_at', d60).lt('created_at', d30),
-    supabase.from('tap_events').select('created_at').eq('user_id', user!.id).gte('created_at', d30).lte('created_at', nowIso),
-    supabase.from('menu_item_views').select('item_name').eq('client_id', user!.id).gte('created_at', d30).lte('created_at', nowIso),
-    supabase.from('button_clicks').select('button_type').eq('client_id', user!.id).gte('created_at', d30).lte('created_at', nowIso),
-    supabase.from('tap_events').select('language').eq('user_id', user!.id).gte('created_at', d30).lte('created_at', nowIso),
-  ])
+      const now    = new Date()
+      const d30    = new Date(now.getTime() - 30 * 86_400_000).toISOString()
+      const d60    = new Date(now.getTime() - 60 * 86_400_000).toISOString()
+      const nowIso = now.toISOString()
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data: sub } = await (supabase.from('subscriptions') as any)
-    .select('*')
-    .eq('user_id', user!.id)
-    .maybeSingle()
+      const [
+        { count: tapsCur },
+        { count: tapsPrev },
+        { count: viewsCur },
+        { count: viewsPrev },
+        { count: reviewsCur },
+        { count: reviewsPrev },
+        { count: followersCur },
+        { count: followersPrev },
+        { data: rawTaps },
+        { data: rawMenuViews },
+        { data: rawSocialClicks },
+        { data: rawLanguages },
+      ] = await Promise.all([
+        supabase.from('tap_events').select('*', { count: 'exact', head: true }).eq('user_id', user.id).gte('created_at', d30).lte('created_at', nowIso),
+        supabase.from('tap_events').select('*', { count: 'exact', head: true }).eq('user_id', user.id).gte('created_at', d60).lt('created_at', d30),
+        supabase.from('menu_item_views').select('*', { count: 'exact', head: true }).eq('client_id', user.id).gte('created_at', d30).lte('created_at', nowIso),
+        supabase.from('menu_item_views').select('*', { count: 'exact', head: true }).eq('client_id', user.id).gte('created_at', d60).lt('created_at', d30),
+        supabase.from('button_clicks').select('*', { count: 'exact', head: true }).eq('client_id', user.id).gte('created_at', d30).lte('created_at', nowIso),
+        supabase.from('button_clicks').select('*', { count: 'exact', head: true }).eq('client_id', user.id).gte('created_at', d60).lt('created_at', d30),
+        supabase.from('subscriptions').select('*', { count: 'exact', head: true }).eq('user_id', user.id).gte('created_at', d30).lte('created_at', nowIso),
+        supabase.from('subscriptions').select('*', { count: 'exact', head: true }).eq('user_id', user.id).gte('created_at', d60).lt('created_at', d30),
+        supabase.from('tap_events').select('created_at').eq('user_id', user.id).gte('created_at', d30).lte('created_at', nowIso),
+        supabase.from('menu_item_views').select('item_name').eq('client_id', user.id).gte('created_at', d30).lte('created_at', nowIso),
+        supabase.from('button_clicks').select('button_type').eq('client_id', user.id).gte('created_at', d30).lte('created_at', nowIso),
+        supabase.from('tap_events').select('language').eq('user_id', user.id).gte('created_at', d30).lte('created_at', nowIso),
+      ])
 
-  console.log('[Dashboard] subscription:', sub)
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data: sub } = await (supabase.from('subscriptions') as any)
+        .select('*')
+        .eq('user_id', user.id)
+        .maybeSingle()
+      console.log('[Dashboard] subscription:', sub)
 
-  // ── Daily taps chart ──────────────────────────────────────────────────────
-  const tapsMap: Record<string, number> = {}
-  ;(rawTaps as { created_at: string }[] | null)?.forEach(row => {
-    const day = row.created_at.slice(0, 10)
-    tapsMap[day] = (tapsMap[day] ?? 0) + 1
-  })
-  const chartData: ChartDay[] = buildDateRange(30).map(date => ({
-    date: new Date(date + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-    taps: tapsMap[date] ?? 0,
-  }))
+      // ── Daily taps chart ────────────────────────────────────────────────────
+      const tapsMap: Record<string, number> = {}
+      ;(rawTaps as { created_at: string }[] | null)?.forEach(row => {
+        const day = row.created_at.slice(0, 10)
+        tapsMap[day] = (tapsMap[day] ?? 0) + 1
+      })
+      const chartData: ChartDay[] = buildDateRange(30).map(date => ({
+        date: new Date(date + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+        taps: tapsMap[date] ?? 0,
+      }))
 
-  // ── Top 5 menu items ──────────────────────────────────────────────────────
-  const itemsMap: Record<string, number> = {}
-  ;(rawMenuViews as { item_name: string | null }[] | null)?.forEach(row => {
-    const name = row.item_name ?? 'Unknown'
-    itemsMap[name] = (itemsMap[name] ?? 0) + 1
-  })
-  const topItems: MenuItem[] = Object.entries(itemsMap)
-    .sort(([, a], [, b]) => b - a)
-    .slice(0, 5)
-    .map(([name, views]) => ({ name, views }))
+      // ── Top 5 menu items ────────────────────────────────────────────────────
+      const itemsMap: Record<string, number> = {}
+      ;(rawMenuViews as { item_name: string | null }[] | null)?.forEach(row => {
+        const name = row.item_name ?? 'Unknown'
+        itemsMap[name] = (itemsMap[name] ?? 0) + 1
+      })
+      const topItems: MenuItem[] = Object.entries(itemsMap)
+        .sort(([, a], [, b]) => b - a)
+        .slice(0, 5)
+        .map(([name, views]) => ({ name, views }))
 
-  // ── Social button clicks breakdown ───────────────────────────────────────
-  const socialMap: Record<string, number> = {}
-  ;(rawSocialClicks as { button_type: string | null }[] | null)?.forEach(row => {
-    const key = (row.button_type ?? '').toLowerCase()
-    if (SOCIAL_PLATFORMS.includes(key)) {
-      socialMap[key] = (socialMap[key] ?? 0) + 1
+      // ── Social button clicks ────────────────────────────────────────────────
+      const socialMap: Record<string, number> = {}
+      ;(rawSocialClicks as { button_type: string | null }[] | null)?.forEach(row => {
+        const key = (row.button_type ?? '').toLowerCase()
+        if (SOCIAL_PLATFORMS.includes(key)) {
+          socialMap[key] = (socialMap[key] ?? 0) + 1
+        }
+      })
+      const socialData: SocialEntry[] = SOCIAL_PLATFORMS
+        .map(platform => ({ platform, count: socialMap[platform] ?? 0 }))
+        .filter(e => e.count > 0)
+
+      // ── Language preferences ────────────────────────────────────────────────
+      const langMap: Record<string, number> = {}
+      ;(rawLanguages as { language: string | null }[] | null)?.forEach(row => {
+        const lang = row.language ?? 'unknown'
+        langMap[lang] = (langMap[lang] ?? 0) + 1
+      })
+      const langData: LangEntry[] = Object.entries(langMap)
+        .sort(([, a], [, b]) => b - a)
+        .slice(0, 5)
+        .map(([language, count]) => ({ language, count }))
+
+      setData({
+        tapsCur:      tapsCur      ?? 0,
+        tapsPrev:     tapsPrev     ?? 0,
+        viewsCur:     viewsCur     ?? 0,
+        viewsPrev:    viewsPrev    ?? 0,
+        reviewsCur:   reviewsCur   ?? 0,
+        reviewsPrev:  reviewsPrev  ?? 0,
+        followersCur: followersCur ?? 0,
+        followersPrev:followersPrev?? 0,
+        chartData,
+        topItems,
+        socialData,
+        langData,
+        subscription: sub as SubscriptionData | null,
+      })
+      setLoading(false)
     }
-  })
-  const socialData: SocialEntry[] = SOCIAL_PLATFORMS
-    .map(platform => ({ platform, count: socialMap[platform] ?? 0 }))
-    .filter(e => e.count > 0)
 
-  // ── Language preferences ──────────────────────────────────────────────────
-  const langMap: Record<string, number> = {}
-  ;(rawLanguages as { language: string | null }[] | null)?.forEach(row => {
-    const lang = row.language ?? 'unknown'
-    langMap[lang] = (langMap[lang] ?? 0) + 1
-  })
-  const langData: LangEntry[] = Object.entries(langMap)
-    .sort(([, a], [, b]) => b - a)
-    .slice(0, 5)
-    .map(([language, count]) => ({ language, count }))
+    void load()
+  }, [])
 
-  // ── Subscription ─────────────────────────────────────────────────────────
-  const subscription = (sub as {
-    plan: string | null
-    status: string | null
-    next_billing_date: string | null
-    amount: number | null
-    payment_method: string | null
-    custom_amount: number | null
-  } | null)
+  if (loading || !data) {
+    return (
+      <div className="p-6 flex items-center justify-center min-h-[400px]">
+        <p className="font-sans text-sm text-white/30">Loading…</p>
+      </div>
+    )
+  }
 
-  // ── Stat cards ────────────────────────────────────────────────────────────
   const stats = [
-    { label: 'Total Taps',            value: tapsCur      ?? 0, change: calcChange(tapsCur      ?? 0, tapsPrev      ?? 0), icon: 'tap'   as const },
-    { label: 'Menu Views',            value: viewsCur     ?? 0, change: calcChange(viewsCur     ?? 0, viewsPrev     ?? 0), icon: 'menu'  as const },
-    { label: 'Google Reviews Gained', value: reviewsCur   ?? 0, change: calcChange(reviewsCur   ?? 0, reviewsPrev   ?? 0), icon: 'star'  as const },
-    { label: 'New Followers',         value: followersCur ?? 0, change: calcChange(followersCur ?? 0, followersPrev ?? 0), icon: 'users' as const },
+    { label: 'Total Taps',            value: data.tapsCur,      change: calcChange(data.tapsCur,      data.tapsPrev),      icon: 'tap'   as const },
+    { label: 'Menu Views',            value: data.viewsCur,     change: calcChange(data.viewsCur,     data.viewsPrev),     icon: 'menu'  as const },
+    { label: 'Google Reviews Gained', value: data.reviewsCur,   change: calcChange(data.reviewsCur,   data.reviewsPrev),   icon: 'star'  as const },
+    { label: 'New Followers',         value: data.followersCur, change: calcChange(data.followersCur, data.followersPrev), icon: 'users' as const },
   ]
 
   return (
@@ -163,12 +200,12 @@ export default async function DashboardPage() {
         <div className="xl:col-span-2 bg-[#141720] border border-white/[0.06] rounded-2xl p-5">
           <h2 className="font-display font-semibold text-white text-base">Daily Taps</h2>
           <p className="font-sans text-xs text-white/35 mt-0.5 mb-5">Tap events per day, last 30 days</p>
-          <TapsChart data={chartData} />
+          <TapsChart data={data.chartData} />
         </div>
         <div className="bg-[#141720] border border-white/[0.06] rounded-2xl p-5">
           <h2 className="font-display font-semibold text-white text-base">Top Menu Items</h2>
           <p className="font-sans text-xs text-white/35 mt-0.5 mb-5">Most viewed, last 30 days</p>
-          <TopMenuItems items={topItems} />
+          <TopMenuItems items={data.topItems} />
         </div>
       </div>
 
@@ -179,21 +216,21 @@ export default async function DashboardPage() {
         <div className="bg-[#141720] border border-white/[0.06] rounded-2xl p-5">
           <h2 className="font-display font-semibold text-white text-base">Social Button Clicks</h2>
           <p className="font-sans text-xs text-white/35 mt-0.5 mb-5">Breakdown by platform, last 30 days</p>
-          <SocialChart data={socialData} />
+          <SocialChart data={data.socialData} />
         </div>
 
         {/* Language preferences */}
         <div className="bg-[#141720] border border-white/[0.06] rounded-2xl p-5">
           <h2 className="font-display font-semibold text-white text-base">Language Preferences</h2>
           <p className="font-sans text-xs text-white/35 mt-0.5 mb-5">Top 5 visitor languages, last 30 days</p>
-          <LanguagePrefs data={langData} />
+          <LanguagePrefs data={data.langData} />
         </div>
 
         {/* Subscription status */}
         <div className="bg-[#141720] border border-white/[0.06] rounded-2xl p-5">
           <h2 className="font-display font-semibold text-white text-base">Subscription</h2>
           <p className="font-sans text-xs text-white/35 mt-0.5 mb-5">Current plan &amp; billing status</p>
-          <SubscriptionCard data={subscription} />
+          <SubscriptionCard data={data.subscription} />
         </div>
 
       </div>
