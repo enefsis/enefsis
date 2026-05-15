@@ -230,7 +230,6 @@ export default async function ClientDetailPage({
               <PencilIcon />
               Edit
             </Link>
-            <DeleteClientButton clientId={id} />
           </div>
         </div>
       </div>
@@ -378,6 +377,20 @@ export default async function ClientDetailPage({
             ))}
           </div>
         )}
+      </div>
+
+      {/* Danger zone */}
+      <div
+        className="rounded-2xl p-5 flex items-center justify-between gap-4"
+        style={{ background: 'rgba(239,68,68,0.04)', border: '1px solid rgba(239,68,68,0.14)' }}
+      >
+        <div>
+          <p className="font-display text-sm font-semibold text-red-400">Delete client</p>
+          <p className="font-sans text-xs mt-0.5" style={{ color: 'rgba(255,255,255,0.35)' }}>
+            Permanently removes this account, landing page, NFC stands, and all analytics data.
+          </p>
+        </div>
+        <DeleteClientButton clientId={id} />
       </div>
 
     </div>

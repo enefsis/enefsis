@@ -377,6 +377,11 @@ export async function deleteClient(
   if (caller?.role !== 'admin') redirect('/dashboard')
 
   // Delete associated data in dependency order
+  await admin.from('tap_events').delete().eq('user_id', clientId)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  await (admin.from('button_clicks') as any).delete().eq('client_id', clientId)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  await (admin.from('menu_item_views') as any).delete().eq('client_id', clientId)
   await admin.from('nfc_stands').delete().eq('user_id', clientId)
   await admin.from('subscriptions').delete().eq('user_id', clientId)
   await admin.from('client_pages').delete().eq('user_id', clientId)
