@@ -356,3 +356,37 @@ export async function impersonateClient(
   const url = `${appUrl}/api/admin/impersonate?token=${encodeURIComponent(data.properties.hashed_token)}&t=${Date.now()}`
   return { url }
 }
+
+// ── Delete client ─────────────────────────────────────────────────────────────
+
+export async function deleteClient(
+  clientId: string,
+): Promise<{ error?: string }> {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) redirect('/login')
+
+  const admin = createAdminClient()
+
+  const { data: callerRaw } = await admin
+    .from('profiles')
+    .select('role')
+    .eq('id', user.id)
+    .maybeSingle()
+  const caller = callerRaw as Pick<Profile, 'role'> | null
+  if (caller?.role !== 'admin') redirect('/dashboard')
+
+  // Delete associated data in dependency order
+  await admin.from('nfc_stands').delete().eq('user_id', clientId)
+  await admin.from('subscriptions').delete().eq('user_id', clientId)
+  await admin.from('client_pages').delete().eq('user_id', clientId)
+  await admin.from('profiles').delete().eq('id', clientId)
+
+  // Delete the auth user last
+  const { error: authErr } = await admin.auth.admin.deleteUser(clientId)
+  if (authErr) return { error: authErr.message }
+
+  revalidatePath('/admin/clients')
+  revalidatePath('/admin')
+  redirect('/admin/clients')
+}

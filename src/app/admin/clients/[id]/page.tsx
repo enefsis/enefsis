@@ -3,6 +3,7 @@ import Link from 'next/link'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { CopyButton } from '@/components/admin/copy-button'
 import { ImpersonateButton } from './impersonate-button'
+import { DeleteClientButton } from './delete-client-button'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 type Profile  = { id: string; full_name: string | null; email: string; created_at: string }
@@ -229,6 +230,7 @@ export default async function ClientDetailPage({
               <PencilIcon />
               Edit
             </Link>
+            <DeleteClientButton clientId={id} />
           </div>
         </div>
       </div>
