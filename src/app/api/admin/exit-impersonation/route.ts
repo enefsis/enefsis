@@ -2,7 +2,7 @@ import { createServerClient } from '@supabase/ssr'
 import { NextRequest, NextResponse } from 'next/server'
 
 export async function GET(request: NextRequest) {
-  const response = NextResponse.redirect('https://enefsis.vercel.app/login')
+  const response = NextResponse.redirect('https://app.enefsis.com/login')
 
   // Clear the impersonation marker
   response.cookies.set('admin_impersonating', '', {

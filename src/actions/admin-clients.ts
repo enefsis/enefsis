@@ -173,7 +173,7 @@ export async function createClientAccount(
   await sendWelcomeEmail({
     name:         fullName,
     email,
-    loginUrl:     'https://enefsis.vercel.app/login',
+    loginUrl:     'https://app.enefsis.com/login',
     tempPassword,
   })
 
