@@ -228,15 +228,17 @@ function SuccessScreen({
   checkoutUrl,
   checkoutLoading,
   checkoutError,
+  onAddAnother,
 }: {
   slug: string
   tempPassword: string
   checkoutUrl: string | null
   checkoutLoading: boolean
   checkoutError: string
+  onAddAnother: () => void
 }) {
-  const appUrl  = typeof window !== 'undefined' ? window.location.origin : ''
-  const pageUrl = `${appUrl}/p/${slug}`
+  const tapUrl  = process.env.NEXT_PUBLIC_TAP_URL ?? ''
+  const pageUrl = `${tapUrl}/p/${slug}`
 
   return (
     <div className="flex flex-col items-center text-center py-12 px-6 max-w-lg mx-auto">
@@ -310,12 +312,13 @@ function SuccessScreen({
       </div>
 
       <div className="flex gap-3">
-        <Link
-          href="/admin/clients/new"
+        <button
+          type="button"
+          onClick={onAddAnother}
           className="px-4 py-2 rounded-xl border border-white/[0.1] text-sm text-white/60 hover:text-white/80 hover:border-white/20 transition-colors"
         >
           Add another
-        </Link>
+        </button>
         <Link
           href="/admin/clients"
           className="px-4 py-2 rounded-xl bg-white/[0.06] border border-white/[0.1] text-white/70 text-sm font-medium hover:text-white hover:border-white/20 transition-colors"
@@ -341,6 +344,7 @@ export function OnboardingForm() {
   const [checkoutLoading, setCheckoutLoading] = useState(false)
   const [checkoutError,  setCheckoutError] = useState('')
   const [isPending,      startTransition]  = useTransition()
+  const [formKey,        setFormKey]       = useState(0)
 
   function toSlug(value: string) {
     return value
@@ -404,6 +408,19 @@ export function OnboardingForm() {
     })
   }
 
+  function handleAddAnother() {
+    setResult(null)
+    setError('')
+    setPlan('basic')
+    setBilling('monthly')
+    setNfcCount(1)
+    setSlug('')
+    setSlugEdited(false)
+    setCheckoutUrl(null)
+    setCheckoutError('')
+    setFormKey(k => k + 1)
+  }
+
   if (result) {
     return (
       <div className="p-6 md:p-10">
@@ -413,6 +430,7 @@ export function OnboardingForm() {
           checkoutUrl={checkoutUrl}
           checkoutLoading={checkoutLoading}
           checkoutError={checkoutError}
+          onAddAnother={handleAddAnother}
         />
       </div>
     )
@@ -435,7 +453,7 @@ export function OnboardingForm() {
         </div>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-8">
+      <form key={formKey} onSubmit={handleSubmit} className="space-y-8">
 
         {/* Account */}
         <div>
