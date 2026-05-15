@@ -37,4 +37,5 @@ export async function toggleSubscriptionStatus(formData: FormData) {
 
   revalidatePath('/admin')
   revalidatePath('/admin/clients')
+  redirect('/admin/clients')
 }

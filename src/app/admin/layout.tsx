@@ -1,4 +1,5 @@
 import { redirect } from 'next/navigation'
+import { headers } from 'next/headers'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { Sidebar } from '@/components/layout/sidebar'
@@ -18,6 +19,10 @@ export default async function AdminLayout({
 }: {
   children: React.ReactNode
 }) {
+  const headersList = await headers()
+  const host = headersList.get('host')
+  if (host === 'tap.enefsis.com') redirect('https://app.enefsis.com/admin')
+
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
