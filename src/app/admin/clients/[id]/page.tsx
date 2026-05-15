@@ -147,7 +147,7 @@ export default async function ClientDetailPage({
   const stands = (standsRes.data as Stand[] | null) ?? []
 
   const standIds   = stands.map(s => s.id)
-  const appUrl     = process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000'
+  const appUrl     = process.env.NEXT_PUBLIC_TAP_URL ?? 'http://localhost:3000'
   const landingUrl = page?.slug ? `${appUrl}/p/${page.slug}` : null
 
   // ── Stats ────────────────────────────────────────────────────────────────

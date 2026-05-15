@@ -45,7 +45,7 @@ export default async function AdminClientsPage() {
     if (s.user_id) standCountByUser[s.user_id] = (standCountByUser[s.user_id] ?? 0) + 1
   })
 
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000'
+  const appUrl = process.env.NEXT_PUBLIC_TAP_URL ?? 'http://localhost:3000'
 
   const clients: ClientListRow[] = (rawProfiles as RawProfile[] | null)?.map(p => {
     const sub  = subByUser[p.id] ?? null

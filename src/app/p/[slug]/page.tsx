@@ -2,6 +2,7 @@ import { notFound } from 'next/navigation'
 import type { Metadata } from 'next'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { LandingClient } from './landing-client'
+import { Logo } from '@/components/ui/logo'
 import type { MenuSectionData } from '@/actions/page-editor'
 
 export const revalidate = 0
@@ -46,6 +47,29 @@ export default async function LandingPage({ params, searchParams }: Props) {
   console.log('[LandingPage] raw page data:', JSON.stringify(page))
 
   if (!page) notFound()
+
+  // Check subscription status — suspended clients show an offline page
+  const { data: sub } = await admin
+    .from('subscriptions')
+    .select('status')
+    .eq('user_id', page.user_id)
+    .maybeSingle()
+
+  if (sub?.status === 'suspended') {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center gap-6 bg-[#0D0F14] px-6">
+        <Logo size="md" />
+        <div className="text-center space-y-2">
+          <p className="font-display text-lg font-semibold text-white">
+            This page is temporarily unavailable
+          </p>
+          <p className="font-sans text-sm text-white/40">
+            Please contact the restaurant directly
+          </p>
+        </div>
+      </div>
+    )
+  }
 
   console.log('[LandingPage] slug:', slug, '| data:', JSON.stringify({
     slug:              page.slug,
