@@ -3,6 +3,7 @@
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 import type { Profile } from '@/types/database'
 
 async function requireAdmin() {
@@ -10,11 +11,12 @@ async function requireAdmin() {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
-  const { data: raw } = await supabase
+  const admin = createAdminClient()
+  const { data: raw } = await admin
     .from('profiles')
     .select('role')
     .eq('id', user.id)
-    .single()
+    .maybeSingle()
 
   const profile = raw as Pick<Profile, 'role'> | null
   if (profile?.role !== 'admin') redirect('/dashboard')
