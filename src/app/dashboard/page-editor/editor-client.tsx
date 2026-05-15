@@ -135,7 +135,6 @@ export function PageEditorClient({
   const [callWaiter,        setCallWaiter]        = useState(initial?.call_waiter_enabled ?? false)
   const [restaurantType,    setRestaurantType]    = useState(initial?.restaurant_type    ?? '')
   const [city,              setCity]              = useState(initial?.city               ?? '')
-  const [yearEstablished,   setYearEstablished]   = useState(initial?.year_established   ?? '')
   const [rating,            setRating]            = useState(initial?.rating             ?? '')
   const [reviewCount,       setReviewCount]       = useState(initial?.review_count       ?? '')
   const [googlePlaceId,     setGooglePlaceId]     = useState(initial?.google_place_id   ?? '')
@@ -306,7 +305,6 @@ export function PageEditorClient({
       call_waiter_enabled: callWaiter,
       restaurant_type:     restaurantType,
       city,
-      year_established:    yearEstablished,
       rating,
       review_count:        reviewCount,
       todays_specials:     todaysSpecials,
@@ -421,16 +419,10 @@ export function PageEditorClient({
               <input type="text" value={city} onChange={e => setCity(e.target.value)}
                 placeholder="Athens" className={inputCls} />
             </Field>
-            <div className="grid grid-cols-2 gap-2">
-              <Field label="Year Established">
-                <input type="text" value={yearEstablished} onChange={e => setYearEstablished(e.target.value)}
-                  placeholder="2010" className={inputCls} />
-              </Field>
-              <Field label="Rating">
-                <input type="text" value={rating} onChange={e => setRating(e.target.value)}
-                  placeholder="4.9" className={inputCls} />
-              </Field>
-            </div>
+            <Field label="Rating">
+              <input type="text" value={rating} onChange={e => setRating(e.target.value)}
+                placeholder="4.9" className={inputCls} />
+            </Field>
             <Field label="Review Count">
               <input type="text" value={reviewCount} onChange={e => setReviewCount(e.target.value)}
                 placeholder="200+" className={inputCls} />
@@ -767,7 +759,6 @@ export function PageEditorClient({
               callWaiterEnabled={callWaiter}
               restaurantType={restaurantType || null}
               city={city || null}
-              yearEstablished={yearEstablished || null}
               rating={rating || null}
               reviewCount={reviewCount || null}
               todaysSpecials={todaysSpecials || null}

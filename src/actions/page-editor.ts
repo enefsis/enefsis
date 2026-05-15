@@ -53,7 +53,6 @@ export type PageData = {
   call_waiter_enabled: boolean
   restaurant_type: string
   city: string
-  year_established: string
   rating: string
   review_count: string
   todays_specials: string
@@ -89,7 +88,6 @@ export async function savePage(data: PageData): Promise<{ slug?: string; error?:
     call_waiter_enabled: data.call_waiter_enabled ?? false,
     restaurant_type:     data.restaurant_type     || null,
     city:                data.city                || null,
-    year_established:    data.year_established    || null,
     rating:              data.rating              || null,
     review_count:        data.review_count        || null,
     todays_specials:     data.todays_specials     || null,

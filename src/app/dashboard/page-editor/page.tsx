@@ -52,7 +52,6 @@ export default async function PageEditorPage() {
         call_waiter_enabled: raw.call_waiter_enabled ?? false,
         restaurant_type:     raw.restaurant_type     ?? '',
         city:                raw.city                ?? '',
-        year_established:    raw.year_established    ?? '',
         rating:              raw.rating              ?? '',
         review_count:        raw.review_count        ?? '',
         todays_specials:     raw.todays_specials     ?? '',

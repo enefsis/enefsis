@@ -115,7 +115,6 @@ export default async function LandingPage({ params, searchParams }: Props) {
     callWaiterEnabled:  page.call_waiter_enabled ?? false,
     restaurantType:     page.restaurant_type     ?? null,
     city:               page.city                ?? null,
-    yearEstablished:    page.year_established    ?? null,
     rating:             page.rating              ?? null,
     reviewCount:        page.review_count        ?? null,
     todaysSpecials:     page.todays_specials     ?? null,

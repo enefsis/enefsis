@@ -49,7 +49,6 @@ export async function savePageForClient(
     call_waiter_enabled: data.call_waiter_enabled ?? false,
     restaurant_type:     data.restaurant_type     || null,
     city:                data.city                || null,
-    year_established:    data.year_established    || null,
     rating:              data.rating              || null,
     review_count:        data.review_count        || null,
     todays_specials:     data.todays_specials     || null,

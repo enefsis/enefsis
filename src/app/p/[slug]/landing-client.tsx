@@ -64,7 +64,6 @@ const UI_KEYS = [
   'Waiter notified!',
   'Share this restaurant',
   'Link copied!',
-  'Since',
   'Table',
 ]
 
@@ -752,7 +751,6 @@ interface Props {
   callWaiterEnabled: boolean
   restaurantType: string | null
   city: string | null
-  yearEstablished: string | null
   rating: string | null
   reviewCount: string | null
   todaysSpecials: string | null
@@ -766,7 +764,7 @@ export function LandingClient({
   googleReviewUrl, instagramUrl, facebookUrl, tiktokUrl, whatsappNumber,
   menuSections,
   openingHours, phone, address, wifiName, wifiPassword, callWaiterEnabled,
-  restaurantType, city, yearEstablished, rating, reviewCount, todaysSpecials,
+  restaurantType, city, rating, reviewCount, todaysSpecials,
   tripAdvisorUrl, websiteUrl,
 }: Props) {
   const [lang, setLang] = useState('EN')
@@ -949,15 +947,7 @@ export function LandingClient({
                     )}
                   </div>
                 )}
-                {yearEstablished && (rating || reviewCount) && (
-                  <div className="w-px h-3 bg-white/20" />
-                )}
-                {yearEstablished && (
-                  <span className="font-sans text-xs" style={{ color: '#8A90A0' }}>
-                    {t('Since')} {yearEstablished}
-                  </span>
-                )}
-                {city && (yearEstablished || rating || reviewCount) && (
+                {city && (rating || reviewCount) && (
                   <div className="w-px h-3 bg-white/20" />
                 )}
                 {city && (
@@ -967,7 +957,7 @@ export function LandingClient({
                   </div>
                 )}
                 {/* Fallback when no dynamic meta is set */}
-                {!rating && !reviewCount && !yearEstablished && !city && (
+                {!rating && !reviewCount && !city && (
                   <div className="flex items-center gap-1.5">
                     <StarFilledIcon />
                     <span className="font-sans text-xs font-semibold text-white/80">4.9</span>
