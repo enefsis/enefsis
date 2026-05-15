@@ -143,7 +143,10 @@ export function ClientsTable({ clients }: { clients: ClientRow[] }) {
                   <span className="font-sans text-white/65 tabular-nums">
                     {(() => {
                       const v = sub?.custom_amount ?? sub?.amount
-                      return v != null ? `€${v.toLocaleString()}` : '—'
+                      if (v == null) return '—'
+                      const isYearly = sub?.plan?.endsWith('_yearly') ?? false
+                      const monthly  = isYearly ? v / 12 : v
+                      return `€${Number.isInteger(monthly) ? monthly : monthly.toFixed(2)}`
                     })()}
                   </span>
                 </td>

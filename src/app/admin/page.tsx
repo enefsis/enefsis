@@ -58,16 +58,17 @@ const PLAN_YEARLY: Record<string, number> = {
 }
 
 function rowMonthly(row: RawMrrRow): number {
-  if (row.custom_amount != null) return row.custom_amount
+  const isYearly = row.plan?.endsWith('_yearly') ?? false
+  if (row.custom_amount != null) return isYearly ? row.custom_amount / 12 : row.custom_amount
   if (row.plan && PLAN_MONTHLY[row.plan] !== undefined) return PLAN_MONTHLY[row.plan]
-  return row.amount ?? 0
+  return isYearly ? (row.amount ?? 0) / 12 : (row.amount ?? 0)
 }
 
 function rowAnnual(row: RawMrrRow): number {
   const isYearly = row.plan?.endsWith('_yearly') ?? false
   if (row.custom_amount != null) return isYearly ? row.custom_amount : row.custom_amount * 12
   if (row.plan && PLAN_YEARLY[row.plan] !== undefined) return PLAN_YEARLY[row.plan]
-  return (row.amount ?? 0) * 12
+  return isYearly ? (row.amount ?? 0) : (row.amount ?? 0) * 12
 }
 
 export default async function AdminPage() {
