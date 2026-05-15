@@ -58,9 +58,13 @@ export async function savePageForClient(
     updated_at:          new Date().toISOString(),
   }
 
+  // google_place_id is not yet in generated DB types — cast via any
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const payloadWithPlaceId: any = { ...payload, google_place_id: data.google_place_id || null }
+
   const { data: updatedRows, error } = await admin
     .from('client_pages')
-    .update(payload)
+    .update(payloadWithPlaceId)
     .eq('user_id', clientId)
     .select('id, slug')
 

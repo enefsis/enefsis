@@ -48,6 +48,8 @@ export default async function AdminPageEditorPage({
     year_established:    raw.year_established    ?? '',
     rating:              raw.rating              ?? '',
     review_count:        raw.review_count        ?? '',
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    google_place_id:     (raw as any).google_place_id ?? '',
     todays_specials:     raw.todays_specials     ?? '',
     trip_advisor_url:    raw.trip_advisor_url    ?? '',
     website_url:         raw.website_url         ?? '',

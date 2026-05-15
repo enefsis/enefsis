@@ -138,6 +138,9 @@ export function PageEditorClient({
   const [yearEstablished,   setYearEstablished]   = useState(initial?.year_established   ?? '')
   const [rating,            setRating]            = useState(initial?.rating             ?? '')
   const [reviewCount,       setReviewCount]       = useState(initial?.review_count       ?? '')
+  const [googlePlaceId,     setGooglePlaceId]     = useState(initial?.google_place_id   ?? '')
+  const [placeIdMsg,        setPlaceIdMsg]        = useState('')
+  const [isFetching,        setIsFetching]        = useState(false)
   const [todaysSpecials,    setTodaysSpecials]    = useState(initial?.todays_specials    ?? '')
   const [tripAdvisorUrl,    setTripAdvisorUrl]    = useState(initial?.trip_advisor_url   ?? '')
   const [websiteUrl,        setWebsiteUrl]        = useState(initial?.website_url        ?? '')
@@ -256,6 +259,31 @@ export function PageEditorClient({
     }))
   }
 
+  // ── Google Places fetch ──
+
+  async function handleFetchFromGoogle() {
+    const id = googlePlaceId.trim()
+    if (!id) return
+    setIsFetching(true)
+    setPlaceIdMsg('')
+    try {
+      const res  = await fetch(`/api/google-places?placeId=${encodeURIComponent(id)}`)
+      const json = await res.json() as { rating?: number | null; review_count?: number | null; error?: string }
+      if (json.error) {
+        setPlaceIdMsg(json.error)
+      } else {
+        if (json.rating       != null) setRating(String(json.rating))
+        if (json.review_count != null) setReviewCount(String(json.review_count))
+        setPlaceIdMsg('✓ Rating synced from Google')
+        setTimeout(() => setPlaceIdMsg(''), 4000)
+      }
+    } catch {
+      setPlaceIdMsg('Network error — could not reach Google')
+    } finally {
+      setIsFetching(false)
+    }
+  }
+
   // ── Save ──
 
   async function doSave(overrideSections?: LocalSection[]) {
@@ -284,6 +312,7 @@ export function PageEditorClient({
       todays_specials:     todaysSpecials,
       trip_advisor_url:    tripAdvisorUrl,
       website_url:         websiteUrl,
+      google_place_id:     googlePlaceId,
       menu_sections: sectionsToSave.map(({ id, name, items }) => ({
         id, name,
         items: items.map(({ id, name, price, description, photo_url, available, allergens }) => ({
@@ -405,6 +434,31 @@ export function PageEditorClient({
             <Field label="Review Count">
               <input type="text" value={reviewCount} onChange={e => setReviewCount(e.target.value)}
                 placeholder="200+" className={inputCls} />
+            </Field>
+            <Field label="Google Place ID">
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  value={googlePlaceId}
+                  onChange={e => { setGooglePlaceId(e.target.value); setPlaceIdMsg('') }}
+                  placeholder="e.g. ChIJN1t_tDeuEmsRUsoyG83frY4"
+                  className={cn(inputCls, 'flex-1 min-w-0')}
+                />
+                <button
+                  type="button"
+                  onClick={handleFetchFromGoogle}
+                  disabled={!googlePlaceId.trim() || isFetching}
+                  className="px-3 py-2 rounded-lg text-xs font-medium border border-white/[0.08] text-white/55 hover:text-white/80 hover:border-white/20 transition-colors disabled:opacity-40 shrink-0"
+                >
+                  {isFetching ? 'Fetching…' : 'Fetch from Google'}
+                </button>
+              </div>
+              <p className="text-[10px] text-white/25 mt-1">Find your Place ID on Google Maps</p>
+              {placeIdMsg && (
+                <p className={cn('text-[10px] mt-1', placeIdMsg.startsWith('✓') ? 'text-emerald-400' : 'text-red-400')}>
+                  {placeIdMsg}
+                </p>
+              )}
             </Field>
             <Field label="Today&apos;s Specials">
               <input type="text" value={todaysSpecials} onChange={e => setTodaysSpecials(e.target.value)}

@@ -59,6 +59,7 @@ export type PageData = {
   todays_specials: string
   trip_advisor_url: string
   website_url: string
+  google_place_id?: string
 }
 
 export async function savePage(data: PageData): Promise<{ slug?: string; error?: string }> {
@@ -97,6 +98,10 @@ export async function savePage(data: PageData): Promise<{ slug?: string; error?:
     updated_at:          new Date().toISOString(),
   }
 
+  // google_place_id is not yet in generated DB types — cast via any
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const payloadWithPlaceId: any = { ...payload, google_place_id: data.google_place_id || null }
+
   console.log('[savePage] user_id:', user.id)
   console.log('[savePage] payload URLs:', {
     google_review_url: payload.google_review_url,
@@ -109,7 +114,7 @@ export async function savePage(data: PageData): Promise<{ slug?: string; error?:
   // Single-step UPDATE keyed on user_id — returns the updated row(s)
   const { data: updatedRows, error: updateError } = await admin
     .from('client_pages')
-    .update(payload)
+    .update(payloadWithPlaceId)
     .eq('user_id', user.id)
     .select('id, slug')
 
@@ -129,7 +134,7 @@ export async function savePage(data: PageData): Promise<{ slug?: string; error?:
     const newSlug = buildSlug(data.restaurant_name, user.email ?? '')
     const { error: insertError } = await admin
       .from('client_pages')
-      .insert({ ...payload, user_id: user.id, slug: newSlug || null })
+      .insert({ ...payloadWithPlaceId, user_id: user.id, slug: newSlug || null })
 
     if (insertError) {
       console.log('[savePage] insert error:', insertError.message)
