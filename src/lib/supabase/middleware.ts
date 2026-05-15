@@ -42,12 +42,26 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.redirect(url)
   }
 
-  // Authenticated user on /login → send to /dashboard
-  // (role-based redirect happens in the login server action, not here)
-  if (user && isLoginPage) {
-    const url = request.nextUrl.clone()
-    url.pathname = '/dashboard'
-    return NextResponse.redirect(url)
+  // Authenticated user on /login or /dashboard → role-based redirect
+  if (user && (isLoginPage || pathname.startsWith('/dashboard'))) {
+    const { data: profileRaw } = await supabase
+      .from('profiles')
+      .select('role')
+      .eq('id', user.id)
+      .maybeSingle()
+    const role = (profileRaw as { role: string } | null)?.role?.toLowerCase()
+
+    if (isLoginPage) {
+      const url = request.nextUrl.clone()
+      url.pathname = role === 'admin' ? '/admin' : '/dashboard'
+      return NextResponse.redirect(url)
+    }
+
+    if (role === 'admin') {
+      const url = request.nextUrl.clone()
+      url.pathname = '/admin'
+      return NextResponse.redirect(url)
+    }
   }
 
   return supabaseResponse
