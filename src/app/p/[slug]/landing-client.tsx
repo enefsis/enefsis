@@ -807,7 +807,6 @@ export function LandingClient({
         ])
         const strings = [
           ...UI_KEYS,
-          restaurantName,
           ...(tagline        ? [tagline]        : []),
           ...(restaurantType ? [restaurantType] : []),
           ...(todaysSpecials ? [todaysSpecials] : []),
@@ -832,7 +831,7 @@ export function LandingClient({
         setIsTranslating(false)
       }
     },
-    [restaurantName, tagline, restaurantType, todaysSpecials, openingHours, menuSections],
+    [tagline, restaurantType, todaysSpecials, openingHours, menuSections],
   )
 
   useEffect(() => {
@@ -927,9 +926,9 @@ export function LandingClient({
                 </p>
               )}
 
-              {/* Restaurant name */}
+              {/* Restaurant name — never translated, always shown as-is */}
               <h1 className="font-display font-bold text-white leading-tight" style={{ fontSize: 34 }}>
-                {t(restaurantName)}
+                {restaurantName}
               </h1>
               {tagline && (
                 <p className="font-sans mt-1.5 leading-snug" style={{ fontSize: 13, color: 'rgba(255,255,255,0.55)' }}>
