@@ -63,7 +63,7 @@ function StatusBadge({ status }: { status: string | null }) {
   )
 }
 
-const HEADERS = ['Client', 'Plan', 'Status', 'Taps (30d)', 'MRR', 'Joined', 'Actions']
+const HEADERS = ['Client', 'Plan', 'Status', 'Taps (30d)', 'MRR', 'ARR', 'Joined', 'Actions']
 
 export function ClientsTable({ clients }: { clients: ClientRow[] }) {
   if (clients.length === 0) {
@@ -147,6 +147,19 @@ export function ClientsTable({ clients }: { clients: ClientRow[] }) {
                       const isYearly = sub?.plan?.endsWith('_yearly') ?? false
                       const monthly  = isYearly ? v / 12 : v
                       return `€${Number.isInteger(monthly) ? monthly : monthly.toFixed(2)}`
+                    })()}
+                  </span>
+                </td>
+
+                {/* ARR */}
+                <td className="px-4 py-3.5">
+                  <span className="font-sans text-white/65 tabular-nums">
+                    {(() => {
+                      const v = sub?.custom_amount ?? sub?.amount
+                      if (v == null) return '—'
+                      const isYearly = sub?.plan?.endsWith('_yearly') ?? false
+                      const annual   = isYearly ? v : v * 12
+                      return `€${annual.toLocaleString()}`
                     })()}
                   </span>
                 </td>
