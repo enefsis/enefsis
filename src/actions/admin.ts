@@ -21,11 +21,11 @@ async function requireAdmin() {
   const profile = raw as Pick<Profile, 'role'> | null
   if (profile?.role !== 'admin') redirect('/dashboard')
 
-  return supabase
+  return admin
 }
 
 export async function toggleSubscriptionStatus(formData: FormData) {
-  const supabase = await requireAdmin()
+  const admin = await requireAdmin()
 
   const subscriptionId = formData.get('subscriptionId') as string | null
   const newStatus      = formData.get('newStatus')      as string | null
@@ -33,7 +33,7 @@ export async function toggleSubscriptionStatus(formData: FormData) {
   if (!subscriptionId || !newStatus || !['active', 'suspended'].includes(newStatus)) return
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  await (supabase.from('subscriptions') as any)
+  await (admin.from('subscriptions') as any)
     .update({ status: newStatus })
     .eq('id', subscriptionId)
 
