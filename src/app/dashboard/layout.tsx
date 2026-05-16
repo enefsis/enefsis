@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation'
 import { cookies } from 'next/headers'
 import { createClient } from '@/lib/supabase/server'
 import { Sidebar } from '@/components/layout/sidebar'
+import { Toaster } from 'sonner'
 import type { Profile } from '@/types/database'
 
 const ADMIN_EMAIL = 'gniokos@gmail.com'
@@ -71,6 +72,7 @@ export default async function DashboardLayout({
         </main>
       </div>
 
+      <Toaster position="top-right" richColors />
     </div>
   )
 }

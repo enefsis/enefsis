@@ -3,6 +3,7 @@ import { headers } from 'next/headers'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { Sidebar } from '@/components/layout/sidebar'
+import { MobileAdminNav } from './mobile-nav'
 import { Toaster } from 'sonner'
 import type { Profile } from '@/types/database'
 
@@ -39,19 +40,26 @@ export default async function AdminLayout({
 
   if (profile?.role?.toLowerCase() !== 'admin') redirect('/dashboard')
 
+  const userProp = {
+    name:  profile?.full_name ?? null,
+    email: profile?.email ?? user.email ?? null,
+  }
+
   return (
     <div className="flex h-screen bg-[#0D0F14] overflow-hidden">
-      <Sidebar
-        navItems={navItems}
-        badge="Admin"
-        user={{
-          name:  profile?.full_name ?? null,
-          email: profile?.email ?? user.email ?? null,
-        }}
-      />
-      <main className="flex-1 overflow-y-auto">
-        {children}
-      </main>
+      {/* Desktop sidebar */}
+      <div className="hidden md:flex">
+        <Sidebar navItems={navItems} badge="Admin" user={userProp} />
+      </div>
+
+      {/* Content column (mobile top bar + main) */}
+      <div className="flex flex-col flex-1 min-w-0 overflow-hidden">
+        <MobileAdminNav navItems={navItems} badge="Admin" user={userProp} />
+        <main className="flex-1 overflow-y-auto">
+          {children}
+        </main>
+      </div>
+
       <Toaster position="top-right" richColors />
     </div>
   )

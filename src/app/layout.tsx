@@ -20,6 +20,10 @@ export const metadata: Metadata = {
     template: '%s | Enefsis',
   },
   description: 'Enefsis management dashboard',
+  icons: {
+    icon:  '/enefsis-logo-transparent.png',
+    apple: '/enefsis-logo-transparent.png',
+  },
 }
 
 export default function RootLayout({
@@ -29,6 +33,9 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" suppressHydrationWarning>
+      <head>
+        <link rel="icon" href="/enefsis-logo-transparent.png" />
+      </head>
       <body className={`${syne.variable} ${dmSans.variable} font-sans antialiased`}>
         {children}
       </body>

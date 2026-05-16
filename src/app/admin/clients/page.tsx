@@ -115,7 +115,7 @@ export default async function AdminClientsPage() {
   return (
     <div className="p-6 space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="font-display text-2xl font-bold text-white">Clients</h1>
           <p className="font-sans text-sm text-white/40 mt-0.5">
@@ -136,9 +136,11 @@ export default async function AdminClientsPage() {
         </div>
       </div>
 
-      {/* Table card */}
+      {/* Table card — horizontal scroll on mobile */}
       <div className="bg-[#141720] border border-white/[0.06] rounded-2xl overflow-hidden">
-        <ClientsListTable clients={clients} />
+        <div className="overflow-x-auto">
+          <ClientsListTable clients={clients} />
+        </div>
       </div>
     </div>
   )

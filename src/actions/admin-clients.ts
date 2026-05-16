@@ -166,16 +166,21 @@ export async function createClientAccount(
     return { success: false, error: standError.message }
   }
 
-  await logActivity(userId, 'Account created')
+  await logActivity(userId, 'Account created', 'Client account created by admin')
 
   revalidatePath('/admin/clients')
 
-  await sendWelcomeEmail({
-    name:         fullName,
-    email,
-    loginUrl:     'https://app.enefsis.com/login',
-    tempPassword,
-  })
+  try {
+    await sendWelcomeEmail({
+      name:         fullName,
+      email,
+      loginUrl:     'https://app.enefsis.com/login',
+      tempPassword,
+    })
+    console.log('[Welcome Email] sent to:', email)
+  } catch (err) {
+    console.error('[Welcome Email] failed:', err)
+  }
 
   return { success: true, slug, tempPassword, userId }
 }

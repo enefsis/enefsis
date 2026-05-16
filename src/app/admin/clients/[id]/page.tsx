@@ -199,7 +199,7 @@ export default async function ClientDetailPage({
 
       {/* Header card */}
       <div className="bg-[#141720] border border-white/[0.06] rounded-2xl p-6">
-        <div className="flex items-start justify-between gap-6">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between sm:gap-6">
           <div className="flex items-center gap-4">
             {/* Avatar */}
             <div
@@ -220,8 +220,8 @@ export default async function ClientDetailPage({
               </div>
             </div>
           </div>
-          {/* Action buttons */}
-          <div className="flex items-center gap-2.5 shrink-0">
+          {/* Action buttons — wrap on mobile */}
+          <div className="flex flex-wrap items-center gap-2 sm:shrink-0">
             {landingUrl && (
               <a
                 href={landingUrl}
@@ -256,9 +256,9 @@ export default async function ClientDetailPage({
       </div>
 
       {/* Stat cards */}
-      <div className="flex gap-4">
-        <StatCard label="Total Taps"     value={tapCount}   />
-        <StatCard label="Button Clicks"  value={clickCount} />
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <StatCard label="Total Taps"      value={tapCount}   />
+        <StatCard label="Button Clicks"   value={clickCount} />
         <StatCard label="Menu Item Views" value={viewCount}  />
       </div>
 
@@ -372,7 +372,8 @@ export default async function ClientDetailPage({
             <p className="font-sans text-sm text-white/25">No NFC stands yet</p>
           </div>
         ) : (
-          <div className="divide-y divide-white/[0.04]">
+          <div className="overflow-x-auto">
+          <div className="divide-y divide-white/[0.04] min-w-[560px]">
             {stands.map((stand, idx) => {
               const standUrl = page?.slug
                 ? `${appUrl}/p/${page.slug}?table=${idx + 1}`
@@ -414,6 +415,7 @@ export default async function ClientDetailPage({
               </div>
             )})}
 
+          </div>
           </div>
         )}
       </div>
