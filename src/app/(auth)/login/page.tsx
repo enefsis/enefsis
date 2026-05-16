@@ -2,7 +2,6 @@
 
 import { useFormState, useFormStatus } from 'react-dom'
 import { login, type LoginState } from './actions'
-import { Logo } from '@/components/ui/logo'
 
 const initialState: LoginState = { error: null }
 
@@ -27,8 +26,17 @@ export default function LoginPage() {
       {/* Card */}
       <div className="bg-[#141720] border border-white/[0.06] rounded-2xl p-8 shadow-2xl">
         {/* Logo */}
-        <div className="flex justify-center mb-8">
-          <Logo size="md" />
+        <div className="flex justify-center items-center gap-2.5 mb-8">
+          <img
+            src="/logo.svg"
+            alt="Enefsis"
+            width={32}
+            height={32}
+            style={{ width: 32, height: 32, objectFit: 'contain' }}
+          />
+          <span className="font-display font-bold text-white" style={{ fontSize: 24 }}>
+            Enefsis
+          </span>
         </div>
 
         {/* Heading */}
