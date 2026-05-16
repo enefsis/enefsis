@@ -152,16 +152,13 @@ export async function createClientAccount(
   }
 
   // ── 5. Create NFC stands ──
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? ''
-  const stands = Array.from({ length: nfcCount }, (_, i) => {
-    const standId = crypto.randomUUID()
-    return {
-      id:               standId,
-      user_id:          userId,
-      name:             `${bizName || fullName} – Stand ${i + 1}`,
-      landing_page_url: `${appUrl}/p/${slug}?sid=${standId}`,
-    }
-  })
+  const tapUrl = process.env.NEXT_PUBLIC_TAP_URL ?? 'https://tap.enefsis.com'
+  const stands = Array.from({ length: nfcCount }, (_, i) => ({
+    id:               crypto.randomUUID(),
+    user_id:          userId,
+    name:             `${bizName || fullName} – Stand ${i + 1}`,
+    landing_page_url: `${tapUrl}/p/${slug}?table=${i + 1}`,
+  }))
   const { error: standError } = await admin.from('nfc_stands').insert(stands)
   if (standError) {
     await rollback()

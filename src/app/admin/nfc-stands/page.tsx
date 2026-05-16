@@ -23,12 +23,12 @@ export default async function AdminNfcStandsPage() {
   const profiles = (rawProfiles as RawProfile[] | null) ?? []
   const pages    = (rawPages    as RawPage[]    | null) ?? []
 
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000'
+  const tapUrl = process.env.NEXT_PUBLIC_TAP_URL ?? 'https://tap.enefsis.com'
 
   // Default landing URL per user (from their published slug)
   const defaultUrlByUser: Record<string, string> = {}
   pages.forEach(p => {
-    if (p.slug) defaultUrlByUser[p.user_id] = `${appUrl}/p/${p.slug}`
+    if (p.slug) defaultUrlByUser[p.user_id] = `${tapUrl}/p/${p.slug}?table=1`
   })
 
   // Group stands by user_id
