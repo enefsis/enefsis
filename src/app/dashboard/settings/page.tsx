@@ -16,7 +16,7 @@ export default async function DashboardSettingsPage() {
   const admin = createAdminClient()
 
   const [{ data: profileRaw }, { data: standsRaw }] = await Promise.all([
-    supabase
+    admin
       .from('profiles')
       .select('full_name, email')
       .eq('id', user.id)

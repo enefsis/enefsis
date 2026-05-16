@@ -27,12 +27,15 @@ export default async function MenuViewsPage() {
 
   const d30 = new Date(Date.now() - 30 * 86_400_000).toISOString()
 
+  const admin = createAdminClient()
+
   const [{ data: rawViews }, { data: rawPage }] = await Promise.all([
-    supabase
+    admin
       .from('menu_item_views')
       .select('created_at, item_id, item_name')
+      .eq('client_id', user.id)
       .gte('created_at', d30),
-    createAdminClient()
+    admin
       .from('client_pages')
       .select('menu_sections')
       .eq('user_id', user.id)
