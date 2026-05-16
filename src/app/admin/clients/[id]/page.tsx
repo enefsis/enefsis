@@ -373,7 +373,11 @@ export default async function ClientDetailPage({
           </div>
         ) : (
           <div className="divide-y divide-white/[0.04]">
-            {stands.map((stand, idx) => (
+            {stands.map((stand, idx) => {
+              const standUrl = page?.slug
+                ? `${appUrl}/p/${page.slug}?table=${idx + 1}`
+                : stand.landing_page_url
+              return (
               <div key={stand.id} className="flex items-center gap-4 px-5 py-3.5 hover:bg-white/[0.018] transition-colors">
                 {/* Stand name */}
                 <div className="w-40 shrink-0">
@@ -386,19 +390,19 @@ export default async function ClientDetailPage({
                 {/* URL */}
                 <div className="flex-1 flex items-center gap-1.5 min-w-0">
                   <span className="font-mono text-[11px] text-gray-400 truncate">
-                    {stand.landing_page_url}
+                    {standUrl}
                   </span>
-                  <CopyButton text={stand.landing_page_url} />
+                  <CopyButton text={standUrl} />
                 </div>
                 {/* Date */}
                 <span className="font-sans text-xs text-gray-400 shrink-0 w-24 text-right">
                   {fmt(stand.created_at)}
                 </span>
                 {/* QR */}
-                <QrButton url={stand.landing_page_url} />
+                <QrButton url={standUrl} />
                 {/* Open */}
                 <a
-                  href={stand.landing_page_url}
+                  href={standUrl}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-sans text-xs font-medium shrink-0 transition-colors"
@@ -408,7 +412,8 @@ export default async function ClientDetailPage({
                   Open
                 </a>
               </div>
-            ))}
+            )})}
+
           </div>
         )}
       </div>

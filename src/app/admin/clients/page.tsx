@@ -107,7 +107,7 @@ export default async function AdminClientsPage() {
       mrr:        active ? calcMrr(sub?.plan ?? null, sub?.amount ?? null, sub?.custom_amount ?? null) : 0,
       arr:        active ? calcArr(sub?.plan ?? null, sub?.amount ?? null, sub?.custom_amount ?? null) : 0,
       nfcStands:  standCountByUser[p.id] ?? 0,
-      joined:     p.created_at.slice(0, 10),
+      joined:     (() => { const [y,m,d] = p.created_at.slice(0,10).split('-'); return `${d}-${m}-${y}` })(),
       landingUrl: page?.slug ? `${appUrl}/p/${page.slug}` : '',
     }
   }) ?? []
