@@ -1,10 +1,12 @@
 export const revalidate = 0
 export const dynamic = 'force-dynamic'
 
+import { Suspense } from 'react'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { MenuViewsChart, type ViewsDay } from '@/components/dashboard/menu-views-chart'
+import { DateRangeFilterUrl } from '@/components/dashboard/date-range-filter-url'
 import type { MenuSectionData } from '@/actions/page-editor'
 
 export const metadata = { title: 'Menu Views' }
@@ -23,12 +25,19 @@ function fmtDay(iso: string) {
   return new Date(iso + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
 }
 
-export default async function MenuViewsPage() {
+export default async function MenuViewsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ days?: string }>
+}) {
+  const sp   = await searchParams
+  const days = parseInt(sp.days ?? '30') || 30
+
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
-  const d30 = new Date(Date.now() - 30 * 86_400_000).toISOString()
+  const dStart = new Date(Date.now() - days * 86_400_000).toISOString()
 
   const admin = createAdminClient()
 
@@ -37,7 +46,7 @@ export default async function MenuViewsPage() {
       .from('menu_item_views')
       .select('created_at, item_id, item_name')
       .eq('client_id', user.id)
-      .gte('created_at', d30),
+      .gte('created_at', dStart),
     admin
       .from('client_pages')
       .select('menu_sections')
@@ -75,7 +84,7 @@ export default async function MenuViewsPage() {
     const day = v.created_at.slice(0, 10)
     viewsByDay[day] = (viewsByDay[day] ?? 0) + 1
   })
-  const chartData: ViewsDay[] = buildDateRange(30).map(date => ({
+  const chartData: ViewsDay[] = buildDateRange(days).map(date => ({
     date:  fmtDay(date),
     views: viewsByDay[date] ?? 0,
   }))
@@ -93,9 +102,14 @@ export default async function MenuViewsPage() {
   return (
     <div className="p-6 space-y-6">
       {/* Header */}
-      <div>
-        <h1 className="font-display text-2xl font-bold text-white">Menu Views</h1>
-        <p className="font-sans text-sm text-white/40 mt-0.5">Last 30 days</p>
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+        <div>
+          <h1 className="font-display text-2xl font-bold text-white">Menu Views</h1>
+          <p className="font-sans text-sm text-white/40 mt-0.5">{days === 1 ? 'Today' : `Last ${days} days`}</p>
+        </div>
+        <Suspense>
+          <DateRangeFilterUrl />
+        </Suspense>
       </div>
 
       {/* Stat cards */}
@@ -116,7 +130,7 @@ export default async function MenuViewsPage() {
       {/* Views over time */}
       <div className="bg-[#141720] border border-white/[0.06] rounded-2xl p-5">
         <h2 className="font-display font-semibold text-white text-base">Views Over Time</h2>
-        <p className="font-sans text-xs text-white/35 mt-0.5 mb-5">Daily menu item views, last 30 days</p>
+        <p className="font-sans text-xs text-white/35 mt-0.5 mb-5">Daily menu item views, {days === 1 ? 'today' : `last ${days} days`}</p>
         <MenuViewsChart data={chartData} />
       </div>
 

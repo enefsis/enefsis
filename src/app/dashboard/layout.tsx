@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation'
 import { cookies } from 'next/headers'
 import { createClient } from '@/lib/supabase/server'
 import { Sidebar } from '@/components/layout/sidebar'
+import { NotificationsBell } from '@/components/dashboard/notifications-bell'
 import { Toaster } from 'sonner'
 import type { Profile } from '@/types/database'
 
@@ -67,9 +68,14 @@ export default async function DashboardLayout({
             email: profile?.email ?? user.email ?? null,
           }}
         />
-        <main className="flex-1 overflow-y-auto">
-          {children}
-        </main>
+        <div className="flex flex-col flex-1 overflow-hidden">
+          <header className="h-[52px] shrink-0 border-b border-white/[0.05] bg-[#0D0F14] flex items-center justify-end px-5">
+            <NotificationsBell />
+          </header>
+          <main className="flex-1 overflow-y-auto">
+            {children}
+          </main>
+        </div>
       </div>
 
       <Toaster position="top-right" richColors />

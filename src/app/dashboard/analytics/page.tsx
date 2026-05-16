@@ -1,11 +1,13 @@
 export const revalidate = 0
 export const dynamic = 'force-dynamic'
 
+import { Suspense } from 'react'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { cn } from '@/lib/utils'
 import { AnalyticsChart, type AnalyticsDay } from '@/components/dashboard/analytics-chart'
+import { DateRangeFilterUrl } from '@/components/dashboard/date-range-filter-url'
 
 export const metadata = { title: 'Analytics' }
 
@@ -118,12 +120,19 @@ function Heatmap({ data }: { data: number[][] }) {
 }
 
 // ── Page ──────────────────────────────────────────────────────────────────────
-export default async function AnalyticsPage() {
+export default async function AnalyticsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ days?: string }>
+}) {
+  const sp   = await searchParams
+  const days = parseInt(sp.days ?? '30') || 30
+
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
-  const d90          = new Date(Date.now() - 90 * 86_400_000).toISOString()
+  const dStart        = new Date(Date.now() - days * 86_400_000).toISOString()
   const supabaseAdmin = createAdminClient()
 
   // ── Parallel data fetch — service role bypasses RLS ───────────────────────
@@ -132,15 +141,15 @@ export default async function AnalyticsPage() {
     (supabaseAdmin as any).from('tap_events')
       .select('created_at, device_type, language, table_number, visitor_id')
       .eq('user_id', user.id)
-      .gte('created_at', d90),
+      .gte('created_at', dStart),
     supabaseAdmin.from('button_clicks')
       .select('created_at, button_type, table_number')
       .eq('client_id', user.id)
-      .gte('created_at', d90),
+      .gte('created_at', dStart),
     supabaseAdmin.from('menu_item_views')
       .select('created_at, item_id, item_name')
       .eq('client_id', user.id)
-      .gte('created_at', d90),
+      .gte('created_at', dStart),
   ])
 
   const taps      = (tapsRes.data   as TapFull[]   | null) ?? []
@@ -161,7 +170,7 @@ export default async function AnalyticsPage() {
       uniqueMap[day].add(t.visitor_id)
     }
   })
-  const chartData: AnalyticsDay[] = buildDateRange(90).map(date => ({
+  const chartData: AnalyticsDay[] = buildDateRange(days).map(date => ({
     date:       fmtDay(date),
     taps:       tapsMap[date]        ?? 0,
     uniqueTaps: uniqueMap[date]?.size ?? 0,
@@ -182,7 +191,8 @@ export default async function AnalyticsPage() {
   })
 
   // ── Weekly comparison ─────────────────────────────────────────────────────
-  const weeks = Array.from({ length: 8 }, (_, wi) => {
+  const numWeeks = Math.min(8, Math.max(1, Math.floor(days / 7)))
+  const weeks = Array.from({ length: numWeeks }, (_, wi) => {
     const endMs   = Date.now() - wi * 7 * 86_400_000
     const startMs = Date.now() - (wi + 1) * 7 * 86_400_000
     const count   = taps.filter(t => {
@@ -274,9 +284,14 @@ export default async function AnalyticsPage() {
     <div className="p-6 space-y-6">
 
       {/* Header */}
-      <div>
-        <h1 className="font-display text-2xl font-bold text-white">Analytics</h1>
-        <p className="font-sans text-sm text-white/40 mt-0.5">Last 90 days</p>
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+        <div>
+          <h1 className="font-display text-2xl font-bold text-white">Analytics</h1>
+          <p className="font-sans text-sm text-white/40 mt-0.5">{days === 1 ? 'Today' : `Last ${days} days`}</p>
+        </div>
+        <Suspense>
+          <DateRangeFilterUrl />
+        </Suspense>
       </div>
 
       {/* Stat cards */}
@@ -298,7 +313,7 @@ export default async function AnalyticsPage() {
       {/* 90-day chart */}
       <div className="bg-[#141720] border border-white/[0.06] rounded-2xl p-5">
         <h2 className="font-display font-semibold text-white text-base">Daily Taps</h2>
-        <p className="font-sans text-xs text-white/35 mt-0.5 mb-5">Tap events per day, last 90 days</p>
+        <p className="font-sans text-xs text-white/35 mt-0.5 mb-5">Tap events per day, {days === 1 ? 'today' : `last ${days} days`}</p>
         <AnalyticsChart data={chartData} />
       </div>
 

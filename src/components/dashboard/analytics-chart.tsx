@@ -32,6 +32,7 @@ export function AnalyticsChart({ data }: { data: AnalyticsDay[] }) {
       <p className="font-sans text-sm text-white/25">No tap data for this period</p>
     </div>
   )
+  const tickInterval = data.length <= 7 ? 0 : data.length <= 31 ? 5 : 13
   return (
     <div>
       <div className="flex items-center gap-5 mb-4">
@@ -52,7 +53,7 @@ export function AnalyticsChart({ data }: { data: AnalyticsDay[] }) {
             tick={{ fill: 'rgba(255,255,255,0.28)', fontSize: 10, fontFamily: 'var(--font-dm-sans)' }}
             axisLine={false}
             tickLine={false}
-            interval={13}
+            interval={tickInterval}
           />
           <YAxis
             tick={{ fill: 'rgba(255,255,255,0.28)', fontSize: 10, fontFamily: 'var(--font-dm-sans)' }}

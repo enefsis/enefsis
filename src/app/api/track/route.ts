@@ -1,6 +1,87 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 
+type AdminClient = ReturnType<typeof createAdminClient>
+
+const MILESTONES = [1, 10, 50, 100, 500, 1000]
+
+async function fireNotificationChecks(admin: AdminClient, userId: string) {
+  try {
+    const now        = new Date()
+    const todayStart = now.toISOString().slice(0, 10) + 'T00:00:00.000Z'
+    const ago90      = new Date(now.getTime() - 90 * 86_400_000).toISOString()
+
+    const [
+      { count: total },
+      { count: todayCount },
+      { data: prevTaps },
+    ] = await Promise.all([
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (admin as any).from('tap_events').select('*', { count: 'exact', head: true }).eq('user_id', userId),
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (admin as any).from('tap_events').select('*', { count: 'exact', head: true }).eq('user_id', userId).gte('created_at', todayStart),
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (admin as any).from('tap_events').select('created_at').eq('user_id', userId).gte('created_at', ago90).lt('created_at', todayStart),
+    ])
+
+    const totalTaps = total     ?? 0
+    const today     = todayCount ?? 0
+
+    // ── Milestone notifications ──────────────────────────────────────────────
+    if (MILESTONES.includes(totalTaps)) {
+      const title = totalTaps === 1
+        ? 'First tap! 🎉'
+        : `You reached ${totalTaps.toLocaleString()} taps! 🎉`
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data: exists } = await (admin as any)
+        .from('notifications')
+        .select('id')
+        .eq('user_id', userId)
+        .eq('title', title)
+        .maybeSingle()
+      if (!exists) {
+        const message = totalTaps === 1
+          ? 'Your NFC stand just received its very first tap. The journey begins!'
+          : `Congratulations! Your NFC page has now received ${totalTaps.toLocaleString()} total taps.`
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        await (admin as any).from('notifications').insert({ user_id: userId, title, message })
+      }
+    }
+
+    // ── Daily record notification ────────────────────────────────────────────
+    if (today >= 5) {
+      const dayMap: Record<string, number> = {}
+      ;(prevTaps as { created_at: string }[] | null ?? []).forEach(row => {
+        const day = row.created_at.slice(0, 10)
+        dayMap[day] = (dayMap[day] ?? 0) + 1
+      })
+      const maxPrev = Object.values(dayMap).reduce((a, b) => Math.max(a, b), 0)
+
+      if (maxPrev > 0 && today > maxPrev) {
+        const title = `New daily record! ${today} taps today`
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const { data: exists } = await (admin as any)
+          .from('notifications')
+          .select('id')
+          .eq('user_id', userId)
+          .eq('title', title)
+          .maybeSingle()
+        if (!exists) {
+          const dayLabel = now.toLocaleDateString('en-US', { month: 'long', day: 'numeric' })
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          await (admin as any).from('notifications').insert({
+            user_id: userId,
+            title,
+            message: `${dayLabel} is your best day yet with ${today} taps — beating your previous record of ${maxPrev}.`,
+          })
+        }
+      }
+    }
+  } catch {
+    // Never crash the track route over a notification failure
+  }
+}
+
 const ALLOWED_BUTTON_TYPES = new Set([
   'instagram',
   'facebook',
@@ -60,6 +141,9 @@ export async function POST(req: NextRequest) {
         { status: 500, headers: CORS_HEADERS }
       )
     }
+
+    // Fire milestone + record checks without blocking the response
+    void fireNotificationChecks(supabase, client_id as string).catch(() => {})
 
     return NextResponse.json({ ok: true }, { status: 200, headers: CORS_HEADERS })
   }
