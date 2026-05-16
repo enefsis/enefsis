@@ -21,8 +21,11 @@ export const metadata: Metadata = {
   },
   description: 'Enefsis management dashboard',
   icons: {
-    icon:  '/enefsis-logo-transparent.png',
-    apple: '/enefsis-logo-transparent.png',
+    icon: [
+      { url: '/favicon-32.png', sizes: '32x32', type: 'image/png' },
+      { url: '/favicon.png', type: 'image/png' },
+    ],
+    apple: '/apple-touch-icon.png',
   },
 }
 
@@ -34,7 +37,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
-        <link rel="icon" href="/enefsis-logo-transparent.png" />
+        <link rel="icon" href="/favicon-32.png" />
       </head>
       <body className={`${syne.variable} ${dmSans.variable} font-sans antialiased`}>
         {children}
