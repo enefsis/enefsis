@@ -144,45 +144,40 @@ export default async function ClientDetailPage({
   const { id } = await params
   const admin   = createAdminClient()
 
-  // ── Fetch all data ────────────────────────────────────────────────────────
-  const [profileRes, subRes, pageRes, standsRes, paymentsRes, activityRes] = await Promise.all([
+  // ── Fetch all data in one parallel batch ─────────────────────────────────
+  const [profileRes, subRes, pageRes, standsRes, paymentsRes, activityRes, tapRes, clickRes, viewRes] = await Promise.all([
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    (admin.from('profiles') as any).select('id, full_name, email, created_at, admin_notes').eq('id', id).maybeSingle(),
+    (admin as any).from('profiles').select('id, full_name, email, created_at, admin_notes').eq('id', id).maybeSingle(),
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    (admin.from('subscriptions') as any).select('id, plan, status, amount, next_billing_date, payment_method, custom_amount').eq('user_id', id).order('created_at', { ascending: false }).limit(1).maybeSingle(),
+    (admin as any).from('subscriptions').select('id, plan, status, amount, next_billing_date, payment_method, custom_amount').eq('user_id', id).order('created_at', { ascending: false }).limit(1).maybeSingle(),
     admin.from('client_pages').select('slug, restaurant_name').eq('user_id', id).maybeSingle(),
     admin.from('nfc_stands').select('id, name, landing_page_url, created_at').eq('user_id', id).order('created_at', { ascending: true }),
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (admin as any).from('payments').select('id, amount, payment_method, notes, paid_at').eq('user_id', id).order('paid_at', { ascending: false }),
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (admin as any).from('activity_log').select('id, action, created_at').eq('user_id', id).order('created_at', { ascending: false }).limit(10),
+    // Stats — service role bypasses RLS on all three tables
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (admin as any).from('tap_events').select('*', { count: 'exact', head: true }).eq('user_id', id),
+    admin.from('button_clicks').select('*', { count: 'exact', head: true }).eq('client_id', id),
+    admin.from('menu_item_views').select('*', { count: 'exact', head: true }).eq('client_id', id),
   ])
 
   const profile = profileRes.data as Profile | null
   if (!profile) notFound()
 
-  const sub    = subRes.data   as Sub    | null
-  const page   = pageRes.data  as Page   | null
-  const stands     = (standsRes.data    as Stand[]    | null) ?? []
-  const payments   = (paymentsRes.data  as Payment[]  | null) ?? []
-  const activities = (activityRes.data  as Activity[] | null) ?? []
+  const sub        = subRes.data   as Sub    | null
+  const page       = pageRes.data  as Page   | null
+  const stands     = (standsRes.data   as Stand[]    | null) ?? []
+  const payments   = (paymentsRes.data as Payment[]  | null) ?? []
+  const activities = (activityRes.data as Activity[] | null) ?? []
 
-  const standIds   = stands.map(s => s.id)
+  const tapCount   = (tapRes   as { count: number | null }).count ?? 0
+  const clickCount = (clickRes as { count: number | null }).count ?? 0
+  const viewCount  = (viewRes  as { count: number | null }).count ?? 0
+
   const appUrl     = process.env.NEXT_PUBLIC_TAP_URL ?? 'http://localhost:3000'
   const landingUrl = page?.slug ? `${appUrl}/p/${page.slug}` : null
-
-  // ── Stats ────────────────────────────────────────────────────────────────
-  const [tapRes, clickRes, viewRes] = await Promise.all([
-    standIds.length
-      ? admin.from('tap_events').select('*', { count: 'exact', head: true }).in('stand_id', standIds)
-      : Promise.resolve({ count: 0 }),
-    admin.from('button_clicks').select('*', { count: 'exact', head: true }).eq('client_id', id),
-    admin.from('menu_item_views').select('*', { count: 'exact', head: true }).eq('client_id', id),
-  ])
-
-  const tapCount   = tapRes.count   ?? 0
-  const clickCount = clickRes.count ?? 0
-  const viewCount  = viewRes.count  ?? 0
   const color      = avatarColor(id)
 
   return (
