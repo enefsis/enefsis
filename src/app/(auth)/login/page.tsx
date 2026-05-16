@@ -26,17 +26,8 @@ export default function LoginPage() {
       {/* Card */}
       <div className="bg-[#141720] border border-white/[0.06] rounded-2xl p-8 shadow-2xl">
         {/* Logo */}
-        <div className="flex justify-center items-center gap-2.5 mb-8">
-          <img
-            src="/logo.svg"
-            alt="Enefsis"
-            width={32}
-            height={32}
-            style={{ width: 32, height: 32, objectFit: 'contain' }}
-          />
-          <span className="font-display font-bold text-white" style={{ fontSize: 24 }}>
-            Enefsis
-          </span>
+        <div className="flex justify-center mb-8">
+          <img src="/enefsis-logo-transparent.png" alt="Enefsis" style={{ height: '120px', objectFit: 'contain' }} />
         </div>
 
         {/* Heading */}
