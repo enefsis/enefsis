@@ -5,6 +5,7 @@ import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { sendWelcomeEmail } from '@/lib/email'
+import { logActivity } from '@/lib/activity-log'
 import { stripe } from '@/lib/stripe/client'
 import type Stripe from 'stripe'
 import type { Profile } from '@/types/database'
@@ -165,6 +166,8 @@ export async function createClientAccount(
     return { success: false, error: standError.message }
   }
 
+  await logActivity(userId, 'Account created')
+
   revalidatePath('/admin/clients')
 
   await sendWelcomeEmail({
@@ -175,6 +178,36 @@ export async function createClientAccount(
   })
 
   return { success: true, slug, tempPassword, userId }
+}
+
+// ── Save admin notes ──────────────────────────────────────────────────────────
+
+export async function saveAdminNotes(
+  clientId: string,
+  notes: string,
+): Promise<{ error?: string }> {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) redirect('/login')
+
+  const admin = createAdminClient()
+
+  const { data: callerRaw } = await admin
+    .from('profiles')
+    .select('role')
+    .eq('id', user.id)
+    .maybeSingle()
+  const caller = callerRaw as Pick<Profile, 'role'> | null
+  if (caller?.role !== 'admin') redirect('/dashboard')
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { error } = await (admin.from('profiles') as any)
+    .update({ admin_notes: notes || null })
+    .eq('id', clientId)
+  if (error) return { error: (error as { message: string }).message }
+
+  revalidatePath(`/admin/clients/${clientId}`)
+  return {}
 }
 
 // ── Update existing client ────────────────────────────────────────────────────
@@ -205,6 +238,7 @@ export async function updateClientInfo(
   const paymentMethod = (formData.get('payment_method') as string | null)?.trim() ?? 'stripe'
   const customAmountStr = (formData.get('custom_amount') as string | null)?.trim() ?? ''
   const paymentNotes  = (formData.get('payment_notes')  as string | null)?.trim() ?? ''
+  const adminNotes    = (formData.get('admin_notes')    as string | null)?.trim() ?? ''
 
   const customAmount = customAmountStr !== '' ? parseInt(customAmountStr, 10) : null
 
@@ -226,9 +260,9 @@ export async function updateClientInfo(
   const currentPlan   = (currentSubRaw as { plan: string; status: string } | null)?.plan               ?? ''
   const currentStatus = (currentSubRaw as { plan: string; status: string } | null)?.status             ?? ''
 
-  // Update profiles row (created_at cast via any — not in generated Update type)
+  // Update profiles row (created_at / admin_notes cast via any — not in generated Update type)
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const profileUpdate: any = { full_name: fullName, email }
+  const profileUpdate: any = { full_name: fullName, email, admin_notes: adminNotes || null }
   if (joinedDate) {
     const [dd, mm, yyyy] = joinedDate.split('-')
     const parsed = new Date(`${yyyy}-${mm}-${dd}`)
@@ -267,9 +301,13 @@ export async function updateClientInfo(
   revalidatePath('/admin/clients')
   revalidatePath('/admin')
 
-  // ── Stripe sync ───────────────────────────────────────────────────────────
+  // ── Activity logging ──────────────────────────────────────────────────────
   const planChanged   = plan   !== currentPlan
   const statusChanged = status !== currentStatus
+  if (planChanged)   await logActivity(clientId, `Plan changed to ${plan}`)
+  if (statusChanged) await logActivity(clientId, `Status changed to ${status}`)
+
+  // ── Stripe sync ───────────────────────────────────────────────────────────
 
   if (planChanged || statusChanged) {
     try {
@@ -364,6 +402,47 @@ export async function impersonateClient(
   return { url }
 }
 
+// ── Add payment ───────────────────────────────────────────────────────────────
+
+export async function addPayment(
+  userId:        string,
+  amount:        number,
+  paymentMethod: string,
+  notes:         string,
+  paidAt:        string,
+): Promise<{ error?: string }> {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) redirect('/login')
+
+  const admin = createAdminClient()
+
+  const { data: callerRaw } = await admin
+    .from('profiles')
+    .select('role')
+    .eq('id', user.id)
+    .maybeSingle()
+  const caller = callerRaw as Pick<Profile, 'role'> | null
+  if (caller?.role !== 'admin') redirect('/dashboard')
+
+  if (!amount || amount <= 0) return { error: 'Amount must be a positive number.' }
+  if (!['stripe', 'cash', 'bank_transfer'].includes(paymentMethod)) return { error: 'Invalid payment method.' }
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { error } = await (admin as any).from('payments').insert({
+    user_id:        userId,
+    amount,
+    payment_method: paymentMethod,
+    notes:          notes || null,
+    paid_at:        paidAt || new Date().toISOString(),
+  })
+  if (error) return { error: (error as { message: string }).message }
+
+  await logActivity(userId, 'Payment recorded')
+  revalidatePath(`/admin/clients/${userId}`)
+  return {}
+}
+
 // ── Delete client ─────────────────────────────────────────────────────────────
 
 export async function deleteClient(
@@ -389,6 +468,8 @@ export async function deleteClient(
   await (admin.from('button_clicks') as any).delete().eq('client_id', clientId)
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   await (admin.from('menu_item_views') as any).delete().eq('client_id', clientId)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  await (admin as any).from('payments').delete().eq('user_id', clientId)
   await admin.from('nfc_stands').delete().eq('user_id', clientId)
   await admin.from('subscriptions').delete().eq('user_id', clientId)
   await admin.from('client_pages').delete().eq('user_id', clientId)

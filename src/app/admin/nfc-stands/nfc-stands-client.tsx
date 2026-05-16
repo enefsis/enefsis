@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { CopyButton } from '@/components/admin/copy-button'
+import { QrButton } from '@/components/admin/qr-button'
 import { createNfcStand } from '@/actions/admin-nfc'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -282,6 +283,9 @@ export function NfcStandsClient({
                             <span className="font-sans text-xs text-gray-400 shrink-0 w-24 text-right">
                               {fmt(stand.createdAt)}
                             </span>
+
+                            {/* QR */}
+                            <QrButton url={stand.landingPageUrl} />
 
                             {/* Open link */}
                             <a

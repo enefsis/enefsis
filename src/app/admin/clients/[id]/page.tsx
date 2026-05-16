@@ -2,14 +2,20 @@ import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { CopyButton } from '@/components/admin/copy-button'
+import { QrButton } from '@/components/admin/qr-button'
 import { ImpersonateButton } from './impersonate-button'
 import { DeleteClientButton } from './delete-client-button'
+import { NotesEditor } from './notes-editor'
+import { PaymentHistory, type PaymentRow } from './payment-history'
+import { ActivityLog, type ActivityEntry } from './activity-log'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
-type Profile  = { id: string; full_name: string | null; email: string; created_at: string }
+type Profile  = { id: string; full_name: string | null; email: string; created_at: string; admin_notes: string | null }
 type Sub      = { id: string; plan: string | null; status: string | null; amount: number | null; next_billing_date: string | null; payment_method: string | null; custom_amount: number | null }
 type Page     = { slug: string | null; restaurant_name: string | null }
 type Stand    = { id: string; name: string | null; landing_page_url: string; created_at: string }
+type Payment  = { id: string; amount: number; payment_method: string | null; notes: string | null; paid_at: string }
+type Activity = { id: string; action: string; created_at: string }
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 function fmt(iso: string) {
@@ -44,6 +50,14 @@ const PLAN_AMOUNTS: Record<string, string> = {
 function fmtPaymentMethod(pm: string | null) {
   const map: Record<string, string> = { stripe: 'Stripe', cash: 'Cash', bank_transfer: 'Bank Transfer' }
   return pm ? (map[pm] ?? pm) : '—'
+}
+
+function renewalBadge(dateStr: string | null): { text: string; color: string } | null {
+  if (!dateStr) return null
+  const days = Math.ceil((new Date(dateStr).getTime() - Date.now()) / 86_400_000)
+  const text  = days < 0 ? 'Overdue' : `Renews in ${days}d`
+  const color = days > 14 ? '#34D399' : days >= 7 ? '#FBBF24' : '#F87171'
+  return { text, color }
 }
 
 function PlanBadge({ plan }: { plan: string | null }) {
@@ -131,12 +145,17 @@ export default async function ClientDetailPage({
   const admin   = createAdminClient()
 
   // ── Fetch all data ────────────────────────────────────────────────────────
-  const [profileRes, subRes, pageRes, standsRes] = await Promise.all([
-    admin.from('profiles').select('id, full_name, email, created_at').eq('id', id).maybeSingle(),
+  const [profileRes, subRes, pageRes, standsRes, paymentsRes, activityRes] = await Promise.all([
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (admin.from('profiles') as any).select('id, full_name, email, created_at, admin_notes').eq('id', id).maybeSingle(),
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (admin.from('subscriptions') as any).select('id, plan, status, amount, next_billing_date, payment_method, custom_amount').eq('user_id', id).order('created_at', { ascending: false }).limit(1).maybeSingle(),
     admin.from('client_pages').select('slug, restaurant_name').eq('user_id', id).maybeSingle(),
     admin.from('nfc_stands').select('id, name, landing_page_url, created_at').eq('user_id', id).order('created_at', { ascending: true }),
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (admin as any).from('payments').select('id, amount, payment_method, notes, paid_at').eq('user_id', id).order('paid_at', { ascending: false }),
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (admin as any).from('activity_log').select('id, action, created_at').eq('user_id', id).order('created_at', { ascending: false }).limit(10),
   ])
 
   const profile = profileRes.data as Profile | null
@@ -144,7 +163,9 @@ export default async function ClientDetailPage({
 
   const sub    = subRes.data   as Sub    | null
   const page   = pageRes.data  as Page   | null
-  const stands = (standsRes.data as Stand[] | null) ?? []
+  const stands     = (standsRes.data    as Stand[]    | null) ?? []
+  const payments   = (paymentsRes.data  as Payment[]  | null) ?? []
+  const activities = (activityRes.data  as Activity[] | null) ?? []
 
   const standIds   = stands.map(s => s.id)
   const appUrl     = process.env.NEXT_PUBLIC_TAP_URL ?? 'http://localhost:3000'
@@ -248,11 +269,12 @@ export default async function ClientDetailPage({
         <div className="bg-[#141720] border border-white/[0.06] rounded-2xl p-5 space-y-4">
           <h2 className="font-display font-semibold text-white text-sm">Account</h2>
           {[
-            { label: 'Email',        value: profile.email },
-            { label: 'Joined',       value: fmt(profile.created_at) },
-            { label: 'Plan',         value: sub?.plan ? fmtPlan(sub.plan) : '—' },
+            { label: 'Email',        value: profile.email,                    badge: null },
+            { label: 'Joined',       value: fmt(profile.created_at),          badge: null },
+            { label: 'Plan',         value: sub?.plan ? fmtPlan(sub.plan) : '—', badge: null },
             {
               label: 'Amount',
+              badge: null,
               value: sub?.custom_amount != null
                 ? `€${sub.custom_amount} (custom)`
                 : sub?.plan && PLAN_AMOUNTS[sub.plan]
@@ -261,15 +283,25 @@ export default async function ClientDetailPage({
                     ? `€${sub.amount}`
                     : '—',
             },
-            { label: 'Payment',      value: fmtPaymentMethod(sub?.payment_method ?? null) },
-            { label: 'Next Billing', value: sub?.next_billing_date ? fmt(sub.next_billing_date) : '—' },
-            { label: 'Sub ID',       value: sub?.id ? sub.id.substring(0, 8) + '…' : '—', mono: true },
+            { label: 'Payment',      value: fmtPaymentMethod(sub?.payment_method ?? null), badge: null },
+            { label: 'Next Billing', value: sub?.next_billing_date ? fmt(sub.next_billing_date) : '—', badge: renewalBadge(sub?.next_billing_date ?? null) },
+            { label: 'Sub ID',       value: sub?.id ? sub.id.substring(0, 8) + '…' : '—', mono: true, badge: null },
           ].map(row => (
             <div key={row.label} className="flex items-start justify-between gap-4 py-2.5 border-b border-white/[0.04] last:border-0">
               <span className="font-sans text-xs text-white/40 shrink-0">{row.label}</span>
-              <span className={`font-sans text-sm text-white/75 text-right ${row.mono ? 'font-mono text-xs text-white/40' : ''}`}>
-                {row.value}
-              </span>
+              <div className="flex items-center gap-2 justify-end flex-wrap">
+                <span className={`font-sans text-sm text-white/75 text-right ${row.mono ? 'font-mono text-xs text-white/40' : ''}`}>
+                  {row.value}
+                </span>
+                {row.badge && (
+                  <span
+                    className="font-sans text-[11px] font-semibold px-2 py-0.5 rounded-md shrink-0"
+                    style={{ color: row.badge.color, background: `${row.badge.color}18`, border: `1px solid ${row.badge.color}40` }}
+                  >
+                    {row.badge.text}
+                  </span>
+                )}
+              </div>
             </div>
           ))}
         </div>
@@ -362,6 +394,8 @@ export default async function ClientDetailPage({
                 <span className="font-sans text-xs text-gray-400 shrink-0 w-24 text-right">
                   {fmt(stand.created_at)}
                 </span>
+                {/* QR */}
+                <QrButton url={stand.landing_page_url} />
                 {/* Open */}
                 <a
                   href={stand.landing_page_url}
@@ -378,6 +412,15 @@ export default async function ClientDetailPage({
           </div>
         )}
       </div>
+
+      {/* Payment History */}
+      <PaymentHistory userId={id} payments={payments as PaymentRow[]} />
+
+      {/* Activity log */}
+      <ActivityLog entries={activities as ActivityEntry[]} />
+
+      {/* Private Notes */}
+      <NotesEditor clientId={id} initialNotes={profile.admin_notes ?? ''} />
 
       {/* Danger zone */}
       <div

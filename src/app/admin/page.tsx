@@ -4,6 +4,7 @@ export const dynamic = 'force-dynamic'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { StatCard } from '@/components/dashboard/stat-card'
 import { ClientsTable, type ClientRow } from '@/components/admin/clients-table'
+import { RevenueChart, type RevenueMonth } from '@/components/admin/revenue-chart'
 
 export const metadata = { title: 'Admin — Overview' }
 
@@ -118,6 +119,13 @@ export default async function AdminPage() {
   const mrr = Math.round(mrrRows?.reduce((sum, row) => sum + rowMonthly(row), 0) ?? 0)
   const arr = Math.round(mrrRows?.reduce((sum, row) => sum + rowAnnual(row),  0) ?? 0)
 
+  // ── Revenue chart — flat at current MRR (no historical data yet) ─────────────
+  const revenueData: RevenueMonth[] = Array.from({ length: 12 }, (_, i) => {
+    const d = new Date(now.getFullYear(), now.getMonth() - (11 - i), 1)
+    const label = d.toLocaleDateString('en-GB', { month: 'short', year: '2-digit' }).replace(' ', " '")
+    return { month: label, mrr, isCurrent: i === 11 }
+  })
+
   const stats = [
     { label: 'Total Clients',             value: totalClients ?? 0, change: calcChange(newClientsCur ?? 0, newClientsPrev ?? 0), icon: 'clients'       as const },
     { label: 'Active Subscriptions',      value: activeSubs   ?? 0, change: calcChange(newSubsCur    ?? 0, newSubsPrev    ?? 0), icon: 'subscriptions' as const },
@@ -185,6 +193,9 @@ export default async function AdminPage() {
         </div>
         <ClientsTable clients={clients} />
       </div>
+
+      {/* Revenue chart */}
+      <RevenueChart data={revenueData} currentMrr={mrr} />
     </div>
   )
 }

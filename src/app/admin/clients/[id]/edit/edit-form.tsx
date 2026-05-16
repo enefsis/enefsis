@@ -17,6 +17,7 @@ export type EditFormProps = {
   paymentMethod: string
   customAmount:  number | null
   paymentNotes:  string
+  adminNotes:    string
   backHref:      string
 }
 
@@ -64,6 +65,7 @@ export function EditForm({
   clientId, fullName: initName, email: initEmail, joinedDate: initJoinedDate,
   plan: initPlan, status: initStatus,
   paymentMethod: initPaymentMethod, customAmount: initCustomAmount, paymentNotes: initPaymentNotes,
+  adminNotes: initAdminNotes,
   backHref,
 }: EditFormProps) {
   const router = useRouter()
@@ -81,6 +83,7 @@ export function EditForm({
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethodKey>(initPaymentMethod as PaymentMethodKey || 'stripe')
   const [customAmount,  setCustomAmount]  = useState(initCustomAmount !== null ? String(initCustomAmount) : '')
   const [paymentNotes,  setPaymentNotes]  = useState(initPaymentNotes)
+  const [adminNotes,    setAdminNotes]    = useState(initAdminNotes)
   const [saving,        setSaving]        = useState(false)
   const [error,         setError]         = useState<string | null>(null)
 
@@ -106,6 +109,7 @@ export function EditForm({
     fd.set('payment_method', paymentMethod)
     fd.set('custom_amount',  customAmount.trim())
     fd.set('payment_notes',  paymentNotes.trim())
+    fd.set('admin_notes',    adminNotes.trim())
 
     try {
       const res = await updateClientInfo(fd)
@@ -339,6 +343,25 @@ export function EditForm({
               style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.10)' }}
             />
           </div>
+        </div>
+
+        {/* Private Notes section */}
+        <div className="bg-[#141720] border border-white/[0.06] rounded-2xl p-5 space-y-3">
+          <div>
+            <p className="font-sans text-[11px] font-semibold text-white/35 uppercase tracking-wider pb-1 border-b border-white/[0.05]">
+              Private Notes
+            </p>
+            <p className="font-sans text-[11px] text-white/25 mt-2">Only visible to admin</p>
+          </div>
+          <textarea
+            value={adminNotes}
+            onChange={e => setAdminNotes(e.target.value)}
+            disabled={saving}
+            rows={4}
+            placeholder="Add any internal notes about this client…"
+            className="w-full px-3.5 py-2.5 rounded-xl font-sans text-sm text-white placeholder-white/20 focus:outline-none focus:ring-1 focus:ring-[#2B5CE6] disabled:opacity-50 transition-colors resize-none"
+            style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.10)' }}
+          />
         </div>
 
         {/* Error */}

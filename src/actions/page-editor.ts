@@ -5,6 +5,7 @@ import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import type { Json } from '@/types/database'
+import { logActivity } from '@/lib/activity-log'
 
 function buildSlug(restaurantName: string, email: string): string {
   const source = restaurantName.trim() || email.split('@')[0]
@@ -139,6 +140,7 @@ export async function savePage(data: PageData): Promise<{ slug?: string; error?:
       return { error: insertError.message }
     }
 
+    await logActivity(user.id, 'Page edited')
     revalidatePath('/dashboard/page-editor')
     if (newSlug) revalidatePath(`/p/${newSlug}`)
     return { slug: newSlug || undefined }
@@ -162,6 +164,7 @@ export async function savePage(data: PageData): Promise<{ slug?: string; error?:
     }
   }
 
+  await logActivity(user.id, 'Page edited')
   revalidatePath('/dashboard/page-editor')
   if (slug) {
     revalidatePath(`/p/${slug}`)

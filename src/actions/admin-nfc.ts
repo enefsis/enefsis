@@ -2,6 +2,7 @@
 
 import { revalidatePath } from 'next/cache'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { logActivity } from '@/lib/activity-log'
 
 export async function createNfcStand(
   userId: string,
@@ -19,6 +20,7 @@ export async function createNfcStand(
 
   if (error) return { error: error.message }
 
+  await logActivity(userId, 'Stand added')
   revalidatePath('/admin/nfc-stands')
   return {}
 }

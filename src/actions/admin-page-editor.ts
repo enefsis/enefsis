@@ -7,6 +7,7 @@ import { createAdminClient } from '@/lib/supabase/admin'
 import type { PageData } from './page-editor'
 import type { Json } from '@/types/database'
 import type { Profile } from '@/types/database'
+import { logActivity } from '@/lib/activity-log'
 
 async function requireAdmin() {
   const supabase = await createClient()
@@ -70,6 +71,7 @@ export async function savePageForClient(
   if (error) return { error: error.message }
 
   const slug = updatedRows?.[0]?.slug ?? undefined
+  await logActivity(clientId, 'Page edited')
   revalidatePath(`/admin/clients/${clientId}/page-editor`)
   revalidatePath(`/admin/clients/${clientId}`)
   if (slug) revalidatePath(`/p/${slug}`)
