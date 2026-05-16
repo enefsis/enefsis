@@ -70,7 +70,12 @@ export function EditForm({
 
   const [name,          setName]          = useState(initName)
   const [email,         setEmail]         = useState(initEmail)
-  const [joinedDate,    setJoinedDate]    = useState(initJoinedDate)
+  const [joinedDate,    setJoinedDate]    = useState(() => {
+    // Convert YYYY-MM-DD → DD-MM-YYYY for display
+    if (!initJoinedDate) return ''
+    const [y, m, d] = initJoinedDate.split('-')
+    return `${d}-${m}-${y}`
+  })
   const [plan,          setPlan]          = useState<PlanKey>(normalizePlan(initPlan))
   const [status,        setStatus]        = useState<StatusKey>(initStatus as StatusKey || 'active')
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethodKey>(initPaymentMethod as PaymentMethodKey || 'stripe')
@@ -181,13 +186,14 @@ export function EditForm({
               Joined Date
             </label>
             <input
-              type="date"
+              type="text"
               value={joinedDate}
               onChange={e => setJoinedDate(e.target.value)}
+              placeholder="DD-MM-YYYY"
               required
               disabled={saving}
               className={inputCls}
-              style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.10)', colorScheme: 'dark' }}
+              style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.10)' }}
             />
           </div>
         </div>

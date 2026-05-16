@@ -214,7 +214,7 @@ export async function updateClientInfo(
   if (!clientId)                                      return { error: 'Client ID missing.' }
   if (!fullName)                                      return { error: 'Name is required.' }
   if (!email || !email.includes('@'))                 return { error: 'Valid email is required.' }
-  if (joinedDate && isNaN(Date.parse(joinedDate)))    return { error: 'Invalid joined date.' }
+  if (joinedDate && !/^\d{2}-\d{2}-\d{4}$/.test(joinedDate)) return { error: 'Joined date must be in DD-MM-YYYY format.' }
   if (!['basic_monthly', 'basic_yearly', 'pro_monthly', 'pro_yearly', 'basic', 'pro'].includes(plan)) return { error: 'Invalid plan.' }
   if (!['active', 'suspended', 'cancelled'].includes(status)) return { error: 'Invalid status.' }
   if (!['stripe', 'cash', 'bank_transfer'].includes(paymentMethod)) return { error: 'Invalid payment method.' }
@@ -232,7 +232,12 @@ export async function updateClientInfo(
   // Update profiles row (created_at cast via any — not in generated Update type)
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const profileUpdate: any = { full_name: fullName, email }
-  if (joinedDate) profileUpdate.created_at = new Date(joinedDate).toISOString()
+  if (joinedDate) {
+    const [dd, mm, yyyy] = joinedDate.split('-')
+    const parsed = new Date(`${yyyy}-${mm}-${dd}`)
+    if (isNaN(parsed.getTime())) return { error: 'Invalid joined date.' }
+    profileUpdate.created_at = parsed.toISOString()
+  }
   const { error: profileErr } = await admin
     .from('profiles')
     .update(profileUpdate)
