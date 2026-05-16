@@ -1,5 +1,9 @@
+export const revalidate = 0
+export const dynamic = 'force-dynamic'
+
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 import { cn } from '@/lib/utils'
 import { AnalyticsChart, type AnalyticsDay } from '@/components/dashboard/analytics-chart'
 
@@ -119,28 +123,22 @@ export default async function AnalyticsPage() {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
-  const d90 = new Date(Date.now() - 90 * 86_400_000).toISOString()
+  const d90          = new Date(Date.now() - 90 * 86_400_000).toISOString()
+  const supabaseAdmin = createAdminClient()
 
-  // ── Fetch stands so we can scope tap_events ────────────────────────────────
-  const { data: standsData } = await supabase
-    .from('nfc_stands')
-    .select('id')
-    .eq('user_id', user.id)
-  const standIds    = (standsData as Array<{ id: string }> | null)?.map(s => s.id) ?? []
-  const standsFilter = standIds.length ? standIds : ['__none__']
-
-  // ── Parallel data fetch ───────────────────────────────────────────────────
+  // ── Parallel data fetch — service role bypasses RLS ───────────────────────
   const [tapsRes, clicksRes, viewsRes] = await Promise.all([
-    supabase.from('tap_events')
-      .select('*')
-      .in('stand_id', standsFilter)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (supabaseAdmin as any).from('tap_events')
+      .select('created_at, device_type, language, table_number')
+      .eq('user_id', user.id)
       .gte('created_at', d90),
-    supabase.from('button_clicks')
-      .select('*')
+    supabaseAdmin.from('button_clicks')
+      .select('created_at, button_type, table_number')
       .eq('client_id', user.id)
       .gte('created_at', d90),
-    supabase.from('menu_item_views')
-      .select('*')
+    supabaseAdmin.from('menu_item_views')
+      .select('created_at, item_id, item_name')
       .eq('client_id', user.id)
       .gte('created_at', d90),
   ])
