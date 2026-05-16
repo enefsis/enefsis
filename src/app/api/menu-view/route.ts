@@ -22,34 +22,24 @@ export async function POST(req: NextRequest) {
     )
   }
 
-  const { stand_id, item_id, item_name, client_id, table_number } = body as Record<string, unknown>
+  const { client_id, item_id, item_name, table_number, stand_id } = body as Record<string, unknown>
 
-  if (!stand_id || typeof stand_id !== 'string') {
+  if (!client_id || typeof client_id !== 'string') {
     return NextResponse.json(
-      { error: 'stand_id is required' },
+      { error: 'client_id is required' },
       { status: 400, headers: CORS_HEADERS }
     )
   }
 
   const supabase = createAdminClient()
 
-  let resolvedClientId = typeof client_id === 'string' ? client_id : null
-  if (!resolvedClientId) {
-    const { data: standRow } = await supabase
-      .from('nfc_stands')
-      .select('user_id')
-      .eq('id', stand_id)
-      .maybeSingle()
-    resolvedClientId = (standRow as { user_id: string | null } | null)?.user_id ?? null
-  }
-
-  const { error } = await supabase.from('menu_item_views').insert({
-    stand_id,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { error } = await (supabase as any).from('menu_item_views').insert({
+    client_id,
     item_id:      typeof item_id      === 'string' ? item_id      : null,
     item_name:    typeof item_name    === 'string' ? item_name    : null,
-    client_id:    resolvedClientId,
-    // @ts-expect-error table_number column pending DB migration
     table_number: typeof table_number === 'number' ? table_number : null,
+    ...(typeof stand_id === 'string' ? { stand_id } : {}),
   })
 
   if (error) {

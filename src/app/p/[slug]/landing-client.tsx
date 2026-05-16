@@ -194,11 +194,16 @@ function trackButton(standId: string | null, clientId: string, buttonType: strin
 }
 
 function trackMenuView(standId: string | null, clientId: string, itemId: string, itemName: string, tableNumber: number | null = null) {
-  if (!standId) return
   fetch('/api/menu-view', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ stand_id: standId, item_id: itemId, item_name: itemName, client_id: clientId, table_number: tableNumber }),
+    body: JSON.stringify({
+      client_id:    clientId,
+      item_id:      itemId,
+      item_name:    itemName,
+      table_number: tableNumber,
+      ...(standId ? { stand_id: standId } : {}),
+    }),
   }).catch(() => {})
 }
 

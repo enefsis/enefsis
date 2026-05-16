@@ -164,7 +164,7 @@ export default async function AnalyticsPage() {
   // ── Stat cards ─────────────────────────────────────────────────────────────
   const totalTaps  = taps.length
   const activeDays = Object.values(tapsMap).filter(v => v > 0).length
-  const avgPerDay  = Math.round(totalTaps / 90)
+  const avgPerDay  = activeDays > 0 ? (totalTaps / activeDays).toFixed(1) : '0.0'
   const peakCount  = Math.max(...Object.values(tapsMap), 0)
 
   // ── Heatmap [dayOfWeek][hour] ──────────────────────────────────────────────
@@ -276,7 +276,7 @@ export default async function AnalyticsPage() {
       <div className="grid grid-cols-2 xl:grid-cols-4 gap-4">
         {[
           { label: 'Total Taps',  value: totalTaps.toLocaleString()  },
-          { label: 'Avg / Day',   value: avgPerDay.toLocaleString()  },
+          { label: 'Avg / Day',   value: avgPerDay                   },
           { label: 'Active Days', value: activeDays.toLocaleString() },
           { label: 'Peak Day',    value: peakCount.toLocaleString()  },
         ].map(s => (

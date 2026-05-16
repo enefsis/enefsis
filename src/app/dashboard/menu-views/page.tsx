@@ -66,7 +66,7 @@ export default async function MenuViewsPage() {
     itemMap[name] = (itemMap[name] ?? 0) + 1
   })
   const topItems      = Object.entries(itemMap).sort(([, a], [, b]) => b - a).slice(0, 10)
-  const maxItemViews  = topItems[0]?.[1] ?? 1
+  const maxItemViews  = topItems[0]?.[1] ?? 0
   const uniqueItems   = Object.keys(itemMap).length
 
   // ── Daily views chart ──────────────────────────────────────────────────────
