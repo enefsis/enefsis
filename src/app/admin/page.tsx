@@ -35,6 +35,7 @@ type RawTapEvent = {
 }
 
 type RawMrrRow = {
+  user_id: string | null
   plan: string | null
   amount: number | null
   custom_amount: number | null
@@ -102,9 +103,9 @@ export default async function AdminPage() {
     supabase.from('subscriptions').select('*', { count: 'exact', head: true }).eq('status', 'active'),
     supabase.from('subscriptions').select('*', { count: 'exact', head: true }).eq('status', 'active').gte('created_at', d30).lte('created_at', nowIso),
     supabase.from('subscriptions').select('*', { count: 'exact', head: true }).eq('status', 'active').gte('created_at', d60).lt('created_at', d30),
-    // MRR rows — include created_at for historical chart
+    // MRR rows — include user_id + created_at for historical chart
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    (supabase.from('subscriptions') as any).select('plan, amount, custom_amount, created_at').eq('status', 'active'),
+    (supabase.from('subscriptions') as any).select('user_id, plan, amount, custom_amount, created_at').eq('status', 'active'),
     supabase.from('tap_events').select('*', { count: 'exact', head: true }).gte('created_at', d30).lte('created_at', nowIso),
     supabase.from('tap_events').select('*', { count: 'exact', head: true }).gte('created_at', d60).lt('created_at', d30),
     // Clients table: full profile list
@@ -124,6 +125,11 @@ export default async function AdminPage() {
   // ── Stat card values ──────────────────────────────────────────────────────
   const mrr = Math.round(mrrRows?.reduce((sum, row) => sum + rowMonthly(row), 0) ?? 0)
   const arr = Math.round(mrrRows?.reduce((sum, row) => sum + rowAnnual(row),  0) ?? 0)
+
+  // Profile date lookup — used to pick the earlier of subscription vs join date
+  const profileDateById: Record<string, string> = {}
+  ;(rawProfiles as RawProfile[] | null)?.forEach(p => { profileDateById[p.id] = p.created_at })
+
   const earliestIso = (earliestProfileRaw as { created_at: string } | null)?.created_at ?? nowIso
   const chartStart  = new Date(new Date(earliestIso).getFullYear(), new Date(earliestIso).getMonth(), 1)
   const chartNow    = new Date(now.getFullYear(), now.getMonth(), 1)
@@ -134,7 +140,11 @@ export default async function AdminPage() {
     const monthEndIso = new Date(cursor.getFullYear(), cursor.getMonth() + 1, 0, 23, 59, 59, 999).toISOString()
     const monthMrr = Math.round(
       (mrrRows ?? [])
-        .filter(r => r.created_at <= monthEndIso)
+        .filter(r => {
+          const profileDate   = r.user_id ? (profileDateById[r.user_id] ?? r.created_at) : r.created_at
+          const effectiveStart = profileDate < r.created_at ? profileDate : r.created_at
+          return effectiveStart <= monthEndIso
+        })
         .reduce((sum, row) => sum + rowMonthly(row), 0)
     )
     const label = cursor.toLocaleDateString('en-GB', { month: 'short', year: '2-digit' }).replace(' ', " '")
