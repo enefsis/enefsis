@@ -38,6 +38,7 @@ type RawMrrRow = {
   plan: string | null
   amount: number | null
   custom_amount: number | null
+  created_at: string
 }
 
 const PLAN_MONTHLY: Record<string, number> = {
@@ -93,6 +94,7 @@ export default async function AdminPage() {
     { data: rawProfiles },
     { data: rawSubscriptions },
     { data: rawClientTaps },
+    { data: earliestProfileRaw },
   ] = await Promise.all([
     supabase.from('profiles').select('*', { count: 'exact', head: true }).neq('role', 'admin'),
     supabase.from('profiles').select('*', { count: 'exact', head: true }).neq('role', 'admin').gte('created_at', d30).lte('created_at', nowIso),
@@ -100,8 +102,9 @@ export default async function AdminPage() {
     supabase.from('subscriptions').select('*', { count: 'exact', head: true }).eq('status', 'active'),
     supabase.from('subscriptions').select('*', { count: 'exact', head: true }).eq('status', 'active').gte('created_at', d30).lte('created_at', nowIso),
     supabase.from('subscriptions').select('*', { count: 'exact', head: true }).eq('status', 'active').gte('created_at', d60).lt('created_at', d30),
+    // MRR rows — include created_at for historical chart
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    (supabase.from('subscriptions') as any).select('plan, amount, custom_amount').eq('status', 'active'),
+    (supabase.from('subscriptions') as any).select('plan, amount, custom_amount, created_at').eq('status', 'active'),
     supabase.from('tap_events').select('*', { count: 'exact', head: true }).gte('created_at', d30).lte('created_at', nowIso),
     supabase.from('tap_events').select('*', { count: 'exact', head: true }).gte('created_at', d60).lt('created_at', d30),
     // Clients table: full profile list
@@ -111,20 +114,34 @@ export default async function AdminPage() {
     (supabase.from('subscriptions') as any).select('id, user_id, plan, status, amount, custom_amount, created_at').order('created_at', { ascending: false }),
     // Clients table: per-user tap counts for last 30 days
     supabase.from('tap_events').select('user_id').gte('created_at', d30).lte('created_at', nowIso),
+    // Earliest client join date — chart start
+    supabase.from('profiles').select('created_at').neq('role', 'admin').order('created_at', { ascending: true }).limit(1).maybeSingle(),
   ])
 
-  // ── Stat card values ──────────────────────────────────────────────────────
+  // ── Revenue chart — monthly MRR from earliest client to today ───────────────
   const mrrRows = mrrRaw as RawMrrRow[] | null
 
+  // ── Stat card values ──────────────────────────────────────────────────────
   const mrr = Math.round(mrrRows?.reduce((sum, row) => sum + rowMonthly(row), 0) ?? 0)
   const arr = Math.round(mrrRows?.reduce((sum, row) => sum + rowAnnual(row),  0) ?? 0)
+  const earliestIso = (earliestProfileRaw as { created_at: string } | null)?.created_at ?? nowIso
+  const chartStart  = new Date(new Date(earliestIso).getFullYear(), new Date(earliestIso).getMonth(), 1)
+  const chartNow    = new Date(now.getFullYear(), now.getMonth(), 1)
 
-  // ── Revenue chart — flat at current MRR (no historical data yet) ─────────────
-  const revenueData: RevenueMonth[] = Array.from({ length: 12 }, (_, i) => {
-    const d = new Date(now.getFullYear(), now.getMonth() - (11 - i), 1)
-    const label = d.toLocaleDateString('en-GB', { month: 'short', year: '2-digit' }).replace(' ', " '")
-    return { month: label, mrr, isCurrent: i === 11 }
-  })
+  const revenueData: RevenueMonth[] = []
+  const cursor = new Date(chartStart)
+  while (cursor <= chartNow) {
+    const monthEndIso = new Date(cursor.getFullYear(), cursor.getMonth() + 1, 0, 23, 59, 59, 999).toISOString()
+    const monthMrr = Math.round(
+      (mrrRows ?? [])
+        .filter(r => r.created_at <= monthEndIso)
+        .reduce((sum, row) => sum + rowMonthly(row), 0)
+    )
+    const label = cursor.toLocaleDateString('en-GB', { month: 'short', year: '2-digit' }).replace(' ', " '")
+    const isCurrent = cursor.getFullYear() === now.getFullYear() && cursor.getMonth() === now.getMonth()
+    revenueData.push({ month: label, mrr: monthMrr, isCurrent })
+    cursor.setMonth(cursor.getMonth() + 1)
+  }
 
   const stats = [
     { label: 'Total Clients',             value: totalClients ?? 0, change: calcChange(newClientsCur ?? 0, newClientsPrev ?? 0), icon: 'clients'       as const },

@@ -41,7 +41,7 @@ export function RevenueChart({ data, currentMrr }: { data: RevenueMonth[]; curre
       <div className="flex items-start justify-between mb-6">
         <div>
           <h2 className="font-display font-semibold text-white text-base">Revenue History</h2>
-          <p className="font-sans text-xs text-white/35 mt-0.5">Monthly Recurring Revenue — last 12 months</p>
+          <p className="font-sans text-xs text-white/35 mt-0.5">Monthly Recurring Revenue — since first client</p>
         </div>
         <div className="text-right">
           <p className="font-display text-xl font-bold text-white">€{currentMrr.toLocaleString()}</p>
@@ -80,7 +80,7 @@ export function RevenueChart({ data, currentMrr }: { data: RevenueMonth[]; curre
 
       {/* Note */}
       <p className="font-sans text-[11px] text-white/25 mt-4 text-center">
-        Historical tracking starts from today — past months reflect current MRR
+        Past months show MRR from active subscriptions created by that date
       </p>
     </div>
   )
