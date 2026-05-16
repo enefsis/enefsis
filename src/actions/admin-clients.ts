@@ -26,6 +26,24 @@ const PLAN_AMOUNTS: Record<string, number> = {
   pro:           100,
 }
 
+function calcNextBillingDate(joinedIso: string, plan: string): string {
+  const joined  = new Date(joinedIso)
+  const day     = joined.getDate()
+  const isYearly = plan.endsWith('_yearly')
+  const today   = new Date()
+  today.setHours(0, 0, 0, 0)
+
+  if (isYearly) {
+    const candidate = new Date(joined.getFullYear(), joined.getMonth(), day)
+    while (candidate <= today) candidate.setFullYear(candidate.getFullYear() + 1)
+    return candidate.toISOString().split('T')[0]
+  } else {
+    const candidate = new Date(today.getFullYear(), today.getMonth(), day)
+    if (candidate <= today) candidate.setMonth(candidate.getMonth() + 1)
+    return candidate.toISOString().split('T')[0]
+  }
+}
+
 export type CreateClientResult =
   | { success: true;  slug: string; tempPassword: string; userId: string }
   | { success: false; error: string }
@@ -289,15 +307,24 @@ export async function updateClientInfo(
   // Update subscription plan + status + payment fields
   // Only sync amount from plan default when no custom_amount is set
   const planAmount = customAmount === null ? (PLAN_AMOUNTS[plan] ?? null) : null
+
+  // Recalculate next_billing_date whenever joined date is saved
+  let nextBillingDate: string | undefined
+  if (joinedDate) {
+    const [dd, mm, yyyy] = joinedDate.split('-')
+    nextBillingDate = calcNextBillingDate(`${yyyy}-${mm}-${dd}`, plan)
+  }
+
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { error: subErr } = await (admin.from('subscriptions') as any)
     .update({
       plan,
       status,
-      payment_method: paymentMethod,
-      custom_amount:  customAmount,
-      payment_notes:  paymentNotes || null,
-      ...(planAmount !== null ? { amount: planAmount } : {}),
+      payment_method:    paymentMethod,
+      custom_amount:     customAmount,
+      payment_notes:     paymentNotes || null,
+      ...(planAmount      !== null      ? { amount:            planAmount      } : {}),
+      ...(nextBillingDate !== undefined ? { next_billing_date: nextBillingDate } : {}),
     })
     .eq('user_id', clientId)
   if (subErr) return { error: (subErr as { message: string }).message }
