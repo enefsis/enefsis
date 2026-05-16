@@ -8,6 +8,7 @@ export interface ClientRow {
   email: string
   joined: string
   taps30d: number
+  uniqueTaps30d: number
   subscription: {
     id: string
     plan: string | null
@@ -63,7 +64,7 @@ function StatusBadge({ status }: { status: string | null }) {
   )
 }
 
-const HEADERS = ['Client', 'Plan', 'Status', 'Taps (30d)', 'MRR', 'ARR', 'Joined', 'Actions']
+const HEADERS = ['Client', 'Plan', 'Status', 'Taps (30d)', 'Unique (30d)', 'MRR', 'ARR', 'Joined', 'Actions']
 
 export function ClientsTable({ clients }: { clients: ClientRow[] }) {
   if (clients.length === 0) {
@@ -135,6 +136,13 @@ export function ClientsTable({ clients }: { clients: ClientRow[] }) {
                 <td className="px-4 py-3.5">
                   <span className="font-sans text-white/65 tabular-nums">
                     {client.taps30d.toLocaleString()}
+                  </span>
+                </td>
+
+                {/* Unique taps 30d */}
+                <td className="px-4 py-3.5">
+                  <span className="font-sans text-[#38BEFF]/70 tabular-nums">
+                    {client.uniqueTaps30d.toLocaleString()}
                   </span>
                 </td>
 

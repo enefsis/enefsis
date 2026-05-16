@@ -785,17 +785,23 @@ export function LandingClient({
   }, [lightboxPhoto])
 
   useEffect(() => {
+    let visitorId = localStorage.getItem('enefsis_visitor_id')
+    if (!visitorId) {
+      visitorId = crypto.randomUUID()
+      localStorage.setItem('enefsis_visitor_id', visitorId)
+    }
     const params = new URLSearchParams(window.location.search)
     const tableNum = params.get('table')
     fetch('/api/track', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        event_type: 'page_view',
-        client_id: clientId,
+        event_type:   'page_view',
+        client_id:    clientId,
+        visitor_id:   visitorId,
         table_number: tableNum ? parseInt(tableNum) : null,
-        language: navigator.language,
-        device_type: /iPhone|iPad|iPod|Android/i.test(navigator.userAgent)
+        language:     navigator.language,
+        device_type:  /iPhone|iPad|iPod|Android/i.test(navigator.userAgent)
           ? 'mobile' : 'desktop',
       }),
     }).catch(() => {})

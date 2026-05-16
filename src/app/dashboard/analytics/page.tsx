@@ -10,7 +10,7 @@ import { AnalyticsChart, type AnalyticsDay } from '@/components/dashboard/analyt
 export const metadata = { title: 'Analytics' }
 
 // ── Types ─────────────────────────────────────────────────────────────────────
-type TapFull   = { created_at: string; device_type: string | null; language: string | null; table_number?: number | null }
+type TapFull   = { created_at: string; device_type: string | null; language: string | null; table_number?: number | null; visitor_id?: string | null }
 type ClickFull = { created_at: string; button_type: string | null; table_number?: number | null }
 type ViewFull  = { created_at: string; item_id: string | null; item_name: string | null }
 
@@ -130,7 +130,7 @@ export default async function AnalyticsPage() {
   const [tapsRes, clicksRes, viewsRes] = await Promise.all([
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (supabaseAdmin as any).from('tap_events')
-      .select('created_at, device_type, language, table_number')
+      .select('created_at, device_type, language, table_number, visitor_id')
       .eq('user_id', user.id)
       .gte('created_at', d90),
     supabaseAdmin.from('button_clicks')
@@ -151,18 +151,25 @@ export default async function AnalyticsPage() {
   const isPro = false
 
   // ── Daily chart ───────────────────────────────────────────────────────────
-  const tapsMap: Record<string, number> = {}
+  const tapsMap:   Record<string, number>      = {}
+  const uniqueMap: Record<string, Set<string>> = {}
   taps.forEach(t => {
     const day = t.created_at.slice(0, 10)
     tapsMap[day] = (tapsMap[day] ?? 0) + 1
+    if (t.visitor_id) {
+      if (!uniqueMap[day]) uniqueMap[day] = new Set()
+      uniqueMap[day].add(t.visitor_id)
+    }
   })
   const chartData: AnalyticsDay[] = buildDateRange(90).map(date => ({
-    date: fmtDay(date),
-    taps: tapsMap[date] ?? 0,
+    date:       fmtDay(date),
+    taps:       tapsMap[date]        ?? 0,
+    uniqueTaps: uniqueMap[date]?.size ?? 0,
   }))
 
   // ── Stat cards ─────────────────────────────────────────────────────────────
   const totalTaps  = taps.length
+  const uniqueTaps = new Set(taps.map(t => t.visitor_id).filter(Boolean)).size
   const activeDays = Object.values(tapsMap).filter(v => v > 0).length
   const avgPerDay  = activeDays > 0 ? (totalTaps / activeDays).toFixed(1) : '0.0'
   const peakCount  = Math.max(...Object.values(tapsMap), 0)
@@ -273,12 +280,13 @@ export default async function AnalyticsPage() {
       </div>
 
       {/* Stat cards */}
-      <div className="grid grid-cols-2 xl:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 xl:grid-cols-5 gap-4">
         {[
-          { label: 'Total Taps',  value: totalTaps.toLocaleString()  },
-          { label: 'Avg / Day',   value: avgPerDay                   },
-          { label: 'Active Days', value: activeDays.toLocaleString() },
-          { label: 'Peak Day',    value: peakCount.toLocaleString()  },
+          { label: 'Total Taps',   value: totalTaps.toLocaleString()  },
+          { label: 'Unique Taps',  value: uniqueTaps.toLocaleString() },
+          { label: 'Avg / Day',    value: avgPerDay                   },
+          { label: 'Active Days',  value: activeDays.toLocaleString() },
+          { label: 'Peak Day',     value: peakCount.toLocaleString()  },
         ].map(s => (
           <div key={s.label} className="bg-[#141720] border border-white/[0.06] rounded-2xl p-5">
             <p className="font-sans text-xs text-white/40 uppercase tracking-wider">{s.label}</p>

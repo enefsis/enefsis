@@ -31,7 +31,8 @@ type RawSubscription = {
 }
 
 type RawTapEvent = {
-  user_id: string | null
+  user_id:    string | null
+  visitor_id: string | null
 }
 
 type RawMrrRow = {
@@ -113,8 +114,9 @@ export default async function AdminPage() {
     // Clients table: all subscriptions (latest per user resolved in JS)
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (supabase.from('subscriptions') as any).select('id, user_id, plan, status, amount, custom_amount, created_at').order('created_at', { ascending: false }),
-    // Clients table: per-user tap counts for last 30 days
-    supabase.from('tap_events').select('user_id').gte('created_at', d30).lte('created_at', nowIso),
+    // Clients table: per-user tap counts + visitor_ids for last 30 days
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (supabase as any).from('tap_events').select('user_id, visitor_id').gte('created_at', d30).lte('created_at', nowIso),
     // Earliest client join date — chart start
     supabase.from('profiles').select('created_at').neq('role', 'admin').order('created_at', { ascending: true }).limit(1).maybeSingle(),
   ])
@@ -171,11 +173,16 @@ export default async function AdminPage() {
     }
   })
 
-  // Tap count per user for last 30 days
-  const tapsByUser: Record<string, number> = {}
+  // Tap count + unique visitor count per user for last 30 days
+  const tapsByUser:        Record<string, number>      = {}
+  const uniqueTapsByUser:  Record<string, Set<string>> = {}
   ;(rawClientTaps as RawTapEvent[] | null)?.forEach(row => {
     if (row.user_id) {
       tapsByUser[row.user_id] = (tapsByUser[row.user_id] ?? 0) + 1
+      if (row.visitor_id) {
+        if (!uniqueTapsByUser[row.user_id]) uniqueTapsByUser[row.user_id] = new Set()
+        uniqueTapsByUser[row.user_id].add(row.visitor_id)
+      }
     }
   })
 
@@ -186,7 +193,8 @@ export default async function AdminPage() {
       name:   p.full_name,
       email:  p.email,
       joined: p.created_at,
-      taps30d: tapsByUser[p.id] ?? 0,
+      taps30d:       tapsByUser[p.id]             ?? 0,
+      uniqueTaps30d: uniqueTapsByUser[p.id]?.size ?? 0,
       subscription: sub
         ? { id: sub.id, plan: sub.plan, status: sub.status, amount: sub.amount, custom_amount: sub.custom_amount }
         : null,

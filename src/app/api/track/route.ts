@@ -31,7 +31,7 @@ export async function POST(req: NextRequest) {
     )
   }
 
-  const { event_type, stand_id, button_type, client_id, table_number, language, device_type } =
+  const { event_type, stand_id, button_type, client_id, table_number, language, device_type, visitor_id } =
     body as Record<string, unknown>
 
   const supabase = createAdminClient()
@@ -48,6 +48,7 @@ export async function POST(req: NextRequest) {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { error } = await (supabase as any).from('tap_events').insert({
       user_id:      client_id,
+      visitor_id:   typeof visitor_id  === 'string' ? visitor_id  : null,
       language:     typeof language    === 'string' ? language    : null,
       device_type:  typeof device_type === 'string' ? device_type : null,
       table_number: typeof table_number === 'number' ? table_number : null,

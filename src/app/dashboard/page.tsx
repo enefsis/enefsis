@@ -28,6 +28,7 @@ function buildDateRange(days: number): string[] {
 interface DashboardData {
   tapsCur: number
   tapsPrev: number
+  uniqueTapsCur: number
   viewsCur: number
   viewsPrev: number
   reviewsCur: number
@@ -87,7 +88,8 @@ export default function DashboardPage() {
         supabase.from('button_clicks').select('*', { count: 'exact', head: true }).eq('client_id', user.id).gte('created_at', d60).lt('created_at', d30),
         supabase.from('subscriptions').select('*', { count: 'exact', head: true }).eq('user_id', user.id).gte('created_at', d30).lte('created_at', nowIso),
         supabase.from('subscriptions').select('*', { count: 'exact', head: true }).eq('user_id', user.id).gte('created_at', d60).lt('created_at', d30),
-        supabase.from('tap_events').select('created_at').eq('user_id', user.id).gte('created_at', d30).lte('created_at', nowIso),
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (supabase as any).from('tap_events').select('created_at, visitor_id').eq('user_id', user.id).gte('created_at', d30).lte('created_at', nowIso),
         supabase.from('menu_item_views').select('item_name').eq('client_id', user.id).gte('created_at', d30).lte('created_at', nowIso),
         supabase.from('button_clicks').select('button_type').eq('client_id', user.id).gte('created_at', d30).lte('created_at', nowIso),
         supabase.from('tap_events').select('language').eq('user_id', user.id).gte('created_at', d30).lte('created_at', nowIso),
@@ -96,9 +98,13 @@ export default function DashboardPage() {
       const sub = await getSubscription(user.id)
       console.log('[Dashboard] subscription:', sub)
 
+      // ── Unique taps ─────────────────────────────────────────────────────────
+      const rawTapsTyped = rawTaps as { created_at: string; visitor_id: string | null }[] | null
+      const uniqueTapsCur = new Set((rawTapsTyped ?? []).map(r => r.visitor_id).filter(Boolean)).size
+
       // ── Daily taps chart ────────────────────────────────────────────────────
       const tapsMap: Record<string, number> = {}
-      ;(rawTaps as { created_at: string }[] | null)?.forEach(row => {
+      ;(rawTapsTyped ?? []).forEach(row => {
         const day = row.created_at.slice(0, 10)
         tapsMap[day] = (tapsMap[day] ?? 0) + 1
       })
@@ -142,9 +148,10 @@ export default function DashboardPage() {
         .map(([language, count]) => ({ language, count }))
 
       setData({
-        tapsCur:      tapsCur      ?? 0,
-        tapsPrev:     tapsPrev     ?? 0,
-        viewsCur:     viewsCur     ?? 0,
+        tapsCur:       tapsCur      ?? 0,
+        tapsPrev:      tapsPrev     ?? 0,
+        uniqueTapsCur,
+        viewsCur:      viewsCur     ?? 0,
         viewsPrev:    viewsPrev    ?? 0,
         reviewsCur:   reviewsCur   ?? 0,
         reviewsPrev:  reviewsPrev  ?? 0,
@@ -171,10 +178,11 @@ export default function DashboardPage() {
   }
 
   const stats = [
-    { label: 'Total Taps',            value: data.tapsCur,      change: calcChange(data.tapsCur,      data.tapsPrev),      icon: 'tap'   as const },
-    { label: 'Menu Views',            value: data.viewsCur,     change: calcChange(data.viewsCur,     data.viewsPrev),     icon: 'menu'  as const },
-    { label: 'Google Reviews Gained', value: data.reviewsCur,   change: calcChange(data.reviewsCur,   data.reviewsPrev),   icon: 'star'  as const },
-    { label: 'New Followers',         value: data.followersCur, change: calcChange(data.followersCur, data.followersPrev), icon: 'users' as const },
+    { label: 'Total Taps',            value: data.tapsCur,       change: calcChange(data.tapsCur,      data.tapsPrev),      icon: 'tap'   as const },
+    { label: 'Unique Taps',           value: data.uniqueTapsCur, change: 0,                                                icon: 'tap'   as const },
+    { label: 'Menu Views',            value: data.viewsCur,      change: calcChange(data.viewsCur,     data.viewsPrev),     icon: 'menu'  as const },
+    { label: 'Google Reviews Gained', value: data.reviewsCur,    change: calcChange(data.reviewsCur,   data.reviewsPrev),   icon: 'star'  as const },
+    { label: 'New Followers',         value: data.followersCur,  change: calcChange(data.followersCur, data.followersPrev), icon: 'users' as const },
   ]
 
   return (
@@ -186,7 +194,7 @@ export default function DashboardPage() {
       </div>
 
       {/* Stat cards */}
-      <div className="grid grid-cols-2 xl:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 xl:grid-cols-5 gap-4">
         {stats.map(s => (
           <StatCard key={s.label} {...s} />
         ))}

@@ -161,7 +161,7 @@ export default async function ClientDetailPage({
     (admin as any).from('activity_log').select('id, action, created_at').eq('user_id', id).order('created_at', { ascending: false }).limit(10),
     // Stats — service role bypasses RLS on all three tables
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    (admin as any).from('tap_events').select('*', { count: 'exact', head: true }).eq('user_id', id),
+    (admin as any).from('tap_events').select('visitor_id').eq('user_id', id),
     admin.from('button_clicks').select('*', { count: 'exact', head: true }).eq('client_id', id),
     admin.from('menu_item_views').select('*', { count: 'exact', head: true }).eq('client_id', id),
   ])
@@ -175,9 +175,11 @@ export default async function ClientDetailPage({
   const payments   = (paymentsRes.data as Payment[]  | null) ?? []
   const activities = (activityRes.data as Activity[] | null) ?? []
 
-  const tapCount   = (tapRes   as { count: number | null }).count ?? 0
-  const clickCount = (clickRes as { count: number | null }).count ?? 0
-  const viewCount  = (viewRes  as { count: number | null }).count ?? 0
+  const tapRows      = (tapRes.data as { visitor_id: string | null }[] | null) ?? []
+  const tapCount     = tapRows.length
+  const uniqueTapCount = new Set(tapRows.map(r => r.visitor_id).filter(Boolean)).size
+  const clickCount   = (clickRes as { count: number | null }).count ?? 0
+  const viewCount    = (viewRes  as { count: number | null }).count ?? 0
 
   const appUrl     = process.env.NEXT_PUBLIC_TAP_URL ?? 'http://localhost:3000'
   const landingUrl = page?.slug ? `${appUrl}/p/${page.slug}` : null
@@ -254,10 +256,11 @@ export default async function ClientDetailPage({
       </div>
 
       {/* Stat cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <StatCard label="Total Taps"      value={tapCount}   />
-        <StatCard label="Button Clicks"   value={clickCount} />
-        <StatCard label="Menu Item Views" value={viewCount}  />
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+        <StatCard label="Total Taps"      value={tapCount}      />
+        <StatCard label="Unique Taps"     value={uniqueTapCount} />
+        <StatCard label="Button Clicks"   value={clickCount}    />
+        <StatCard label="Menu Item Views" value={viewCount}     />
       </div>
 
       {/* Account + Business */}
