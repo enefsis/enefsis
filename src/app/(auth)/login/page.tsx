@@ -27,7 +27,7 @@ export default function LoginPage() {
       <div className="bg-[#141720] border border-white/[0.06] rounded-2xl p-8 shadow-2xl">
         {/* Logo */}
         <div className="flex justify-center mb-3">
-          <img src="/enefsis-logo-transparent.png" alt="Enefsis" style={{ height: '160px', objectFit: 'contain' }} />
+          <img src="/enefsis-logo-transparent.png" alt="Enefsis" style={{ height: '200px', objectFit: 'contain' }} />
         </div>
 
         {/* Heading */}
