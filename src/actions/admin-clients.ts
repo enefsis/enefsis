@@ -202,6 +202,7 @@ export async function updateClientInfo(
   const clientId      = (formData.get('clientId')       as string | null)?.trim() ?? ''
   const fullName      = (formData.get('full_name')      as string | null)?.trim() ?? ''
   const email         = (formData.get('email')          as string | null)?.trim().toLowerCase() ?? ''
+  const joinedDate    = (formData.get('joined_date')    as string | null)?.trim() ?? ''
   const plan          = (formData.get('plan')           as string | null)?.trim() ?? ''
   const status        = (formData.get('status')         as string | null)?.trim() ?? ''
   const paymentMethod = (formData.get('payment_method') as string | null)?.trim() ?? 'stripe'
@@ -213,6 +214,7 @@ export async function updateClientInfo(
   if (!clientId)                                      return { error: 'Client ID missing.' }
   if (!fullName)                                      return { error: 'Name is required.' }
   if (!email || !email.includes('@'))                 return { error: 'Valid email is required.' }
+  if (joinedDate && isNaN(Date.parse(joinedDate)))    return { error: 'Invalid joined date.' }
   if (!['basic_monthly', 'basic_yearly', 'pro_monthly', 'pro_yearly', 'basic', 'pro'].includes(plan)) return { error: 'Invalid plan.' }
   if (!['active', 'suspended', 'cancelled'].includes(status)) return { error: 'Invalid status.' }
   if (!['stripe', 'cash', 'bank_transfer'].includes(paymentMethod)) return { error: 'Invalid payment method.' }
@@ -227,10 +229,13 @@ export async function updateClientInfo(
   const currentPlan   = (currentSubRaw as { plan: string; status: string } | null)?.plan               ?? ''
   const currentStatus = (currentSubRaw as { plan: string; status: string } | null)?.status             ?? ''
 
-  // Update profiles row
+  // Update profiles row (created_at cast via any — not in generated Update type)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const profileUpdate: any = { full_name: fullName, email }
+  if (joinedDate) profileUpdate.created_at = new Date(joinedDate).toISOString()
   const { error: profileErr } = await admin
     .from('profiles')
-    .update({ full_name: fullName, email })
+    .update(profileUpdate)
     .eq('id', clientId)
   if (profileErr) return { error: profileErr.message }
 

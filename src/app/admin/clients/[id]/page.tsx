@@ -13,7 +13,7 @@ type Stand    = { id: string; name: string | null; landing_page_url: string; cre
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 function fmt(iso: string) {
-  return new Date(iso).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
+  return new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
 }
 
 function initial(name: string | null, email: string) {

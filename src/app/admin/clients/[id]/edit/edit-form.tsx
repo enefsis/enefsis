@@ -11,6 +11,7 @@ export type EditFormProps = {
   clientId:      string
   fullName:      string
   email:         string
+  joinedDate:    string
   plan:          string
   status:        string
   paymentMethod: string
@@ -60,7 +61,7 @@ function ArrowLeftIcon() {
 
 // ── Form ──────────────────────────────────────────────────────────────────────
 export function EditForm({
-  clientId, fullName: initName, email: initEmail,
+  clientId, fullName: initName, email: initEmail, joinedDate: initJoinedDate,
   plan: initPlan, status: initStatus,
   paymentMethod: initPaymentMethod, customAmount: initCustomAmount, paymentNotes: initPaymentNotes,
   backHref,
@@ -69,6 +70,7 @@ export function EditForm({
 
   const [name,          setName]          = useState(initName)
   const [email,         setEmail]         = useState(initEmail)
+  const [joinedDate,    setJoinedDate]    = useState(initJoinedDate)
   const [plan,          setPlan]          = useState<PlanKey>(normalizePlan(initPlan))
   const [status,        setStatus]        = useState<StatusKey>(initStatus as StatusKey || 'active')
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethodKey>(initPaymentMethod as PaymentMethodKey || 'stripe')
@@ -93,6 +95,7 @@ export function EditForm({
     fd.set('clientId',       clientId)
     fd.set('full_name',      name.trim())
     fd.set('email',          email.trim())
+    fd.set('joined_date',    joinedDate)
     fd.set('plan',           plan)
     fd.set('status',         status)
     fd.set('payment_method', paymentMethod)
@@ -171,6 +174,21 @@ export function EditForm({
             <p className="font-sans text-[11px] text-white/25 mt-1.5">
               Changing the email also updates the login credentials.
             </p>
+          </div>
+
+          <div>
+            <label className="block font-sans text-[11px] font-semibold text-white/40 uppercase tracking-wider mb-1.5">
+              Joined Date
+            </label>
+            <input
+              type="date"
+              value={joinedDate}
+              onChange={e => setJoinedDate(e.target.value)}
+              required
+              disabled={saving}
+              className={inputCls}
+              style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.10)', colorScheme: 'dark' }}
+            />
           </div>
         </div>
 
