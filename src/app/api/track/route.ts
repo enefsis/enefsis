@@ -31,8 +31,39 @@ export async function POST(req: NextRequest) {
     )
   }
 
-  const { stand_id, button_type, client_id, table_number } = body as Record<string, unknown>
+  const { event_type, stand_id, button_type, client_id, table_number, language, device_type } =
+    body as Record<string, unknown>
 
+  const supabase = createAdminClient()
+
+  // ── Page view ─────────────────────────────────────────────────────────────
+  if (event_type === 'page_view') {
+    if (!client_id || typeof client_id !== 'string') {
+      return NextResponse.json(
+        { error: 'client_id is required for page_view' },
+        { status: 400, headers: CORS_HEADERS }
+      )
+    }
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { error } = await (supabase as any).from('tap_events').insert({
+      user_id:      client_id,
+      language:     typeof language    === 'string' ? language    : null,
+      device_type:  typeof device_type === 'string' ? device_type : null,
+      table_number: typeof table_number === 'number' ? table_number : null,
+    })
+
+    if (error) {
+      return NextResponse.json(
+        { error: 'Failed to log page view' },
+        { status: 500, headers: CORS_HEADERS }
+      )
+    }
+
+    return NextResponse.json({ ok: true }, { status: 200, headers: CORS_HEADERS })
+  }
+
+  // ── Button click (existing behaviour) ────────────────────────────────────
   if (!stand_id || typeof stand_id !== 'string') {
     return NextResponse.json(
       { error: 'stand_id is required' },
@@ -46,8 +77,6 @@ export async function POST(req: NextRequest) {
       { status: 400, headers: CORS_HEADERS }
     )
   }
-
-  const supabase = createAdminClient()
 
   let resolvedClientId = typeof client_id === 'string' ? client_id : null
   if (!resolvedClientId) {

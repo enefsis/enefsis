@@ -779,6 +779,23 @@ export function LandingClient({
     return () => { document.body.style.overflow = '' }
   }, [lightboxPhoto])
 
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    const tableNum = params.get('table')
+    fetch('/api/track', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        event_type: 'page_view',
+        client_id: clientId,
+        table_number: tableNum ? parseInt(tableNum) : null,
+        language: navigator.language,
+        device_type: /iPhone|iPad|iPod|Android/i.test(navigator.userAgent)
+          ? 'mobile' : 'desktop',
+      }),
+    }).catch(() => {})
+  }, [])
+
   const selectLang = useCallback(
     async (code: string) => {
       setLang(code)
