@@ -778,6 +778,9 @@ export function LandingClient({
   const [translated, setTranslated] = useState<Record<string, string>>({})
   const [isTranslating, setIsTranslating] = useState(false)
   const translationCache = useRef<Record<string, Record<string, string>>>({})
+  // Fallback: read table number from URL if server didn't parse it
+  const [urlTableNum, setUrlTableNum] = useState<number | null>(null)
+  const chipTable = tableNumber ?? urlTableNum
 
   useEffect(() => {
     document.body.style.overflow = lightboxPhoto ? 'hidden' : ''
@@ -792,6 +795,10 @@ export function LandingClient({
     }
     const params = new URLSearchParams(window.location.search)
     const tableNum = params.get('table')
+    if (tableNum) {
+      const parsed = parseInt(tableNum)
+      if (!isNaN(parsed)) setUrlTableNum(parsed)
+    }
     fetch('/api/track', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -906,53 +913,73 @@ export function LandingClient({
 
           <div className="relative h-full flex flex-col justify-between px-5 pt-5 pb-8">
 
-            {/* Top bar: Enefsis badge left (only when no custom logo), table chip right */}
-            <div className="flex items-center justify-between">
-              {!logoUrl ? (
-                <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full"
-                  style={{
-                    background: 'rgba(255,255,255,0.1)',
-                    backdropFilter: 'blur(12px)',
-                    WebkitBackdropFilter: 'blur(12px)',
-                    border: '1px solid rgba(255,255,255,0.18)',
-                  }}>
-                  <NfcIcon />
-                  <span className="font-sans font-bold tracking-[0.14em]"
-                    style={{ fontSize: 10, color: 'rgba(255,255,255,0.9)' }}>ENEFSIS</span>
-                </div>
-              ) : <div />}
-              {tableNumber !== null && (
-                <div className="px-3 py-1.5 rounded-full"
-                  style={{ background: 'rgba(212,168,83,0.15)', border: '1px solid rgba(212,168,83,0.35)' }}>
-                  <span className="font-sans font-bold tracking-wide"
-                    style={{ fontSize: 11, color: '#D4A853' }}>{t('Table')} {tableNumber}</span>
-                </div>
-              )}
-            </div>
-
-            {/* Bottom content */}
+            {/* Top section: badge row + logo */}
             <div>
-              {/* Centered logo above restaurant name */}
+              {/* Badge row: Enefsis left, table chip right */}
+              <div className="flex items-center justify-between">
+                {!logoUrl ? (
+                  <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full"
+                    style={{
+                      background: 'rgba(255,255,255,0.1)',
+                      backdropFilter: 'blur(12px)',
+                      WebkitBackdropFilter: 'blur(12px)',
+                      border: '1px solid rgba(255,255,255,0.18)',
+                    }}>
+                    <NfcIcon />
+                    <span className="font-sans font-bold tracking-[0.14em]"
+                      style={{ fontSize: 10, color: 'rgba(255,255,255,0.9)' }}>ENEFSIS</span>
+                  </div>
+                ) : <div />}
+
+                {/* Table chip — gold glassmorphism pill */}
+                {chipTable !== null && (
+                  <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-full"
+                    style={{
+                      background: 'rgba(212,168,83,0.28)',
+                      border: '1px solid rgba(212,168,83,0.6)',
+                      backdropFilter: 'blur(10px)',
+                      WebkitBackdropFilter: 'blur(10px)',
+                      boxShadow: '0 2px 16px rgba(212,168,83,0.22)',
+                    }}>
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none"
+                      stroke="#D4A853" strokeWidth="2.5" strokeLinecap="round" aria-hidden="true">
+                      <line x1="9"  y1="3"  x2="9"  y2="21" />
+                      <line x1="15" y1="3"  x2="15" y2="21" />
+                      <line x1="3"  y1="9"  x2="21" y2="9"  />
+                      <line x1="3"  y1="15" x2="21" y2="15" />
+                    </svg>
+                    <span className="font-sans font-bold"
+                      style={{ fontSize: 12, color: '#E8C46A', letterSpacing: '0.03em' }}>
+                      {t('Table')} {chipTable}
+                    </span>
+                  </div>
+                )}
+              </div>
+
+              {/* Logo — centered at top of hero, just below badge row */}
               {logoUrl && (
-                <div className="flex justify-center mb-3">
+                <div className="flex justify-center mt-4">
                   <img
                     src={logoUrl}
                     alt="Logo"
                     className="object-contain"
-                    style={{ maxHeight: 64, maxWidth: 160 }}
+                    style={{ maxHeight: 72, maxWidth: 164 }}
                   />
                 </div>
               )}
+            </div>
 
-              {/* Category / location tag */}
-              {(restaurantType || city) && (
+            {/* Bottom content: category + name + meta */}
+            <div>
+              {/* Category tag — type only, city shown separately in meta row */}
+              {restaurantType && (
                 <p className="font-sans font-semibold mb-2 leading-none"
                   style={{ fontSize: 12, color: 'rgba(255,255,255,0.50)', letterSpacing: '0.03em' }}>
-                  {[restaurantType && t(restaurantType), city].filter(Boolean).join(' · ')}
+                  {t(restaurantType)}
                 </p>
               )}
 
-              {/* Restaurant name — never translated, always shown as-is */}
+              {/* Restaurant name */}
               <h1 className="font-display font-bold text-white leading-tight" style={{ fontSize: 34 }}>
                 {restaurantName}
               </h1>
@@ -984,7 +1011,6 @@ export function LandingClient({
                     <span className="font-sans text-xs" style={{ color: '#8A90A0' }}>{city}</span>
                   </div>
                 )}
-                {/* Fallback when no dynamic meta is set */}
                 {!rating && !reviewCount && !city && (
                   <div className="flex items-center gap-1.5">
                     <StarFilledIcon />
