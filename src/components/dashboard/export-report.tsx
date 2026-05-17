@@ -46,7 +46,6 @@ export interface ExportData {
   uniqueTapsCur: number
   viewsCur:      number
   reviewsCur:    number
-  followersCur:  number
   chartData:   { date: string; taps: number }[]
   topItems:    { name: string; views: number }[]
   socialData:  { platform: string; count: number }[]
@@ -68,7 +67,6 @@ function downloadCSV(data: ExportData, rangeLabel: string) {
   lines.push(`Unique Taps,${data.uniqueTapsCur}`)
   lines.push(`Menu Views,${data.viewsCur}`)
   lines.push(`New Reviews (est.),${data.reviewsCur}`)
-  lines.push(`New Followers,${data.followersCur}`)
   lines.push('')
 
   lines.push('DAILY TAPS')
@@ -202,7 +200,6 @@ function printPDF(data: ExportData, rangeLabel: string) {
   <div class="stat-card"><div class="stat-label">Unique Taps</div><div class="stat-value">${data.uniqueTapsCur.toLocaleString()}</div></div>
   <div class="stat-card"><div class="stat-label">Menu Views</div><div class="stat-value">${data.viewsCur.toLocaleString()}</div></div>
   <div class="stat-card"><div class="stat-label">New Reviews (est.)</div><div class="stat-value">${data.reviewsCur.toLocaleString()}</div></div>
-  <div class="stat-card"><div class="stat-label">New Followers</div><div class="stat-value">${data.followersCur.toLocaleString()}</div></div>
 </div>
 
 <div class="two-col">

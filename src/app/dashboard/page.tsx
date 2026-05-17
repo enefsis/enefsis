@@ -63,8 +63,6 @@ interface DashboardData {
   viewsPrev: number
   reviewsCur: number
   reviewsPrev: number
-  followersCur: number
-  followersPrev: number
   chartData: ChartDay[]
   topItems: MenuItem[]
   socialData: SocialEntry[]
@@ -112,8 +110,6 @@ export default function DashboardPage() {
         { count: viewsPrev },
         { data: rawReviewHistoryCur },
         { data: rawReviewHistoryPrev },
-        { count: followersCur },
-        { count: followersPrev },
         { data: rawTaps },
         { data: rawMenuViews },
         { data: rawSocialClicks },
@@ -127,8 +123,6 @@ export default function DashboardPage() {
         (supabase as any).from('review_count_history').select('review_count').eq('user_id', user.id).gte('created_at', dStart).lte('created_at', nowIso).order('created_at', { ascending: true }),
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         (supabase as any).from('review_count_history').select('review_count').eq('user_id', user.id).gte('created_at', dPrev).lt('created_at', dStart).order('created_at', { ascending: true }),
-        supabase.from('subscriptions').select('*', { count: 'exact', head: true }).eq('user_id', user.id).gte('created_at', dStart).lte('created_at', nowIso),
-        supabase.from('subscriptions').select('*', { count: 'exact', head: true }).eq('user_id', user.id).gte('created_at', dPrev).lt('created_at', dStart),
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         (supabase as any).from('tap_events').select('created_at, visitor_id, table_number').eq('user_id', user.id).gte('created_at', dStart).lte('created_at', nowIso),
         supabase.from('menu_item_views').select('item_name').eq('client_id', user.id).gte('created_at', dStart).lte('created_at', nowIso),
@@ -234,8 +228,6 @@ export default function DashboardPage() {
         viewsPrev:     viewsPrev     ?? 0,
         reviewsCur,
         reviewsPrev,
-        followersCur:  followersCur  ?? 0,
-        followersPrev: followersPrev ?? 0,
         chartData,
         topItems,
         socialData,
@@ -271,7 +263,6 @@ export default function DashboardPage() {
     { label: 'Unique Taps',           value: data.uniqueTapsCur, change: 0,                                                icon: 'tap'   as const },
     { label: 'Menu Views',            value: data.viewsCur,      change: calcChange(data.viewsCur,     data.viewsPrev),     icon: 'menu'  as const },
     { label: 'New Reviews (est.)', subtitle: 'Based on Google data, updated daily', value: data.reviewsCur, change: calcChange(data.reviewsCur, data.reviewsPrev), icon: 'star' as const },
-    { label: 'New Followers',         value: data.followersCur,  change: calcChange(data.followersCur, data.followersPrev), icon: 'users' as const },
   ]
 
   return (
@@ -289,7 +280,7 @@ export default function DashboardPage() {
       </div>
 
       {/* Stat cards */}
-      <div className="grid grid-cols-2 xl:grid-cols-5 gap-4">
+      <div className="grid grid-cols-2 xl:grid-cols-4 gap-4">
         {stats.map(s => (
           <StatCard key={s.label} {...s} />
         ))}
