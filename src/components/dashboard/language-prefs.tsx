@@ -3,26 +3,27 @@ export interface LangEntry {
   count: number
 }
 
-const LANG_NAMES: Record<string, string> = {
-  en: 'English',
-  el: 'Greek',
-  de: 'German',
-  fr: 'French',
-  es: 'Spanish',
-  it: 'Italian',
-  pt: 'Portuguese',
-  ru: 'Russian',
-  ar: 'Arabic',
-  zh: 'Chinese',
-  ja: 'Japanese',
-  ko: 'Korean',
-  nl: 'Dutch',
-  pl: 'Polish',
-  tr: 'Turkish',
-}
-
-function resolveName(code: string): string {
-  return LANG_NAMES[code.toLowerCase()] ?? code
+function getLanguageName(code: string): string {
+  const map: Record<string, string> = {
+    'en-GB': 'English (UK)',
+    'en-US': 'English (US)',
+    'en':    'English',
+    'de':    'German',
+    'el':    'Greek',
+    'fr':    'French',
+    'it':    'Italian',
+    'es':    'Spanish',
+    'ru':    'Russian',
+    'zh':    'Chinese',
+    'ja':    'Japanese',
+    'ar':    'Arabic',
+    'pt':    'Portuguese',
+    'ko':    'Korean',
+    'nl':    'Dutch',
+    'pl':    'Polish',
+    'tr':    'Turkish',
+  }
+  return map[code] ?? map[code.split('-')[0]] ?? code
 }
 
 export function LanguagePrefs({ data }: { data: LangEntry[] }) {
@@ -49,7 +50,7 @@ export function LanguagePrefs({ data }: { data: LangEntry[] }) {
                   {i + 1}
                 </span>
                 <span className="font-sans text-sm font-medium text-white/80">
-                  {resolveName(language)}
+                  {getLanguageName(language)}
                 </span>
               </div>
               <div className="flex items-center gap-2">

@@ -88,6 +88,9 @@ const ALLOWED_BUTTON_TYPES = new Set([
   'tiktok',
   'whatsapp',
   'google_review',
+  'tripadvisor',
+  'website',
+  'call_waiter',
   'menu',
 ])
 
@@ -148,7 +151,37 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ ok: true }, { status: 200, headers: CORS_HEADERS })
   }
 
-  // ── Button click (existing behaviour) ────────────────────────────────────
+  // ── Button click (new: event_type-based, no stand_id required) ──────────
+  if (event_type === 'button_click') {
+    if (!client_id || typeof client_id !== 'string') {
+      return NextResponse.json(
+        { error: 'client_id is required for button_click' },
+        { status: 400, headers: CORS_HEADERS }
+      )
+    }
+    if (!button_type || typeof button_type !== 'string' || !ALLOWED_BUTTON_TYPES.has(button_type)) {
+      return NextResponse.json(
+        { error: `button_type must be one of: ${Array.from(ALLOWED_BUTTON_TYPES).join(', ')}` },
+        { status: 400, headers: CORS_HEADERS }
+      )
+    }
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { error } = await (supabase as any).from('button_clicks').insert({
+      client_id,
+      button_type,
+      visitor_id:   typeof visitor_id   === 'string' ? visitor_id   : null,
+      table_number: typeof table_number === 'number'  ? table_number : null,
+    })
+    if (error) {
+      return NextResponse.json(
+        { error: 'Failed to log button click' },
+        { status: 500, headers: CORS_HEADERS }
+      )
+    }
+    return NextResponse.json({ ok: true }, { status: 200, headers: CORS_HEADERS })
+  }
+
+  // ── Button click (legacy: stand_id-based) ────────────────────────────────
   if (!stand_id || typeof stand_id !== 'string') {
     return NextResponse.json(
       { error: 'stand_id is required' },

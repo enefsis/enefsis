@@ -184,12 +184,18 @@ function WhatsAppIcon({ size = 24 }: { size?: number }) {
 
 // ─── Tracking helpers ─────────────────────────────────────────────────────────
 
-function trackButton(standId: string | null, clientId: string, buttonType: string, tableNumber: number | null = null) {
-  if (!standId) return
+function trackButton(clientId: string, buttonType: string, tableNumber: number | null = null) {
+  const visitorId = localStorage.getItem('enefsis_visitor_id')
   fetch('/api/track', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ stand_id: standId, button_type: buttonType, client_id: clientId, table_number: tableNumber }),
+    body: JSON.stringify({
+      event_type:   'button_click',
+      button_type:  buttonType,
+      client_id:    clientId,
+      table_number: tableNumber,
+      visitor_id:   visitorId,
+    }),
   }).catch(() => {})
 }
 
@@ -262,7 +268,7 @@ function FollowUsSection({
             href={card.href}
             target="_blank"
             rel="noopener noreferrer"
-            onClick={() => trackButton(standId, clientId, card.key, tableNumber)}
+            onClick={() => trackButton(clientId, card.key, tableNumber)}
             className="flex flex-col gap-3 p-4 rounded-2xl active:scale-[0.97] transition-transform"
             style={{ background: card.bg, border: `1px solid ${card.border}` }}
           >
@@ -630,7 +636,7 @@ function CallWaiterButton({
 
   function handleCall() {
     if (notified) return
-    trackButton(standId, clientId, 'call_waiter', tableNumber)
+    trackButton(clientId, 'call_waiter', tableNumber)
     setNotified(true)
     setTimeout(() => setNotified(false), 3000)
   }
@@ -1053,7 +1059,7 @@ export function LandingClient({
               href={googleReviewUrl}
               target="_blank"
               rel="noopener noreferrer"
-              onClick={() => trackButton(standId, clientId, 'google_review', tableNumber)}
+              onClick={() => trackButton(clientId, 'google_review', tableNumber)}
               className="flex items-center justify-between w-full px-5 rounded-2xl active:scale-[0.98] transition-transform"
               style={{
                 background: 'linear-gradient(100deg, #F5A623 0%, #E8880A 100%)',

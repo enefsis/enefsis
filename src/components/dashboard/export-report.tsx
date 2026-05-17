@@ -13,6 +13,29 @@ function fmtHour(h: number): string {
   return `${h - 12} PM`
 }
 
+function getLanguageName(code: string): string {
+  const map: Record<string, string> = {
+    'en-GB': 'English (UK)',
+    'en-US': 'English (US)',
+    'en':    'English',
+    'de':    'German',
+    'el':    'Greek',
+    'fr':    'French',
+    'it':    'Italian',
+    'es':    'Spanish',
+    'ru':    'Russian',
+    'zh':    'Chinese',
+    'ja':    'Japanese',
+    'ar':    'Arabic',
+    'pt':    'Portuguese',
+    'ko':    'Korean',
+    'nl':    'Dutch',
+    'pl':    'Polish',
+    'tr':    'Turkish',
+  }
+  return map[code] ?? map[code.split('-')[0]] ?? code
+}
+
 function csvEsc(s: string) { return s.replace(/"/g, '""') }
 function htmlEsc(s: string) {
   return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
@@ -60,7 +83,7 @@ function downloadCSV(data: ExportData, rangeLabel: string) {
 
   lines.push('LANGUAGE PREFERENCES')
   lines.push('Language,Count')
-  data.langData.forEach(l => lines.push(`"${csvEsc(l.language)}",${l.count}`))
+  data.langData.forEach(l => lines.push(`"${csvEsc(getLanguageName(l.language))}",${l.count}`))
   lines.push('')
 
   lines.push('SOCIAL BUTTON CLICKS')
@@ -198,7 +221,7 @@ function printPDF(data: ExportData, rangeLabel: string) {
       ? '<p class="no-data">No data yet</p>'
       : `<table>
           <thead><tr><th>Language</th><th>Visitors</th></tr></thead>
-          <tbody>${data.langData.map(l => `<tr><td>${htmlEsc(l.language)}</td><td>${l.count.toLocaleString()}</td></tr>`).join('')}</tbody>
+          <tbody>${data.langData.map(l => `<tr><td>${htmlEsc(getLanguageName(l.language))}</td><td>${l.count.toLocaleString()}</td></tr>`).join('')}</tbody>
         </table>`}
   </div>
 </div>
