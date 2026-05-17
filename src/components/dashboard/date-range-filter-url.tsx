@@ -31,6 +31,8 @@ export function DateRangeFilterUrl() {
     const params = new URLSearchParams(searchParams.toString())
     params.set('days', String(d))
     router.push(`${pathname}?${params.toString()}`, { scroll: false })
+    // Invalidate Next.js router cache so server components always re-fetch
+    router.refresh()
   }
 
   return <DateRangeFilter days={days} onChange={onChange} />

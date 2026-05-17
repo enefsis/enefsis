@@ -59,6 +59,16 @@ function buildDateRange(days: number): string[] {
   })
 }
 
+// "Today" = since local midnight on server; other ranges = rolling window
+function getStartDate(days: number): string {
+  if (days === 1) {
+    const d = new Date()
+    d.setHours(0, 0, 0, 0)
+    return d.toISOString()
+  }
+  return new Date(Date.now() - days * 86_400_000).toISOString()
+}
+
 function fmtDay(iso: string) {
   return new Date(iso + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
 }
@@ -132,7 +142,7 @@ export default async function AnalyticsPage({
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
-  const dStart        = new Date(Date.now() - days * 86_400_000).toISOString()
+  const dStart        = getStartDate(days)
   const supabaseAdmin = createAdminClient()
 
   // ── Parallel data fetch — service role bypasses RLS ───────────────────────

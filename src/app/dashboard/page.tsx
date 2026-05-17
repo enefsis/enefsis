@@ -29,6 +29,21 @@ function buildDateRange(days: number): string[] {
   })
 }
 
+// "Today" = since local midnight; other ranges = rolling window from now
+function computeRange(days: number, now: Date): { dStart: string; dPrev: string } {
+  if (days === 1) {
+    const todayMidnight = new Date(now)
+    todayMidnight.setHours(0, 0, 0, 0)
+    const yesterdayMidnight = new Date(todayMidnight)
+    yesterdayMidnight.setDate(yesterdayMidnight.getDate() - 1)
+    return { dStart: todayMidnight.toISOString(), dPrev: yesterdayMidnight.toISOString() }
+  }
+  return {
+    dStart: new Date(now.getTime() - days * 86_400_000).toISOString(),
+    dPrev:  new Date(now.getTime() - 2 * days * 86_400_000).toISOString(),
+  }
+}
+
 const CLOCK_EMOJIS = ['🕛','🕐','🕑','🕒','🕓','🕔','🕕','🕖','🕗','🕘','🕙','🕚']
 const DAY_NAMES    = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday']
 function fmtHour(h: number): string {
@@ -86,10 +101,9 @@ export default function DashboardPage() {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) { setLoading(false); return }
 
-      const now    = new Date()
-      const dStart = new Date(now.getTime() - d * 86_400_000).toISOString()
-      const dPrev  = new Date(now.getTime() - 2 * d * 86_400_000).toISOString()
-      const nowIso = now.toISOString()
+      const now              = new Date()
+      const { dStart, dPrev } = computeRange(d, now)
+      const nowIso           = now.toISOString()
 
       const [
         { count: tapsCur },

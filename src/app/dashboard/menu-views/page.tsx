@@ -25,6 +25,15 @@ function fmtDay(iso: string) {
   return new Date(iso + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
 }
 
+function getStartDate(days: number): string {
+  if (days === 1) {
+    const d = new Date()
+    d.setHours(0, 0, 0, 0)
+    return d.toISOString()
+  }
+  return new Date(Date.now() - days * 86_400_000).toISOString()
+}
+
 export default async function MenuViewsPage({
   searchParams,
 }: {
@@ -37,7 +46,7 @@ export default async function MenuViewsPage({
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
-  const dStart = new Date(Date.now() - days * 86_400_000).toISOString()
+  const dStart = getStartDate(days)
 
   const admin = createAdminClient()
 
