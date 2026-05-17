@@ -868,14 +868,17 @@ export function LandingClient({
   )
 
   useEffect(() => {
+    // 1. Respect an explicit stored preference
     const stored = localStorage.getItem('enefsis_lang')
     if (stored && LANGUAGES.some(l => l.code === stored)) {
       void selectLang(stored)
       return
     }
-    const nav = navigator.language.slice(0, 2).toLowerCase()
+    // 2. Auto-detect: map navigator.language (e.g. "el-GR") to a DeepL code
+    const nav   = navigator.language.slice(0, 2).toLowerCase()
     const match = LANGUAGES.find(l => l.nav === nav)
-    if (match) void selectLang(match.code)
+    // Only translate if a supported non-English language is detected
+    if (match && match.code !== 'EN') void selectLang(match.code)
   }, [selectLang])
 
   const t = (text: string) => translated[text] ?? text
