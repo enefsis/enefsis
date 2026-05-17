@@ -169,8 +169,7 @@ export async function POST(req: NextRequest) {
     const { error } = await (supabase as any).from('button_clicks').insert({
       client_id,
       button_type,
-      visitor_id:   typeof visitor_id   === 'string' ? visitor_id   : null,
-      table_number: typeof table_number === 'number'  ? table_number : null,
+      table_number: typeof table_number === 'number' ? table_number : null,
     })
     if (error) {
       return NextResponse.json(
