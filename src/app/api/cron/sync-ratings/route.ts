@@ -62,6 +62,15 @@ export async function GET(request: Request) {
         })
         .eq('user_id', page.user_id)
 
+      // Snapshot the review count so we can calculate gains over time
+      if (user_ratings_total != null) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        await (admin as any).from('review_count_history').insert({
+          user_id:      page.user_id,
+          review_count: user_ratings_total,
+        })
+      }
+
       results.updated++
     } catch (err) {
       results.failed++

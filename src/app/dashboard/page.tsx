@@ -110,8 +110,8 @@ export default function DashboardPage() {
         { count: tapsPrev },
         { count: viewsCur },
         { count: viewsPrev },
-        { count: reviewsCur },
-        { count: reviewsPrev },
+        { data: rawReviewHistoryCur },
+        { data: rawReviewHistoryPrev },
         { count: followersCur },
         { count: followersPrev },
         { data: rawTaps },
@@ -123,8 +123,10 @@ export default function DashboardPage() {
         supabase.from('tap_events').select('*', { count: 'exact', head: true }).eq('user_id', user.id).gte('created_at', dPrev).lt('created_at', dStart),
         supabase.from('menu_item_views').select('*', { count: 'exact', head: true }).eq('client_id', user.id).gte('created_at', dStart).lte('created_at', nowIso),
         supabase.from('menu_item_views').select('*', { count: 'exact', head: true }).eq('client_id', user.id).gte('created_at', dPrev).lt('created_at', dStart),
-        supabase.from('button_clicks').select('*', { count: 'exact', head: true }).eq('client_id', user.id).gte('created_at', dStart).lte('created_at', nowIso),
-        supabase.from('button_clicks').select('*', { count: 'exact', head: true }).eq('client_id', user.id).gte('created_at', dPrev).lt('created_at', dStart),
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (supabase as any).from('review_count_history').select('review_count').eq('user_id', user.id).gte('created_at', dStart).lte('created_at', nowIso).order('created_at', { ascending: true }),
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (supabase as any).from('review_count_history').select('review_count').eq('user_id', user.id).gte('created_at', dPrev).lt('created_at', dStart).order('created_at', { ascending: true }),
         supabase.from('subscriptions').select('*', { count: 'exact', head: true }).eq('user_id', user.id).gte('created_at', dStart).lte('created_at', nowIso),
         supabase.from('subscriptions').select('*', { count: 'exact', head: true }).eq('user_id', user.id).gte('created_at', dPrev).lt('created_at', dStart),
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -138,6 +140,16 @@ export default function DashboardPage() {
 
       // Fire daily summary check without blocking data load
       void checkAndCreateDailySummary().catch(() => {})
+
+      // ── New reviews (est.) from review_count_history snapshots ───────────────
+      const reviewSnapsCur  = (rawReviewHistoryCur  as { review_count: number }[] | null) ?? []
+      const reviewSnapsPrev = (rawReviewHistoryPrev as { review_count: number }[] | null) ?? []
+      const reviewsCur  = reviewSnapsCur.length  >= 2
+        ? Math.max(0, reviewSnapsCur[reviewSnapsCur.length - 1].review_count   - reviewSnapsCur[0].review_count)
+        : 0
+      const reviewsPrev = reviewSnapsPrev.length >= 2
+        ? Math.max(0, reviewSnapsPrev[reviewSnapsPrev.length - 1].review_count - reviewSnapsPrev[0].review_count)
+        : 0
 
       // ── Unique taps + top tables ─────────────────────────────────────────────
       const rawTapsTyped  = rawTaps as { created_at: string; visitor_id: string | null; table_number: number | null }[] | null
@@ -220,8 +232,8 @@ export default function DashboardPage() {
         uniqueTapsCur,
         viewsCur:      viewsCur      ?? 0,
         viewsPrev:     viewsPrev     ?? 0,
-        reviewsCur:    reviewsCur    ?? 0,
-        reviewsPrev:   reviewsPrev   ?? 0,
+        reviewsCur,
+        reviewsPrev,
         followersCur:  followersCur  ?? 0,
         followersPrev: followersPrev ?? 0,
         chartData,
@@ -258,7 +270,7 @@ export default function DashboardPage() {
     { label: 'Total Taps',            value: data.tapsCur,       change: calcChange(data.tapsCur,      data.tapsPrev),      icon: 'tap'   as const },
     { label: 'Unique Taps',           value: data.uniqueTapsCur, change: 0,                                                icon: 'tap'   as const },
     { label: 'Menu Views',            value: data.viewsCur,      change: calcChange(data.viewsCur,     data.viewsPrev),     icon: 'menu'  as const },
-    { label: 'Google Reviews Gained', value: data.reviewsCur,    change: calcChange(data.reviewsCur,   data.reviewsPrev),   icon: 'star'  as const },
+    { label: 'New Reviews (est.)', subtitle: 'Based on Google data, updated daily', value: data.reviewsCur, change: calcChange(data.reviewsCur, data.reviewsPrev), icon: 'star' as const },
     { label: 'New Followers',         value: data.followersCur,  change: calcChange(data.followersCur, data.followersPrev), icon: 'users' as const },
   ]
 

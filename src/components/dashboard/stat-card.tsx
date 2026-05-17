@@ -14,13 +14,14 @@ const icons = {
 
 interface StatCardProps {
   label: string
+  subtitle?: string
   value: number
   change: number
   icon: keyof typeof icons
   prefix?: string
 }
 
-export function StatCard({ label, value, change, icon, prefix }: StatCardProps) {
+export function StatCard({ label, subtitle, value, change, icon, prefix }: StatCardProps) {
   const Icon = icons[icon]
 
   const isPositive = change > 0
@@ -41,6 +42,9 @@ export function StatCard({ label, value, change, icon, prefix }: StatCardProps) 
           {value.toLocaleString()}
         </p>
         <p className="font-sans text-sm text-white/45 mt-1.5">{label}</p>
+        {subtitle && (
+          <p className="font-sans text-[10px] text-white/25 mt-0.5 leading-tight">{subtitle}</p>
+        )}
       </div>
 
       {/* Change */}
