@@ -228,7 +228,7 @@ interface FollowCard {
 
 function FollowUsSection({
   instagramUrl, facebookUrl, tiktokUrl, tripAdvisorUrl, whatsappHref, websiteUrl,
-  standId, clientId, tableNumber, t,
+  clientId, tableNumber, t,
 }: {
   instagramUrl:    string | null
   facebookUrl:     string | null
@@ -236,7 +236,6 @@ function FollowUsSection({
   tripAdvisorUrl:  string | null
   whatsappHref:    string
   websiteUrl:      string | null
-  standId:         string | null
   clientId:        string
   tableNumber:     number | null
   t:               (s: string) => string
@@ -625,9 +624,8 @@ function InfoSection({
 // ─── Call Waiter button ───────────────────────────────────────────────────────
 
 function CallWaiterButton({
-  standId, clientId, tableNumber, t,
+  clientId, tableNumber, t,
 }: {
-  standId: string | null
   clientId: string
   tableNumber: number | null
   t: (s: string) => string
@@ -818,7 +816,8 @@ export function LandingClient({
           ? 'mobile' : 'desktop',
       }),
     }).catch(() => {})
-  }, [])
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [clientId])
 
   const selectLang = useCallback(
     async (code: string) => {
@@ -1111,7 +1110,6 @@ export function LandingClient({
           tripAdvisorUrl={tripAdvisorUrl}
           whatsappHref={whatsappHref}
           websiteUrl={websiteUrl}
-          standId={standId}
           clientId={clientId}
           tableNumber={tableNumber}
           t={t}
@@ -1130,7 +1128,7 @@ export function LandingClient({
         {/* ── Call Waiter ──────────────────────────────────────────────────── */}
         {callWaiterEnabled && (
           <div className="px-4 pt-4">
-            <CallWaiterButton standId={standId} clientId={clientId} tableNumber={tableNumber} t={t} />
+            <CallWaiterButton clientId={clientId} tableNumber={tableNumber} t={t} />
           </div>
         )}
 
