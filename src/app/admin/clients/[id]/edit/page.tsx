@@ -32,7 +32,7 @@ export default async function ClientEditPage({
     (admin as any).from('sales_agents')
       .select('id, name, territory')
       .eq('status', 'active')
-      .order('full_name', { ascending: true }),
+      .order('name', { ascending: true }),
     // agent_id column may not exist yet — tolerate error
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (admin as any).from('profiles')
