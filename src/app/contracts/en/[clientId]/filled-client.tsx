@@ -4,19 +4,20 @@ import { useEffect, useRef } from 'react'
 import { logContractGenerated } from '@/actions/contract-log'
 
 export interface ContractData {
-  clientId:        string
-  fullName:        string | null
-  email:           string
-  restaurantName:  string | null
-  address:         string | null
-  city:            string | null
-  phone:           string | null
-  plan:            string | null
-  amount:          number
-  paymentMethod:   string | null
-  nextBillingDate: string | null
-  standsCount:     number
-  today:           string
+  clientId:         string
+  fullName:         string | null
+  email:            string
+  restaurantName:   string | null
+  address:          string | null
+  city:             string | null
+  phone:            string | null
+  plan:             string | null
+  amount:           number
+  paymentMethod:    string | null
+  nextBillingDate:  string | null
+  standsCount:      number
+  today:            string
+  serviceStartDate: string
 }
 
 const PRINT_CSS = `
@@ -42,6 +43,13 @@ const PRINT_CSS = `
     ul { padding-left: 16px !important; }
   }
 `
+
+function fmtDate(str: string | null | undefined): string | null {
+  if (!str) return null
+  const d = str.includes('T') ? str.split('T')[0] : str
+  const [y, m, day] = d.split('-')
+  return `${day}-${m}-${y}`
+}
 
 function F({ value }: { value: string | null | undefined }) {
   return (
@@ -127,7 +135,7 @@ export function FilledContractEn({ data }: { data: ContractData }) {
         {/* Meta */}
         <div className="flex gap-6 mb-10 pb-4 border-b" style={{ borderColor: 'rgba(255,255,255,0.08)' }}>
           <div className="flex-1"><Label>Contract No.</Label><Blank /></div>
-          <div className="flex-1"><Label>Contract Date</Label><F value={data.today} /></div>
+          <div className="flex-1"><Label>Contract Date</Label><F value={fmtDate(data.today)} /></div>
         </div>
 
         <div className="space-y-9">
@@ -168,10 +176,10 @@ export function FilledContractEn({ data }: { data: ContractData }) {
             <SectionTitle>2. Contract Details</SectionTitle>
             <div className="grid grid-cols-2 gap-5 mb-5">
               {([
-                ['Service Start Date',                data.today],
+                ['Service Start Date',                fmtDate(data.serviceStartDate)],
                 ['Number of NFC Stands',             data.standsCount > 0 ? String(data.standsCount) : null],
                 ['Monthly / Annual Fee (excl. VAT)', data.amount > 0 ? `€${data.amount}` : null],
-                ['First Billing Date',               data.nextBillingDate],
+                ['First Billing Date',               fmtDate(data.nextBillingDate)],
               ] as [string, string | null][]).map(([label, value]) => (
                 <div key={label}><Label>{label}</Label><F value={value} /></div>
               ))}
@@ -302,7 +310,7 @@ export function FilledContractEn({ data }: { data: ContractData }) {
                 <div className="space-y-4">
                   <div><Label>Full Name</Label><F value={data.fullName} /></div>
                   <div><Label>Position / Title</Label><Blank /></div>
-                  <div><Label>Date</Label><F value={data.today} /></div>
+                  <div><Label>Date</Label><F value={fmtDate(data.today)} /></div>
                   <div>
                     <Label>Signature</Label>
                     <div className="sig-box rounded-lg" style={{ height: 80, border: '1px solid rgba(255,255,255,0.10)' }} />

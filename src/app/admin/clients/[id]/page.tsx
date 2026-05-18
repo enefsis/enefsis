@@ -12,6 +12,7 @@ import { NotesEditor } from './notes-editor'
 import { PaymentHistory, type PaymentRow } from './payment-history'
 import { ActivityLog, type ActivityEntry } from './activity-log'
 import { ContractHistory, type ContractLog } from './contract-history'
+import { GenerateContractModal } from './generate-contract-modal'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 type Profile  = { id: string; full_name: string | null; email: string; created_at: string; admin_notes: string | null }
@@ -432,37 +433,7 @@ export default async function ClientDetailPage({
       <ActivityLog entries={activities as ActivityEntry[]} />
 
       {/* Generate Contract */}
-      <div className="bg-[#141720] border border-white/[0.06] rounded-2xl p-5">
-        <h2 className="font-display font-semibold text-white text-sm mb-4">Generate Contract</h2>
-        <div className="flex flex-wrap gap-3">
-          <a
-            href={`/contracts/en/${id}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl font-sans text-sm font-medium transition-colors"
-            style={{ background: 'rgba(43,92,230,0.12)', color: '#6B90F5', border: '1px solid rgba(43,92,230,0.22)' }}
-          >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-              <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-              <path d="M14 2v6h6M16 13H8M16 17H8M10 9H8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-            English Contract
-          </a>
-          <a
-            href={`/contracts/de/${id}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl font-sans text-sm font-medium transition-colors"
-            style={{ background: 'rgba(251,191,36,0.08)', color: '#FBBF24', border: '1px solid rgba(251,191,36,0.18)' }}
-          >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-              <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-              <path d="M14 2v6h6M16 13H8M16 17H8M10 9H8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-            German Contract
-          </a>
-        </div>
-      </div>
+      <GenerateContractModal clientId={id} joinedDate={profile.created_at} />
 
       {/* Contract History */}
       <ContractHistory logs={contractLogs} userId={id} />
