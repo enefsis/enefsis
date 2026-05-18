@@ -2,7 +2,7 @@ import { notFound } from 'next/navigation'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { EditForm } from './edit-form'
 
-type Profile  = { full_name: string | null; email: string; created_at: string; admin_notes: string | null; agent_id: string | null }
+type Profile  = { full_name: string | null; email: string; created_at: string; admin_notes: string | null }
 type Sub      = { plan: string | null; status: string | null; payment_method: string | null; custom_amount: number | null; payment_notes: string | null }
 type AgentRow = { id: string; full_name: string; territory: string | null }
 
@@ -14,10 +14,12 @@ export default async function ClientEditPage({
   const { id }  = await params
   const admin   = createAdminClient()
 
-  const [profileRes, subRes, agentsRes] = await Promise.all([
+  // agent_id and agents table are new — keep them in separate queries so a
+  // missing column / missing table never causes the core profile fetch to fail.
+  const [profileRes, subRes, agentsRes, agentAssignRes] = await Promise.all([
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (admin.from('profiles') as any)
-      .select('full_name, email, created_at, admin_notes, agent_id')
+      .select('full_name, email, created_at, admin_notes')
       .eq('id', id).maybeSingle(),
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (admin.from('subscriptions') as any)
@@ -31,13 +33,20 @@ export default async function ClientEditPage({
       .select('id, full_name, territory')
       .eq('status', 'active')
       .order('full_name', { ascending: true }),
+    // agent_id column may not exist yet — tolerate error
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (admin as any).from('profiles')
+      .select('agent_id')
+      .eq('id', id).maybeSingle(),
   ])
 
   const profile = profileRes.data as Profile | null
   if (!profile) notFound()
 
-  const sub    = subRes.data    as Sub        | null
-  const agents = (agentsRes.data as AgentRow[] | null) ?? []
+  const sub    = subRes.data       as Sub        | null
+  const agents = (agentsRes.error ? [] : (agentsRes.data as AgentRow[] | null) ?? [])
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const agentId = agentAssignRes.error ? null : ((agentAssignRes.data as any)?.agent_id ?? null)
 
   return (
     <EditForm
@@ -51,7 +60,7 @@ export default async function ClientEditPage({
       customAmount={sub?.custom_amount ?? null}
       paymentNotes={sub?.payment_notes ?? ''}
       adminNotes={profile.admin_notes ?? ''}
-      agentId={profile.agent_id ?? null}
+      agentId={agentId}
       agents={agents}
       backHref={`/admin/clients/${id}`}
     />
