@@ -12,6 +12,7 @@ import {
   Wifi,
   CreditCard,
   PanelLeft,
+  Briefcase,
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import { signOut } from '@/actions/auth'
@@ -26,6 +27,7 @@ const ICON_MAP: Record<string, LucideIcon> = {
   clients:       Users,
   'nfc-stands':  Wifi,
   subscriptions: CreditCard,
+  agents:        Briefcase,
 }
 
 export interface NavItem {
