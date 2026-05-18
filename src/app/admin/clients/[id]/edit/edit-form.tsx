@@ -1,14 +1,12 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { toast } from 'sonner'
 import { updateClientInfo } from '@/actions/admin-clients'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
-type AgentOption = { id: string; name: string; territory: string | null }
-
 export type EditFormProps = {
   clientId:      string
   fullName:      string
@@ -21,7 +19,6 @@ export type EditFormProps = {
   paymentNotes:  string
   adminNotes:    string
   agentId:       string | null
-  agents:        AgentOption[]
   backHref:      string
 }
 
@@ -70,11 +67,12 @@ export function EditForm({
   plan: initPlan, status: initStatus,
   paymentMethod: initPaymentMethod, customAmount: initCustomAmount, paymentNotes: initPaymentNotes,
   adminNotes: initAdminNotes,
-  agentId: initAgentId, agents,
+  agentId: initAgentId,
   backHref,
 }: EditFormProps) {
   const router = useRouter()
 
+  const [agents,        setAgents]        = useState<any[]>([])
   const [name,          setName]          = useState(initName)
   const [email,         setEmail]         = useState(initEmail)
   const [joinedDate,    setJoinedDate]    = useState(() => {
@@ -92,6 +90,16 @@ export function EditForm({
   const [agentId,       setAgentId]       = useState<string | null>(initAgentId)
   const [saving,        setSaving]        = useState(false)
   const [error,         setError]         = useState<string | null>(null)
+
+  useEffect(() => {
+    fetch('/api/admin/agents')
+      .then(res => res.json())
+      .then(data => {
+        console.log('[EditForm] agents loaded:', data.agents)
+        setAgents(data.agents || [])
+      })
+      .catch(err => console.error('[EditForm] agents error:', err))
+  }, [])
 
   const isManualPayment = paymentMethod !== 'stripe'
 
@@ -376,7 +384,7 @@ export function EditForm({
                 <option value="">No agent assigned</option>
                 {agents.map(agent => (
                   <option key={agent.id} value={agent.id}>
-                    {agent.name}{agent.territory ? ` — ${agent.territory}` : ''}
+                    {agent.name} — {agent.territory}
                   </option>
                 ))}
               </select>

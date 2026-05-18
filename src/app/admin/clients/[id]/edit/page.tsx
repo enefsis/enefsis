@@ -4,7 +4,6 @@ import { EditForm } from './edit-form'
 
 type Profile  = { full_name: string | null; email: string; created_at: string; admin_notes: string | null }
 type Sub      = { plan: string | null; status: string | null; payment_method: string | null; custom_amount: number | null; payment_notes: string | null }
-type AgentRow = { id: string; name: string; territory: string | null }
 
 export default async function ClientEditPage({
   params,
@@ -16,7 +15,7 @@ export default async function ClientEditPage({
 
   // agent_id and agents table are new — keep them in separate queries so a
   // missing column / missing table never causes the core profile fetch to fail.
-  const [profileRes, subRes, agentsRes, agentAssignRes] = await Promise.all([
+  const [profileRes, subRes, agentAssignRes] = await Promise.all([
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (admin.from('profiles') as any)
       .select('full_name, email, created_at, admin_notes')
@@ -28,11 +27,6 @@ export default async function ClientEditPage({
       .order('created_at', { ascending: false })
       .limit(1)
       .maybeSingle(),
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    (admin as any).from('sales_agents')
-      .select('id, name, territory')
-      .eq('status', 'active')
-      .order('name', { ascending: true }),
     // agent_id column may not exist yet — tolerate error
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (admin as any).from('profiles')
@@ -43,8 +37,7 @@ export default async function ClientEditPage({
   const profile = profileRes.data as Profile | null
   if (!profile) notFound()
 
-  const sub    = subRes.data       as Sub        | null
-  const agents = (agentsRes.error ? [] : (agentsRes.data as AgentRow[] | null) ?? [])
+  const sub     = subRes.data as Sub | null
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const agentId = agentAssignRes.error ? null : ((agentAssignRes.data as any)?.agent_id ?? null)
 
@@ -61,7 +54,6 @@ export default async function ClientEditPage({
       paymentNotes={sub?.payment_notes ?? ''}
       adminNotes={profile.admin_notes ?? ''}
       agentId={agentId}
-      agents={agents}
       backHref={`/admin/clients/${id}`}
     />
   )
