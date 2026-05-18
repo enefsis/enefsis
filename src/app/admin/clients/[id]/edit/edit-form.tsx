@@ -99,7 +99,7 @@ export function EditForm({
   const [error,         setError]         = useState<string | null>(null)
 
   useEffect(() => {
-    fetch('/api/admin/agents')
+    fetch('/api/admin/agents', { credentials: 'include' })
       .then(res => res.json())
       .then((data: { agents: AgentOption[] }) => {
         console.log('[EditForm] agents loaded:', data.agents)
