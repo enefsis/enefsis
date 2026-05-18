@@ -108,6 +108,50 @@ export default function AdminSettingsPage() {
         </div>
       </SettingsCard>
 
+      {/* Contracts */}
+      <SettingsCard title="Contracts">
+        <div>
+          <p className="font-sans text-sm font-medium text-white/80 mb-1">Client Service Contracts</p>
+          <p className="font-sans text-xs text-white/35 mb-4">
+            Printable NFC Smart Hub service contracts. Open, fill in client details, then print or save as PDF.
+          </p>
+          <div className="flex gap-3">
+            <a
+              href="/contracts/en"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-2 px-4 py-2 rounded-xl font-sans text-sm font-semibold transition-colors"
+              style={{
+                background: 'rgba(43,92,230,0.12)',
+                border: '1px solid rgba(43,92,230,0.25)',
+                color: '#7BA7FF',
+              }}
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/>
+              </svg>
+              English Contract
+            </a>
+            <a
+              href="/contracts/de"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-2 px-4 py-2 rounded-xl font-sans text-sm font-semibold transition-colors"
+              style={{
+                background: 'rgba(43,92,230,0.12)',
+                border: '1px solid rgba(43,92,230,0.25)',
+                color: '#7BA7FF',
+              }}
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/>
+              </svg>
+              Deutscher Vertrag
+            </a>
+          </div>
+        </div>
+      </SettingsCard>
+
       {/* Danger zone */}
       <SettingsCard title="Danger Zone">
         <div className="space-y-4">

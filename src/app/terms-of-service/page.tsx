@@ -45,7 +45,8 @@ export default function TermsOfServicePage() {
             <AddressBlock
               name="Multimedia Agentur, Georgios Niokos"
               tradingAs="Enefsis"
-              location="Vienna, Austria"
+              location="Schnirchgasse 2/17, 1030 Wien, Austria"
+              atu="ATU78295916"
               email="support@enefsis.com"
               role="Service Provider"
             />
@@ -441,11 +442,12 @@ function SubHeading({ children }: { children: React.ReactNode }) {
 }
 
 function AddressBlock({
-  name, tradingAs, location, email, role,
+  name, tradingAs, location, atu, email, role,
 }: {
   name: string
   tradingAs: string
   location: string
+  atu?: string
   email: string
   role: string
 }) {
@@ -468,6 +470,7 @@ function AddressBlock({
       <p className="font-semibold text-white">{name}</p>
       <p>Trading as <span className="text-white font-medium">{tradingAs}</span></p>
       <p>{location}</p>
+      {atu && <p style={{ color: 'rgba(200,205,216,0.55)' }}>ATU: {atu}</p>}
       <p>
         <a href={`mailto:${email}`} style={{ color: '#2B5CE6' }}>{email}</a>
       </p>

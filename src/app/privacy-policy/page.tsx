@@ -296,7 +296,8 @@ function AddressBlock() {
     >
       <p className="font-semibold text-white">Multimedia Agentur, Georgios Niokos</p>
       <p>Trading as <span className="text-white font-medium">Enefsis</span></p>
-      <p>Vienna, Austria</p>
+      <p>Schnirchgasse 2/17, 1030 Wien, Austria</p>
+      <p style={{ color: 'rgba(200,205,216,0.55)' }}>ATU: ATU78295916</p>
       <p>
         Email:{' '}
         <a href="mailto:support@enefsis.com" style={{ color: '#2B5CE6' }}>
