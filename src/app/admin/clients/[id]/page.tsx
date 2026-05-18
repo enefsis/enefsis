@@ -11,6 +11,7 @@ import { DeleteClientButton } from './delete-client-button'
 import { NotesEditor } from './notes-editor'
 import { PaymentHistory, type PaymentRow } from './payment-history'
 import { ActivityLog, type ActivityEntry } from './activity-log'
+import { ContractHistory, type ContractLog } from './contract-history'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 type Profile  = { id: string; full_name: string | null; email: string; created_at: string; admin_notes: string | null }
@@ -148,7 +149,7 @@ export default async function ClientDetailPage({
   const admin   = createAdminClient()
 
   // ── Fetch all data in one parallel batch ─────────────────────────────────
-  const [profileRes, subRes, pageRes, standsRes, paymentsRes, activityRes, tapRes, clickRes, viewRes] = await Promise.all([
+  const [profileRes, subRes, pageRes, standsRes, paymentsRes, activityRes, tapRes, clickRes, viewRes, contractsRes] = await Promise.all([
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (admin as any).from('profiles').select('id, full_name, email, created_at, admin_notes').eq('id', id).maybeSingle(),
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -164,16 +165,19 @@ export default async function ClientDetailPage({
     (admin as any).from('tap_events').select('visitor_id').eq('user_id', id),
     admin.from('button_clicks').select('*', { count: 'exact', head: true }).eq('client_id', id),
     admin.from('menu_item_views').select('*', { count: 'exact', head: true }).eq('client_id', id),
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (admin as any).from('contract_logs').select('id, language, plan, amount, stands, generated_at').eq('user_id', id).order('generated_at', { ascending: false }).limit(20),
   ])
 
   const profile = profileRes.data as Profile | null
   if (!profile) notFound()
 
-  const sub        = subRes.data   as Sub    | null
-  const page       = pageRes.data  as Page   | null
-  const stands     = (standsRes.data   as Stand[]    | null) ?? []
-  const payments   = (paymentsRes.data as Payment[]  | null) ?? []
-  const activities = (activityRes.data as Activity[] | null) ?? []
+  const sub           = subRes.data       as Sub    | null
+  const page          = pageRes.data      as Page   | null
+  const stands        = (standsRes.data   as Stand[]    | null) ?? []
+  const payments      = (paymentsRes.data as Payment[]  | null) ?? []
+  const activities    = (activityRes.data as Activity[] | null) ?? []
+  const contractLogs  = (contractsRes.data as ContractLog[] | null) ?? []
 
   const tapRows      = (tapRes.data as { visitor_id: string | null }[] | null) ?? []
   const tapCount     = tapRows.length
@@ -426,6 +430,42 @@ export default async function ClientDetailPage({
 
       {/* Activity log */}
       <ActivityLog entries={activities as ActivityEntry[]} />
+
+      {/* Generate Contract */}
+      <div className="bg-[#141720] border border-white/[0.06] rounded-2xl p-5">
+        <h2 className="font-display font-semibold text-white text-sm mb-4">Generate Contract</h2>
+        <div className="flex flex-wrap gap-3">
+          <a
+            href={`/contracts/en/${id}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl font-sans text-sm font-medium transition-colors"
+            style={{ background: 'rgba(43,92,230,0.12)', color: '#6B90F5', border: '1px solid rgba(43,92,230,0.22)' }}
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+              <path d="M14 2v6h6M16 13H8M16 17H8M10 9H8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+            English Contract
+          </a>
+          <a
+            href={`/contracts/de/${id}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl font-sans text-sm font-medium transition-colors"
+            style={{ background: 'rgba(251,191,36,0.08)', color: '#FBBF24', border: '1px solid rgba(251,191,36,0.18)' }}
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+              <path d="M14 2v6h6M16 13H8M16 17H8M10 9H8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+            German Contract
+          </a>
+        </div>
+      </div>
+
+      {/* Contract History */}
+      <ContractHistory logs={contractLogs} userId={id} />
 
       {/* Private Notes */}
       <NotesEditor clientId={id} initialNotes={profile.admin_notes ?? ''} />
