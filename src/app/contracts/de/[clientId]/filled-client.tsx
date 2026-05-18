@@ -2,9 +2,21 @@
 
 import { useEffect, useRef } from 'react'
 import { logContractGenerated } from '@/actions/contract-log'
-import type { ContractData } from '../../../en/[clientId]/filled-client'
-
-export type { ContractData }
+export type ContractData = {
+  clientId: string
+  fullName: string | null
+  email: string
+  restaurantName: string | null
+  address: string | null
+  city: string | null
+  phone: string | null
+  plan: string | null
+  amount: number
+  paymentMethod: string | null
+  nextBillingDate: string | null
+  standsCount: number
+  today: string
+}
 
 const PRINT_CSS = `
   @media print {
