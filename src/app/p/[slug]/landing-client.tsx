@@ -65,6 +65,10 @@ const UI_KEYS = [
   'Share this restaurant',
   'Link copied!',
   'Table',
+  'We use cookies',
+  'We use cookies to analyse how you use our menu and improve your experience. You can accept or decline non-essential tracking.',
+  'Accept',
+  'Decline',
 ]
 
 // ─── SVG icons ────────────────────────────────────────────────────────────────
@@ -770,14 +774,7 @@ function PoweredByFooter() {
 
 // ─── Cookie consent banner ───────────────────────────────────────────────────
 
-const CONSENT_STRINGS: Record<string, { title: string; body: string; accept: string; decline: string }> = {
-  DE: { title: 'Wir verwenden Cookies',      body: 'Wir analysieren, wie Sie unser Menü nutzen.',          accept: 'Akzeptieren', decline: 'Ablehnen'   },
-  EL: { title: 'Χρησιμοποιούμε cookies',     body: 'Αναλύουμε πώς χρησιμοποιείτε το μενού μας.',          accept: 'Αποδοχή',     decline: 'Απόρριψη'   },
-}
-const DEFAULT_CONSENT = { title: 'We use cookies', body: 'We use cookies to analyse how you use our menu and improve your experience. You can accept or decline non-essential tracking.', accept: 'Accept', decline: 'Decline' }
-
-function CookieConsentBanner({ onAccept, onDecline, lang }: { onAccept: () => void; onDecline: () => void; lang: string }) {
-  const s = CONSENT_STRINGS[lang] ?? DEFAULT_CONSENT
+function CookieConsentBanner({ onAccept, onDecline, t }: { onAccept: () => void; onDecline: () => void; t: (s: string) => string }) {
   return (
     <div
       className="fixed bottom-0 left-0 right-0 z-50 flex justify-center"
@@ -792,10 +789,10 @@ function CookieConsentBanner({ onAccept, onDecline, lang }: { onAccept: () => vo
         }}
       >
         <p className="font-sans font-semibold text-white mb-1" style={{ fontSize: 14 }}>
-          {s.title}
+          {t('We use cookies')}
         </p>
         <p className="font-sans mb-4" style={{ fontSize: 12, color: 'rgba(255,255,255,0.45)', lineHeight: 1.5 }}>
-          {s.body}
+          {t('We use cookies to analyse how you use our menu and improve your experience. You can accept or decline non-essential tracking.')}
         </p>
         <div className="flex gap-2">
           <button
@@ -809,7 +806,7 @@ function CookieConsentBanner({ onAccept, onDecline, lang }: { onAccept: () => vo
               border: '1px solid rgba(255,255,255,0.09)',
             }}
           >
-            {s.decline}
+            {t('Decline')}
           </button>
           <button
             type="button"
@@ -822,7 +819,7 @@ function CookieConsentBanner({ onAccept, onDecline, lang }: { onAccept: () => vo
               boxShadow: '0 4px 16px rgba(43,101,240,0.35)',
             }}
           >
-            {s.accept}
+            {t('Accept')}
           </button>
         </div>
       </div>
@@ -1261,8 +1258,8 @@ export function LandingClient({
       </div>
 
       {/* ── Cookie consent banner ───────────────────────────────────────── */}
-      {cookieConsent === null && (
-        <CookieConsentBanner onAccept={handleAcceptConsent} onDecline={handleDeclineConsent} lang={lang} />
+      {cookieConsent === null && !isTranslating && (
+        <CookieConsentBanner onAccept={handleAcceptConsent} onDecline={handleDeclineConsent} t={t} />
       )}
 
       {/* ── Language picker modal ────────────────────────────────────────── */}
