@@ -32,7 +32,7 @@ export async function createAgent(formData: FormData): Promise<{ error?: string 
   }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { error } = await (admin as any).from('agents').insert({
+  const { error } = await (admin as any).from('sales_agents').insert({
     full_name:       fullName,
     email,
     phone:           phone    || null,
@@ -69,7 +69,7 @@ export async function updateAgent(formData: FormData): Promise<{ error?: string 
   }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { error } = await (admin as any).from('agents').update({
+  const { error } = await (admin as any).from('sales_agents').update({
     full_name:       fullName,
     email,
     phone:           phone     || null,
@@ -113,7 +113,7 @@ export async function updateAgentStatus(
   if (!admin) return { error: 'Unauthorized' }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { error } = await (admin as any).from('agents').update({ status }).eq('id', agentId)
+  const { error } = await (admin as any).from('sales_agents').update({ status }).eq('id', agentId)
   if (error) return { error: error.message }
 
   revalidatePath('/admin/agents')

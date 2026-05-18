@@ -85,7 +85,7 @@ export default async function AgentDetailPage({
   // ── Stage 1: agent + all linked profiles + subscriptions + commissions ──────
   const [agentRes, profilesRes, subsRes, commissionsRes] = await Promise.all([
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    (admin as any).from('agents')
+    (admin as any).from('sales_agents')
       .select('id, full_name, email, phone, territory, commission_rate, status, notes, created_at')
       .eq('id', id).maybeSingle(),
     // eslint-disable-next-line @typescript-eslint/no-explicit-any

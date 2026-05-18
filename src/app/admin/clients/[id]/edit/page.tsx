@@ -29,7 +29,7 @@ export default async function ClientEditPage({
       .limit(1)
       .maybeSingle(),
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    (admin as any).from('agents')
+    (admin as any).from('sales_agents')
       .select('id, full_name, territory')
       .eq('status', 'active')
       .order('full_name', { ascending: true }),

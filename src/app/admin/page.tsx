@@ -128,7 +128,7 @@ export default async function AdminPage() {
     supabase.from('profiles').select('created_at').neq('role', 'admin').order('created_at', { ascending: true }).limit(1).maybeSingle(),
     // Agent commission rates
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    (supabase as any).from('agents').select('id, commission_rate').eq('status', 'active'),
+    (supabase as any).from('sales_agents').select('id, commission_rate').eq('status', 'active'),
   ])
 
   // ── Revenue chart — monthly MRR from earliest client to today ───────────────

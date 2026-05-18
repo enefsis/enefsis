@@ -63,7 +63,7 @@ export default async function AgentsPage() {
   // Fetch agents + profile-agent links + latest subscriptions in parallel
   const [agentsRes, profilesRes, subsRes] = await Promise.all([
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    (admin as any).from('agents')
+    (admin as any).from('sales_agents')
       .select('id, full_name, email, phone, territory, commission_rate, status, created_at')
       .order('created_at', { ascending: false }),
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
