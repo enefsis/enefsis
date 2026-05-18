@@ -118,23 +118,19 @@ export function Sidebar({ navItems, badge, user }: SidebarProps) {
         </form>
 
         <div className="flex items-center gap-2.5 px-3 pt-3">
-          <a
-            href="https://www.enefsis.com/privacy-policy"
-            target="_blank"
-            rel="noopener noreferrer"
+          <Link
+            href="/privacy-policy"
             className="font-sans text-[10px] text-white/20 hover:text-white/40 transition-colors"
           >
             Privacy
-          </a>
+          </Link>
           <span className="text-white/10 text-[10px]">·</span>
-          <a
-            href="https://www.enefsis.com/terms-of-service"
-            target="_blank"
-            rel="noopener noreferrer"
+          <Link
+            href="/terms-of-service"
             className="font-sans text-[10px] text-white/20 hover:text-white/40 transition-colors"
           >
             Terms
-          </a>
+          </Link>
         </div>
       </div>
     </aside>

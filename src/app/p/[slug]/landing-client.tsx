@@ -759,9 +759,7 @@ function PoweredByFooter() {
           Connect with one tap
         </p>
         <a
-          href="https://www.enefsis.com/privacy-policy"
-          target="_blank"
-          rel="noopener noreferrer"
+          href="/privacy-policy"
           className="font-sans"
           style={{ fontSize: 10, color: 'rgba(255,255,255,0.18)' }}
         >
