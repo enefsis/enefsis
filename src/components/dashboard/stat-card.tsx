@@ -1,4 +1,4 @@
-import { TrendingUp, TrendingDown, Minus, Zap, BookOpen, Star, UserPlus, Users, CreditCard, Euro, CalendarDays } from 'lucide-react'
+import { TrendingUp, TrendingDown, Minus, Zap, BookOpen, Star, UserPlus, Users, CreditCard, Euro, CalendarDays, Coins } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 const icons = {
@@ -10,6 +10,7 @@ const icons = {
   subscriptions: CreditCard,
   revenue:       Euro,
   arr:           CalendarDays,
+  commissions:   Coins,
 }
 
 interface StatCardProps {
@@ -19,10 +20,12 @@ interface StatCardProps {
   change: number
   icon: keyof typeof icons
   prefix?: string
+  accentColor?: 'blue' | 'amber'
 }
 
-export function StatCard({ label, subtitle, value, change, icon, prefix }: StatCardProps) {
-  const Icon = icons[icon]
+export function StatCard({ label, subtitle, value, change, icon, prefix, accentColor = 'blue' }: StatCardProps) {
+  const Icon    = icons[icon]
+  const isAmber = accentColor === 'amber'
 
   const isPositive = change > 0
   const isNegative = change < 0
@@ -31,8 +34,11 @@ export function StatCard({ label, subtitle, value, change, icon, prefix }: StatC
   return (
     <div className="bg-[#141720] border border-white/[0.06] rounded-2xl p-5 flex flex-col gap-4">
       {/* Icon */}
-      <div className="w-9 h-9 rounded-lg bg-[#2B5CE6]/10 border border-[#2B5CE6]/20 flex items-center justify-center">
-        <Icon size={17} className="text-[#2B5CE6]" strokeWidth={1.75} />
+      <div className={cn(
+        'w-9 h-9 rounded-lg flex items-center justify-center',
+        isAmber ? 'bg-amber-500/10 border border-amber-500/20' : 'bg-[#2B5CE6]/10 border border-[#2B5CE6]/20',
+      )}>
+        <Icon size={17} className={isAmber ? 'text-amber-400' : 'text-[#2B5CE6]'} strokeWidth={1.75} />
       </div>
 
       {/* Value */}

@@ -262,6 +262,8 @@ export async function updateClientInfo(
   const customAmountStr = (formData.get('custom_amount') as string | null)?.trim() ?? ''
   const paymentNotes  = (formData.get('payment_notes')  as string | null)?.trim() ?? ''
   const adminNotes    = (formData.get('admin_notes')    as string | null)?.trim() ?? ''
+  const agentIdStr    = (formData.get('agent_id')       as string | null)?.trim() ?? ''
+  const agentId       = agentIdStr || null
 
   const customAmount = customAmountStr !== '' ? parseInt(customAmountStr, 10) : null
 
@@ -285,7 +287,7 @@ export async function updateClientInfo(
 
   // Update profiles row (created_at / admin_notes cast via any — not in generated Update type)
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const profileUpdate: any = { full_name: fullName, email, admin_notes: adminNotes || null }
+  const profileUpdate: any = { full_name: fullName, email, admin_notes: adminNotes || null, agent_id: agentId }
   if (joinedDate) {
     const [dd, mm, yyyy] = joinedDate.split('-')
     const parsed = new Date(`${yyyy}-${mm}-${dd}`)
@@ -323,6 +325,7 @@ export async function updateClientInfo(
       payment_method:    paymentMethod,
       custom_amount:     customAmount,
       payment_notes:     paymentNotes || null,
+      agent_id:          agentId,
       ...(planAmount      !== null      ? { amount:            planAmount      } : {}),
       ...(nextBillingDate !== undefined ? { next_billing_date: nextBillingDate } : {}),
     })

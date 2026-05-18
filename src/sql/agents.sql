@@ -16,3 +16,6 @@ CREATE POLICY "service role full access" ON agents USING (true) WITH CHECK (true
 
 -- Link clients to their referring agent
 ALTER TABLE profiles ADD COLUMN IF NOT EXISTS agent_id uuid REFERENCES agents(id) ON DELETE SET NULL;
+
+-- Also track agent assignment on the subscription row
+ALTER TABLE subscriptions ADD COLUMN IF NOT EXISTS agent_id uuid REFERENCES agents(id) ON DELETE SET NULL;

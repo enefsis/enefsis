@@ -36,11 +36,17 @@ type RawTapEvent = {
 }
 
 type RawMrrRow = {
-  user_id: string | null
-  plan: string | null
-  amount: number | null
+  user_id:       string | null
+  plan:          string | null
+  amount:        number | null
   custom_amount: number | null
-  created_at: string
+  created_at:    string
+  agent_id:      string | null
+}
+
+type RawAgent = {
+  id:              string
+  commission_rate: number | string
 }
 
 const PLAN_MONTHLY: Record<string, number> = {
@@ -97,6 +103,7 @@ export default async function AdminPage() {
     { data: rawSubscriptions },
     { data: rawClientTaps },
     { data: earliestProfileRaw },
+    { data: rawAgents },
   ] = await Promise.all([
     supabase.from('profiles').select('*', { count: 'exact', head: true }).neq('role', 'admin'),
     supabase.from('profiles').select('*', { count: 'exact', head: true }).neq('role', 'admin').gte('created_at', d30).lte('created_at', nowIso),
@@ -104,9 +111,9 @@ export default async function AdminPage() {
     supabase.from('subscriptions').select('*', { count: 'exact', head: true }).eq('status', 'active'),
     supabase.from('subscriptions').select('*', { count: 'exact', head: true }).eq('status', 'active').gte('created_at', d30).lte('created_at', nowIso),
     supabase.from('subscriptions').select('*', { count: 'exact', head: true }).eq('status', 'active').gte('created_at', d60).lt('created_at', d30),
-    // MRR rows — include user_id + created_at for historical chart
+    // MRR rows — include agent_id for commission calculation
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    (supabase.from('subscriptions') as any).select('user_id, plan, amount, custom_amount, created_at').eq('status', 'active'),
+    (supabase.from('subscriptions') as any).select('user_id, plan, amount, custom_amount, created_at, agent_id').eq('status', 'active'),
     supabase.from('tap_events').select('*', { count: 'exact', head: true }).gte('created_at', d30).lte('created_at', nowIso),
     supabase.from('tap_events').select('*', { count: 'exact', head: true }).gte('created_at', d60).lt('created_at', d30),
     // Clients table: full profile list
@@ -119,6 +126,9 @@ export default async function AdminPage() {
     (supabase as any).from('tap_events').select('user_id, visitor_id').gte('created_at', d30).lte('created_at', nowIso),
     // Earliest client join date — chart start
     supabase.from('profiles').select('created_at').neq('role', 'admin').order('created_at', { ascending: true }).limit(1).maybeSingle(),
+    // Agent commission rates
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (supabase as any).from('agents').select('id, commission_rate').eq('status', 'active'),
   ])
 
   // ── Revenue chart — monthly MRR from earliest client to today ───────────────
@@ -127,6 +137,20 @@ export default async function AdminPage() {
   // ── Stat card values ──────────────────────────────────────────────────────
   const mrr = Math.round(mrrRows?.reduce((sum, row) => sum + rowMonthly(row), 0) ?? 0)
   const arr = Math.round(mrrRows?.reduce((sum, row) => sum + rowAnnual(row),  0) ?? 0)
+
+  // Agent commission rate lookup
+  const agentRateById: Record<string, number> = {}
+  ;(rawAgents as RawAgent[] | null)?.forEach(a => {
+    agentRateById[a.id] = parseFloat(String(a.commission_rate))
+  })
+
+  // Total commissions due = SUM of (client MRR × agent commission_rate / 100)
+  // for all active subscriptions that have an agent_id assigned
+  const totalCommissions = Math.round(
+    (mrrRows ?? [])
+      .filter(r => r.agent_id != null && agentRateById[r.agent_id] != null)
+      .reduce((sum, row) => sum + rowMonthly(row) * (agentRateById[row.agent_id!] / 100), 0)
+  )
 
   // Profile date lookup — used to pick the earlier of subscription vs join date
   const profileDateById: Record<string, string> = {}
@@ -156,11 +180,12 @@ export default async function AdminPage() {
   }
 
   const stats = [
-    { label: 'Total Clients',             value: totalClients ?? 0, change: calcChange(newClientsCur ?? 0, newClientsPrev ?? 0), icon: 'clients'       as const },
-    { label: 'Active Subscriptions',      value: activeSubs   ?? 0, change: calcChange(newSubsCur    ?? 0, newSubsPrev    ?? 0), icon: 'subscriptions' as const },
-    { label: 'Monthly Recurring Revenue', value: mrr,               change: 0,                                                  icon: 'revenue'       as const, prefix: '€' },
-    { label: 'Annual Recurring Revenue',  value: arr,               change: 0,                                                  icon: 'arr'           as const, prefix: '€' },
-    { label: 'Total Taps — Last 30 Days', value: tapsCur ?? 0,      change: calcChange(tapsCur ?? 0, tapsPrev ?? 0),            icon: 'tap'           as const },
+    { label: 'Total Clients',             value: totalClients    ?? 0, change: calcChange(newClientsCur ?? 0, newClientsPrev ?? 0), icon: 'clients'       as const },
+    { label: 'Active Subscriptions',      value: activeSubs      ?? 0, change: calcChange(newSubsCur    ?? 0, newSubsPrev    ?? 0), icon: 'subscriptions' as const },
+    { label: 'Monthly Recurring Revenue', value: mrr,                  change: 0,                                                  icon: 'revenue'       as const, prefix: '€' },
+    { label: 'Annual Recurring Revenue',  value: arr,                  change: 0,                                                  icon: 'arr'           as const, prefix: '€' },
+    { label: 'Total Taps — Last 30 Days', value: tapsCur         ?? 0, change: calcChange(tapsCur ?? 0, tapsPrev ?? 0),            icon: 'tap'           as const },
+    { label: 'Commissions Due',           value: totalCommissions,     change: 0,                                                  icon: 'commissions'   as const, prefix: '€', accentColor: 'amber' as const },
   ]
 
   // ── Clients table data ────────────────────────────────────────────────────
@@ -210,7 +235,7 @@ export default async function AdminPage() {
       </div>
 
       {/* Stat cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
         {stats.map(s => (
           <StatCard key={s.label} {...s} />
         ))}
