@@ -7,7 +7,7 @@ import { updateAgent } from '@/actions/admin-agents'
 
 export type AgentData = {
   id:              string
-  full_name:       string
+  name:            string
   email:           string
   phone:           string | null
   territory:       string | null
@@ -43,7 +43,7 @@ export function AgentInfoCard({ agent }: { agent: AgentData }) {
   const rate = parseFloat(String(agent.commission_rate))
 
   // Edit form state — initialised from props
-  const [fullName,       setFullName]       = useState(agent.full_name)
+  const [fullName,       setFullName]       = useState(agent.name)
   const [email,          setEmail]          = useState(agent.email)
   const [phone,          setPhone]          = useState(agent.phone ?? '')
   const [territory,      setTerritory]      = useState(agent.territory ?? '')
@@ -54,7 +54,7 @@ export function AgentInfoCard({ agent }: { agent: AgentData }) {
   function cancelEdit() {
     setEditing(false)
     setError(null)
-    setFullName(agent.full_name)
+    setFullName(agent.name)
     setEmail(agent.email)
     setPhone(agent.phone ?? '')
     setTerritory(agent.territory ?? '')
@@ -113,7 +113,7 @@ export function AgentInfoCard({ agent }: { agent: AgentData }) {
           </button>
         </div>
         <div>
-          <Row label="Full Name"        value={agent.full_name} />
+          <Row label="Full Name"        value={agent.name} />
           <Row label="Email"            value={agent.email} />
           <Row label="Phone"            value={agent.phone} />
           <Row label="Territory"        value={agent.territory} />

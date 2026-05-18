@@ -4,7 +4,7 @@ import { EditForm } from './edit-form'
 
 type Profile  = { full_name: string | null; email: string; created_at: string; admin_notes: string | null }
 type Sub      = { plan: string | null; status: string | null; payment_method: string | null; custom_amount: number | null; payment_notes: string | null }
-type AgentRow = { id: string; full_name: string; territory: string | null }
+type AgentRow = { id: string; name: string; territory: string | null }
 
 export default async function ClientEditPage({
   params,
@@ -30,7 +30,7 @@ export default async function ClientEditPage({
       .maybeSingle(),
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (admin as any).from('sales_agents')
-      .select('id, full_name, territory')
+      .select('id, name, territory')
       .eq('status', 'active')
       .order('full_name', { ascending: true }),
     // agent_id column may not exist yet — tolerate error

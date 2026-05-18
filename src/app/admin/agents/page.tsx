@@ -8,7 +8,7 @@ import { createAdminClient } from '@/lib/supabase/admin'
 // ── Types ────────────────────────────────────────────────────────────────────
 type RawAgent = {
   id: string
-  full_name: string
+  name: string
   email: string
   phone: string | null
   territory: string | null
@@ -64,7 +64,7 @@ export default async function AgentsPage() {
   const [agentsRes, profilesRes, subsRes] = await Promise.all([
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (admin as any).from('sales_agents')
-      .select('id, full_name, email, phone, territory, commission_rate, status, created_at')
+      .select('id, name, email, phone, territory, commission_rate, status, created_at')
       .order('created_at', { ascending: false }),
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (admin as any).from('profiles')
@@ -178,7 +178,7 @@ export default async function AgentsPage() {
                 <div className="sm:hidden space-y-2">
                   <div className="flex items-start justify-between gap-3">
                     <div>
-                      <p className="font-sans text-sm font-medium text-white">{agent.full_name}</p>
+                      <p className="font-sans text-sm font-medium text-white">{agent.name}</p>
                       <p className="font-sans text-xs text-white/40 mt-0.5">{agent.email}</p>
                       {agent.territory && (
                         <p className="font-sans text-xs text-white/30 mt-0.5">{agent.territory}</p>
@@ -199,7 +199,7 @@ export default async function AgentsPage() {
                   style={{ gridTemplateColumns: '1fr 1fr 130px 90px 80px 90px 110px 90px' }}
                 >
                   <div className="min-w-0">
-                    <p className="font-sans text-sm font-medium text-white truncate">{agent.full_name}</p>
+                    <p className="font-sans text-sm font-medium text-white truncate">{agent.name}</p>
                     {agent.phone && (
                       <p className="font-sans text-xs text-white/30 mt-0.5 truncate">{agent.phone}</p>
                     )}

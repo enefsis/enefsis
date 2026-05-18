@@ -33,7 +33,7 @@ export async function createAgent(formData: FormData): Promise<{ error?: string 
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { error } = await (admin as any).from('sales_agents').insert({
-    full_name:       fullName,
+    name:            fullName,
     email,
     phone:           phone    || null,
     territory:       territory || null,
@@ -70,7 +70,7 @@ export async function updateAgent(formData: FormData): Promise<{ error?: string 
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { error } = await (admin as any).from('sales_agents').update({
-    full_name:       fullName,
+    name:            fullName,
     email,
     phone:           phone     || null,
     territory:       territory || null,

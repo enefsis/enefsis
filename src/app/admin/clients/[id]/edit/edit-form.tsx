@@ -7,7 +7,7 @@ import { toast } from 'sonner'
 import { updateClientInfo } from '@/actions/admin-clients'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
-type AgentOption = { id: string; full_name: string; territory: string | null }
+type AgentOption = { id: string; name: string; territory: string | null }
 
 export type EditFormProps = {
   clientId:      string
@@ -376,7 +376,7 @@ export function EditForm({
                 <option value="">No agent assigned</option>
                 {agents.map(agent => (
                   <option key={agent.id} value={agent.id}>
-                    {agent.full_name}{agent.territory ? ` — ${agent.territory}` : ''}
+                    {agent.name}{agent.territory ? ` — ${agent.territory}` : ''}
                   </option>
                 ))}
               </select>

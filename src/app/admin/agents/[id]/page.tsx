@@ -86,7 +86,7 @@ export default async function AgentDetailPage({
   const [agentRes, profilesRes, subsRes, commissionsRes] = await Promise.all([
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (admin as any).from('sales_agents')
-      .select('id, full_name, email, phone, territory, commission_rate, status, notes, created_at')
+      .select('id, name, email, phone, territory, commission_rate, status, notes, created_at')
       .eq('id', id).maybeSingle(),
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (admin as any).from('profiles')
@@ -168,7 +168,7 @@ export default async function AgentDetailPage({
 
       {/* Agent header */}
       <div>
-        <h1 className="font-display text-2xl font-bold text-white">{agent.full_name}</h1>
+        <h1 className="font-display text-2xl font-bold text-white">{agent.name}</h1>
         <p className="font-sans text-sm text-white/40 mt-0.5">{agent.email}</p>
       </div>
 
