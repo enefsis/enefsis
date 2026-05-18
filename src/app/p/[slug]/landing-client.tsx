@@ -287,6 +287,22 @@ function FollowUsSection({
   )
 }
 
+// ─── Badge color map ─────────────────────────────────────────────────────────
+
+function getBadgeStyle(text: string): { color: string; bg: string; border: string } {
+  const key = text.trim().toLowerCase()
+  const map: Record<string, { color: string; bg: string; border: string }> = {
+    'popular':       { color: '#F5A623', bg: 'rgba(245,166,35,0.13)',   border: 'rgba(245,166,35,0.30)'  },
+    'vegan':         { color: '#22C55E', bg: 'rgba(34,197,94,0.12)',    border: 'rgba(34,197,94,0.28)'   },
+    'vegetarian':    { color: '#4ADE80', bg: 'rgba(74,222,128,0.12)',   border: 'rgba(74,222,128,0.28)'  },
+    'spicy':         { color: '#F87171', bg: 'rgba(248,113,113,0.12)',  border: 'rgba(248,113,113,0.28)' },
+    'new':           { color: '#38BEFF', bg: 'rgba(56,190,255,0.12)',   border: 'rgba(56,190,255,0.28)'  },
+    'gluten free':   { color: '#C084FC', bg: 'rgba(192,132,252,0.12)',  border: 'rgba(192,132,252,0.28)' },
+    "chef's choice": { color: '#FB923C', bg: 'rgba(251,146,60,0.12)',   border: 'rgba(251,146,60,0.28)'  },
+  }
+  return map[key] ?? { color: '#6B90F5', bg: 'rgba(43,92,230,0.12)', border: 'rgba(43,92,230,0.28)' }
+}
+
 // ─── Menu item card ───────────────────────────────────────────────────────────
 
 interface MenuItemCardProps {
@@ -355,21 +371,25 @@ function MenuItemCard({ item, onView, onPhotoClick, t }: MenuItemCardProps) {
           <p className="font-sans font-semibold leading-snug flex-1 min-w-0" style={{ fontSize: 14, color: '#F0F2F8' }}>
             {t(item.name)}
           </p>
-          {item.is_popular && (
-            <span
-              className="shrink-0 font-sans font-bold rounded-full"
-              style={{
-                fontSize: 10,
-                color: '#F5A623',
-                background: 'rgba(245,166,35,0.12)',
-                border: '1px solid rgba(245,166,35,0.25)',
-                padding: '2px 7px',
-                whiteSpace: 'nowrap',
-              }}
-            >
-              ★ Popular
-            </span>
-          )}
+          {(item.badge || item.is_popular) && (() => {
+            const badgeText = item.badge || 'Popular'
+            const s = getBadgeStyle(badgeText)
+            return (
+              <span
+                className="shrink-0 font-sans font-bold rounded-full"
+                style={{
+                  fontSize: 10,
+                  color: s.color,
+                  background: s.bg,
+                  border: `1px solid ${s.border}`,
+                  padding: '2px 7px',
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                ★ {badgeText}
+              </span>
+            )
+          })()}
         </div>
 
         {item.description && (

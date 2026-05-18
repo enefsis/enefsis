@@ -26,6 +26,7 @@ export type MenuItemData = {
   available?: boolean
   allergens?: string
   is_popular?: boolean
+  badge?: string
 }
 
 export type MenuSectionData = {

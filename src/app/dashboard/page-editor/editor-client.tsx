@@ -313,8 +313,10 @@ export function PageEditorClient({
       google_place_id:     googlePlaceId,
       menu_sections: sectionsToSave.map(({ id, name, items }) => ({
         id, name,
-        items: items.map(({ id, name, price, description, photo_url, available, allergens }) => ({
+        items: items.map(({ id, name, price, description, photo_url, available, allergens, is_popular, badge }) => ({
           id, name, price, description, photo_url, available: available !== false, allergens,
+          ...(is_popular ? { is_popular } : {}),
+          ...(badge       ? { badge }      : {}),
         })),
       })),
     }
@@ -343,6 +345,7 @@ export function PageEditorClient({
       available: i.available !== false,
       allergens: i.allergens,
       is_popular: i.is_popular,
+      badge: i.badge,
     })),
   }))
 
@@ -947,6 +950,14 @@ function MenuItemEditor({ item, isFirst, isLast, onRemove, onUpdate, onMoveUp, o
           {available ? 'On' : 'Off'}
         </button>
       </div>
+      <input
+        type="text"
+        value={item.badge ?? ''}
+        onChange={e => onUpdate({ badge: e.target.value.slice(0, 15) })}
+        placeholder="Badge (optional) — e.g. Popular, Vegan, Spicy, New"
+        maxLength={15}
+        className={cn(inputCls, 'py-1.5 text-xs w-full')}
+      />
     </div>
   )
 }
