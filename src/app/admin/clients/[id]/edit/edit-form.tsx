@@ -7,6 +7,13 @@ import { toast } from 'sonner'
 import { updateClientInfo } from '@/actions/admin-clients'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
+interface AgentOption {
+  id:              string
+  name:            string
+  territory:       string | null
+  commission_rate: number
+}
+
 export type EditFormProps = {
   clientId:      string
   fullName:      string
@@ -72,7 +79,7 @@ export function EditForm({
 }: EditFormProps) {
   const router = useRouter()
 
-  const [agents,        setAgents]        = useState<any[]>([])
+  const [agents,        setAgents]        = useState<AgentOption[]>([])
   const [name,          setName]          = useState(initName)
   const [email,         setEmail]         = useState(initEmail)
   const [joinedDate,    setJoinedDate]    = useState(() => {
@@ -94,7 +101,7 @@ export function EditForm({
   useEffect(() => {
     fetch('/api/admin/agents')
       .then(res => res.json())
-      .then(data => {
+      .then((data: { agents: AgentOption[] }) => {
         console.log('[EditForm] agents loaded:', data.agents)
         setAgents(data.agents || [])
       })
