@@ -185,6 +185,7 @@ function WhatsAppIcon({ size = 24 }: { size?: number }) {
 // ─── Tracking helpers ─────────────────────────────────────────────────────────
 
 function trackButton(clientId: string, buttonType: string, tableNumber: number | null = null) {
+  if (localStorage.getItem('enefsis_cookie_consent') !== 'accepted') return
   const visitorId = localStorage.getItem('enefsis_visitor_id')
   fetch('/api/track', {
     method: 'POST',
@@ -200,6 +201,7 @@ function trackButton(clientId: string, buttonType: string, tableNumber: number |
 }
 
 function trackMenuView(standId: string | null, clientId: string, itemId: string, itemName: string, tableNumber: number | null = null) {
+  if (localStorage.getItem('enefsis_cookie_consent') !== 'accepted') return
   fetch('/api/menu-view', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -752,6 +754,71 @@ function PoweredByFooter() {
         <p className="font-sans font-semibold" style={{ fontSize: 9, letterSpacing: '0.14em', color: 'rgba(255,255,255,0.18)', textTransform: 'uppercase' }}>
           Connect with one tap
         </p>
+        <a
+          href="https://www.enefsis.com/privacy-policy"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="font-sans"
+          style={{ fontSize: 10, color: 'rgba(255,255,255,0.18)' }}
+        >
+          Privacy Policy
+        </a>
+      </div>
+    </div>
+  )
+}
+
+// ─── Cookie consent banner ───────────────────────────────────────────────────
+
+function CookieConsentBanner({ onAccept, onDecline }: { onAccept: () => void; onDecline: () => void }) {
+  return (
+    <div
+      className="fixed bottom-0 left-0 right-0 z-50 flex justify-center"
+      style={{ animation: 'slideUp 0.35s cubic-bezier(0.32, 0.72, 0, 1)' }}
+    >
+      <div
+        className="mx-4 mb-4 rounded-2xl p-4 w-full max-w-[430px]"
+        style={{
+          background: '#1A1D26',
+          border: '1px solid rgba(255,255,255,0.12)',
+          boxShadow: '0 -4px 32px rgba(0,0,0,0.45)',
+        }}
+      >
+        <p className="font-sans font-semibold text-white mb-1" style={{ fontSize: 14 }}>
+          We use cookies
+        </p>
+        <p className="font-sans mb-4" style={{ fontSize: 12, color: 'rgba(255,255,255,0.45)', lineHeight: 1.5 }}>
+          We use cookies to analyse how you use our menu and improve your experience.
+          You can accept or decline non-essential tracking.
+        </p>
+        <div className="flex gap-2">
+          <button
+            type="button"
+            onClick={onDecline}
+            className="flex-1 py-2.5 rounded-xl font-sans font-semibold active:scale-[0.97] transition-transform"
+            style={{
+              fontSize: 13,
+              color: 'rgba(255,255,255,0.5)',
+              background: 'rgba(255,255,255,0.06)',
+              border: '1px solid rgba(255,255,255,0.09)',
+            }}
+          >
+            Decline
+          </button>
+          <button
+            type="button"
+            onClick={onAccept}
+            className="flex-1 py-2.5 rounded-xl font-sans font-semibold active:scale-[0.97] transition-transform"
+            style={{
+              fontSize: 13,
+              color: '#ffffff',
+              background: 'linear-gradient(100deg, #2B65F0 0%, #1B4FD8 100%)',
+              boxShadow: '0 4px 16px rgba(43,101,240,0.35)',
+            }}
+          >
+            Accept
+          </button>
+        </div>
       </div>
     </div>
   )
@@ -805,17 +872,18 @@ export function LandingClient({
   // Fallback: read table number from URL if server didn't parse it
   const [urlTableNum, setUrlTableNum] = useState<number | null>(null)
   const chipTable = tableNumber ?? urlTableNum
+  const [cookieConsent, setCookieConsent] = useState<'accepted' | 'declined' | null>(null)
 
   useEffect(() => {
     document.body.style.overflow = lightboxPhoto ? 'hidden' : ''
     return () => { document.body.style.overflow = '' }
   }, [lightboxPhoto])
 
+  // Mount-only: read consent + parse URL table number
   useEffect(() => {
-    let visitorId = localStorage.getItem('enefsis_visitor_id')
-    if (!visitorId) {
-      visitorId = crypto.randomUUID()
-      localStorage.setItem('enefsis_visitor_id', visitorId)
+    const stored = localStorage.getItem('enefsis_cookie_consent')
+    if (stored === 'accepted' || stored === 'declined') {
+      setCookieConsent(stored as 'accepted' | 'declined')
     }
     const params = new URLSearchParams(window.location.search)
     const tableNum = params.get('table')
@@ -823,6 +891,19 @@ export function LandingClient({
       const parsed = parseInt(tableNum)
       if (!isNaN(parsed)) setUrlTableNum(parsed)
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  // Fire page_view only after consent is granted
+  useEffect(() => {
+    if (cookieConsent !== 'accepted') return
+    let visitorId = localStorage.getItem('enefsis_visitor_id')
+    if (!visitorId) {
+      visitorId = crypto.randomUUID()
+      localStorage.setItem('enefsis_visitor_id', visitorId)
+    }
+    const params = new URLSearchParams(window.location.search)
+    const tableNum = params.get('table')
     fetch('/api/track', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -837,7 +918,18 @@ export function LandingClient({
       }),
     }).catch(() => {})
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [clientId])
+  }, [cookieConsent, clientId])
+
+  function handleAcceptConsent() {
+    localStorage.setItem('enefsis_cookie_consent', 'accepted')
+    setCookieConsent('accepted')
+  }
+
+  function handleDeclineConsent() {
+    localStorage.setItem('enefsis_cookie_consent', 'declined')
+    localStorage.removeItem('enefsis_visitor_id')
+    setCookieConsent('declined')
+  }
 
   const selectLang = useCallback(
     async (code: string) => {
@@ -1162,6 +1254,11 @@ export function LandingClient({
 
       </div>
 
+      {/* ── Cookie consent banner ───────────────────────────────────────── */}
+      {cookieConsent === null && (
+        <CookieConsentBanner onAccept={handleAcceptConsent} onDecline={handleDeclineConsent} />
+      )}
+
       {/* ── Language picker modal ────────────────────────────────────────── */}
       {langOpen && (
         <div
@@ -1248,7 +1345,10 @@ export function LandingClient({
         </div>
       )}
 
-      <style>{`@keyframes fadeIn { from { opacity:0 } to { opacity:1 } }`}</style>
+      <style>{`
+        @keyframes fadeIn  { from { opacity:0 }             to { opacity:1 }            }
+        @keyframes slideUp { from { transform:translateY(100%) } to { transform:translateY(0) } }
+      `}</style>
     </div>
   )
 }

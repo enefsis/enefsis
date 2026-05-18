@@ -116,6 +116,26 @@ export function Sidebar({ navItems, badge, user }: SidebarProps) {
             Sign out
           </button>
         </form>
+
+        <div className="flex items-center gap-2.5 px-3 pt-3">
+          <a
+            href="https://www.enefsis.com/privacy-policy"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="font-sans text-[10px] text-white/20 hover:text-white/40 transition-colors"
+          >
+            Privacy
+          </a>
+          <span className="text-white/10 text-[10px]">·</span>
+          <a
+            href="https://www.enefsis.com/terms-of-service"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="font-sans text-[10px] text-white/20 hover:text-white/40 transition-colors"
+          >
+            Terms
+          </a>
+        </div>
       </div>
     </aside>
   )
