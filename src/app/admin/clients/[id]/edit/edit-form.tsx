@@ -131,7 +131,7 @@ export function EditForm({
     fd.set('custom_amount',  customAmount.trim())
     fd.set('payment_notes',  paymentNotes.trim())
     fd.set('admin_notes',    adminNotes.trim())
-    fd.set('agent_id',       agentId ?? '')
+    fd.set('agent_id',       agentId || '')
 
     try {
       const res = await updateClientInfo(fd)
@@ -376,31 +376,18 @@ export function EditForm({
             <label className="block font-sans text-[11px] font-semibold text-white/40 uppercase tracking-wider mb-1.5">
               Assigned Sales Agent
             </label>
-            <div className="relative">
-              <select
-                value={agentId ?? ''}
-                onChange={e => setAgentId(e.target.value || null)}
-                disabled={saving}
-                className="w-full h-10 pl-3.5 pr-10 rounded-xl font-sans text-sm text-white appearance-none cursor-pointer outline-none transition-colors disabled:opacity-50"
-                style={{
-                  background: 'rgba(255,255,255,0.06)',
-                  border: '1px solid rgba(255,255,255,0.10)',
-                  colorScheme: 'dark',
-                }}
-              >
-                <option value="">No agent assigned</option>
-                {agents.map(agent => (
-                  <option key={agent.id} value={agent.id}>
-                    {agent.name} — {agent.territory}
-                  </option>
-                ))}
-              </select>
-              <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-white/30">
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                  <path d="M6 9l6 6 6-6" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
-              </div>
-            </div>
+            <select
+              value={agentId || ''}
+              onChange={e => setAgentId(e.target.value)}
+              className="w-full bg-[#0D0F14] border border-white/10 rounded-lg px-3 py-2 text-white font-sans text-sm"
+            >
+              <option value="">No agent assigned</option>
+              {agents.map(agent => (
+                <option key={agent.id} value={agent.id}>
+                  {agent.name} — {agent.territory}
+                </option>
+              ))}
+            </select>
             {agents.length === 0 && (
               <p className="font-sans text-[11px] text-white/25 mt-1.5">
                 No active agents found. Add agents in{' '}
