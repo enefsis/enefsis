@@ -168,12 +168,9 @@ export default async function AgentDetailPage({
       </Link>
 
       {/* Agent header */}
-      <div className="flex items-start justify-between gap-4">
-        <div>
-          <h1 className="font-display text-2xl font-bold text-white">{agent.name}</h1>
-          <p className="font-sans text-sm text-white/40 mt-0.5">{agent.email}</p>
-        </div>
-        <DeleteAgentButton agentId={id} />
+      <div>
+        <h1 className="font-display text-2xl font-bold text-white">{agent.name}</h1>
+        <p className="font-sans text-sm text-white/40 mt-0.5">{agent.email}</p>
       </div>
 
       {/* Info card (inline-editable) */}
@@ -314,6 +311,15 @@ export default async function AgentDetailPage({
             </table>
           </div>
         )}
+      </div>
+
+      {/* Danger zone */}
+      <div className="bg-[#141720] border border-red-500/10 rounded-2xl p-5 space-y-3">
+        <div>
+          <p className="font-sans text-[11px] font-semibold text-red-400/60 uppercase tracking-wider">Danger Zone</p>
+          <p className="font-sans text-xs text-white/30 mt-1">Permanently remove this agent and unassign all linked clients.</p>
+        </div>
+        <DeleteAgentButton agentId={id} agentName={agent.name} />
       </div>
 
     </div>
