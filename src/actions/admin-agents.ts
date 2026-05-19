@@ -118,8 +118,9 @@ export async function deleteAgent(
     .from('subscriptions').update({ agent_id: null }).eq('agent_id', agentId)
   if (subErr) return { error: subErr.message }
 
-  const { error: profErr } = await admin
-    .from('profiles').update({ agent_id: null } as never).eq('agent_id', agentId)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { error: profErr } = await (admin as any)
+    .from('profiles').update({ agent_id: null }).eq('agent_id', agentId)
   if (profErr) return { error: profErr.message }
 
   // Delete commission history
