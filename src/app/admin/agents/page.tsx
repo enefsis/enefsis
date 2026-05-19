@@ -178,7 +178,9 @@ export default async function AgentsPage() {
                 <div className="sm:hidden space-y-2">
                   <div className="flex items-start justify-between gap-3">
                     <div>
-                      <p className="font-sans text-sm font-medium text-white">{agent.name}</p>
+                      <Link href={`/admin/agents/${agent.id}`}>
+                        <span className="font-sans text-sm font-medium text-white hover:text-blue-400 cursor-pointer">{agent.name}</span>
+                      </Link>
                       <p className="font-sans text-xs text-white/40 mt-0.5">{agent.email}</p>
                       {agent.territory && (
                         <p className="font-sans text-xs text-white/30 mt-0.5">{agent.territory}</p>
@@ -199,7 +201,9 @@ export default async function AgentsPage() {
                   style={{ gridTemplateColumns: '1fr 1fr 130px 90px 80px 90px 110px 90px' }}
                 >
                   <div className="min-w-0">
-                    <p className="font-sans text-sm font-medium text-white truncate">{agent.name}</p>
+                    <Link href={`/admin/agents/${agent.id}`}>
+                      <span className="font-sans text-sm font-medium text-white hover:text-blue-400 cursor-pointer truncate block">{agent.name}</span>
+                    </Link>
                     {agent.phone && (
                       <p className="font-sans text-xs text-white/30 mt-0.5 truncate">{agent.phone}</p>
                     )}
