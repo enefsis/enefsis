@@ -10,7 +10,7 @@ import { LanguagePrefs, type LangEntry } from '@/components/dashboard/language-p
 import { SubscriptionCard, type SubscriptionData } from '@/components/dashboard/subscription-card'
 import { DateRangeFilter } from '@/components/dashboard/date-range-filter'
 import { ExportReport, type ExportData } from '@/components/dashboard/export-report'
-import { getSubscription } from '@/actions/dashboard'
+import { getSubscription, getChecklist } from '@/actions/dashboard'
 import { checkAndCreateDailySummary } from '@/actions/notifications'
 import { GettingStartedCard, type ChecklistData } from '@/components/dashboard/getting-started-card'
 
@@ -132,35 +132,10 @@ export default function DashboardPage() {
         supabase.from('tap_events').select('language').eq('user_id', user.id).gte('created_at', dStart).lte('created_at', nowIso),
       ])
 
-      const [sub, { data: pageRaw }] = await Promise.all([
+      const [sub, checklist] = await Promise.all([
         getSubscription(user.id),
-        supabase
-          .from('client_pages')
-          .select('logo_url, google_review_url, menu_sections, instagram_url, facebook_url, tiktok_url, whatsapp_number, opening_hours')
-          .eq('user_id', user.id)
-          .maybeSingle(),
+        getChecklist(user.id),
       ])
-
-      const page = pageRaw as {
-        logo_url:         string | null
-        google_review_url: string | null
-        menu_sections:    unknown
-        instagram_url:    string | null
-        facebook_url:     string | null
-        tiktok_url:       string | null
-        whatsapp_number:  string | null
-        opening_hours:    string | null
-      } | null
-
-      const menuSections = Array.isArray(page?.menu_sections) ? page!.menu_sections as { items?: unknown[] }[] : []
-
-      const checklist: ChecklistData = {
-        hasLogo:         !!page?.logo_url,
-        hasGoogleReview: !!page?.google_review_url,
-        hasMenu:         menuSections.some(s => (s.items?.length ?? 0) > 0),
-        hasSocials:      !!(page?.instagram_url || page?.facebook_url || page?.tiktok_url || page?.whatsapp_number),
-        hasOpeningHours: !!page?.opening_hours,
-      }
 
       // Fire daily summary check without blocking data load
       void checkAndCreateDailySummary().catch(() => {})
