@@ -72,6 +72,10 @@ const UI_KEYS = [
   'Decline',
   'Come back later for your next stamp',
   'Show this to staff',
+  'Enjoying your visit?',
+  'Leave us a quick review — it means the world to us',
+  'Leave a Review',
+  'Maybe later',
 ]
 
 // ─── SVG icons ────────────────────────────────────────────────────────────────
@@ -915,12 +919,14 @@ function GoogleReviewPrompt({
   tableNumber,
   onReview,
   onDismiss,
+  t,
 }: {
   url:         string
   clientId:    string
   tableNumber: number | null
   onReview:    () => void
   onDismiss:   () => void
+  t:           (s: string) => string
 }) {
   return (
     <div
@@ -944,12 +950,12 @@ function GoogleReviewPrompt({
             <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
           </svg>
           <p className="font-display font-bold text-white" style={{ fontSize: 15 }}>
-            Enjoying your visit? ⭐
+            {t('Enjoying your visit?')} ⭐
           </p>
         </div>
 
         <p className="font-sans mb-4" style={{ fontSize: 12, color: 'rgba(255,255,255,0.42)', lineHeight: 1.55 }}>
-          Leave us a quick review — it means the world to us
+          {t('Leave us a quick review — it means the world to us')}
         </p>
 
         {/* Gold CTA */}
@@ -971,7 +977,7 @@ function GoogleReviewPrompt({
             textDecoration: 'none',
           }}
         >
-          Leave a Review
+          {t('Leave a Review')}
         </a>
 
         {/* Dismiss */}
@@ -985,7 +991,7 @@ function GoogleReviewPrompt({
             className="font-sans active:opacity-50 transition-opacity"
             style={{ fontSize: 12, color: 'rgba(255,255,255,0.26)' }}
           >
-            Maybe later
+            {t('Maybe later')}
           </button>
         </div>
       </div>
@@ -1635,6 +1641,7 @@ export function LandingClient({
           tableNumber={tableNumber}
           onReview={() => setShowReviewPrompt(false)}
           onDismiss={() => setShowReviewPrompt(false)}
+          t={t}
         />
       )}
 
