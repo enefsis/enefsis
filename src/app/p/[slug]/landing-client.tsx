@@ -1201,17 +1201,31 @@ export function LandingClient({
     return () => { document.body.style.overflow = '' }
   }, [lightboxPhoto])
 
-  // 120-second auto-prompt — skipped if already tapped or dismissed this session
+  // Exit-intent review prompt — visibilitychange, pagehide, 90s fallback
   useEffect(() => {
-    if (!isPro || !googleReviewUrl) return
-    const timer = setTimeout(() => {
+    if (!googleReviewUrl) return
+
+    function triggerReminder() {
       const tapped    = sessionStorage.getItem('review_tapped')    === 'true'
       const dismissed = sessionStorage.getItem('review_dismissed') === 'true'
       if (!tapped && !dismissed) setShowReviewPrompt(true)
-    }, 120_000)
-    return () => clearTimeout(timer)
+    }
+
+    function onVisibilityChange() {
+      if (document.hidden) triggerReminder()
+    }
+
+    document.addEventListener('visibilitychange', onVisibilityChange)
+    window.addEventListener('pagehide', triggerReminder)
+    const fallback = setTimeout(triggerReminder, 90_000)
+
+    return () => {
+      document.removeEventListener('visibilitychange', onVisibilityChange)
+      window.removeEventListener('pagehide', triggerReminder)
+      clearTimeout(fallback)
+    }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isPro, googleReviewUrl])
+  }, [googleReviewUrl])
 
   // Mount-only: read consent + parse URL table number
   useEffect(() => {
@@ -1614,7 +1628,7 @@ export function LandingClient({
       </div>
 
       {/* ── Google Review auto-prompt ────────────────────────────────────── */}
-      {isPro && googleReviewUrl && showReviewPrompt && (
+      {googleReviewUrl && showReviewPrompt && (
         <GoogleReviewPrompt
           url={googleReviewUrl}
           clientId={clientId}
