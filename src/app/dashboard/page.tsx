@@ -12,6 +12,7 @@ import { DateRangeFilter } from '@/components/dashboard/date-range-filter'
 import { ExportReport, type ExportData } from '@/components/dashboard/export-report'
 import { getSubscription } from '@/actions/dashboard'
 import { checkAndCreateDailySummary } from '@/actions/notifications'
+import { GettingStartedCard, type ChecklistData } from '@/components/dashboard/getting-started-card'
 
 const LS_KEY          = 'enefsis_date_range'
 const SOCIAL_PLATFORMS = ['instagram', 'google', 'whatsapp', 'facebook', 'tiktok']
@@ -71,6 +72,7 @@ interface DashboardData {
   peakHour: number | null
   peakDay:  number | null
   subscription: SubscriptionData | null
+  checklist: ChecklistData
 }
 
 export default function DashboardPage() {
@@ -130,7 +132,35 @@ export default function DashboardPage() {
         supabase.from('tap_events').select('language').eq('user_id', user.id).gte('created_at', dStart).lte('created_at', nowIso),
       ])
 
-      const sub = await getSubscription(user.id)
+      const [sub, { data: pageRaw }] = await Promise.all([
+        getSubscription(user.id),
+        supabase
+          .from('client_pages')
+          .select('logo_url, google_review_url, menu_sections, instagram_url, facebook_url, tiktok_url, whatsapp_number, opening_hours')
+          .eq('user_id', user.id)
+          .maybeSingle(),
+      ])
+
+      const page = pageRaw as {
+        logo_url:         string | null
+        google_review_url: string | null
+        menu_sections:    unknown
+        instagram_url:    string | null
+        facebook_url:     string | null
+        tiktok_url:       string | null
+        whatsapp_number:  string | null
+        opening_hours:    string | null
+      } | null
+
+      const menuSections = Array.isArray(page?.menu_sections) ? page!.menu_sections as { items?: unknown[] }[] : []
+
+      const checklist: ChecklistData = {
+        hasLogo:         !!page?.logo_url,
+        hasGoogleReview: !!page?.google_review_url,
+        hasMenu:         menuSections.some(s => (s.items?.length ?? 0) > 0),
+        hasSocials:      !!(page?.instagram_url || page?.facebook_url || page?.tiktok_url || page?.whatsapp_number),
+        hasOpeningHours: !!page?.opening_hours,
+      }
 
       // Fire daily summary check without blocking data load
       void checkAndCreateDailySummary().catch(() => {})
@@ -236,6 +266,7 @@ export default function DashboardPage() {
         peakHour,
         peakDay,
         subscription: sub,
+        checklist,
       })
       setLoading(false)
     }
@@ -278,6 +309,9 @@ export default function DashboardPage() {
           <ExportReport data={data as ExportData} rangeLabel={rangeLabel} />
         </div>
       </div>
+
+      {/* Onboarding checklist */}
+      <GettingStartedCard checklist={data.checklist} />
 
       {/* Stat cards */}
       <div className="grid grid-cols-2 xl:grid-cols-4 gap-4">

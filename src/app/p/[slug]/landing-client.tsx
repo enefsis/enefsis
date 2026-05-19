@@ -56,6 +56,7 @@ const UI_KEYS = [
   'Today',
   'Open',
   'Reservations',
+  'Reserve a Table',
   'Address',
   'Free WiFi',
   "Today's Specials",
@@ -69,6 +70,8 @@ const UI_KEYS = [
   'We use cookies to analyse how you use our menu and improve your experience. You can accept or decline non-essential tracking.',
   'Accept',
   'Decline',
+  'Come back later for your next stamp',
+  'Show this to staff',
 ]
 
 // ─── SVG icons ────────────────────────────────────────────────────────────────
@@ -316,9 +319,10 @@ interface MenuItemCardProps {
   onView: () => void
   onPhotoClick: (url: string) => void
   t: (s: string) => string
+  unavailable?: boolean
 }
 
-function MenuItemCard({ item, onView, onPhotoClick, t }: MenuItemCardProps) {
+function MenuItemCard({ item, onView, onPhotoClick, t, unavailable = false }: MenuItemCardProps) {
   const ref   = useRef<HTMLDivElement>(null)
   const fired = useRef(false)
 
@@ -351,13 +355,17 @@ function MenuItemCard({ item, onView, onPhotoClick, t }: MenuItemCardProps) {
     <div
       ref={ref}
       className="flex items-start gap-3 p-3.5 rounded-2xl"
-      style={{ background: '#161920', border: '1px solid rgba(255,255,255,0.07)' }}
+      style={{
+        background: '#161920',
+        border: '1px solid rgba(255,255,255,0.07)',
+        opacity: unavailable ? 0.55 : 1,
+      }}
     >
       {/* Photo or placeholder — always shown */}
       <div
         className="w-20 h-20 rounded-lg shrink-0 overflow-hidden flex items-center justify-center bg-[#2a2d35]"
-        onClick={hasPhoto ? () => onPhotoClick(item.photo_url!) : undefined}
-        style={hasPhoto ? { cursor: 'pointer' } : undefined}
+        onClick={hasPhoto && !unavailable ? () => onPhotoClick(item.photo_url!) : undefined}
+        style={hasPhoto && !unavailable ? { cursor: 'pointer' } : undefined}
       >
         {hasPhoto
           ? <img src={item.photo_url!} alt={item.name} className="w-full h-full object-cover" />
@@ -372,12 +380,26 @@ function MenuItemCard({ item, onView, onPhotoClick, t }: MenuItemCardProps) {
 
       {/* Text */}
       <div className="flex-1 min-w-0">
-        {/* Name + Popular badge */}
+        {/* Name + badge row */}
         <div className="flex items-start justify-between gap-1.5 mb-0.5">
           <p className="font-sans font-semibold leading-snug flex-1 min-w-0" style={{ fontSize: 14, color: '#F0F2F8' }}>
             {t(item.name)}
           </p>
-          {(item.badge || item.is_popular) && (() => {
+          {unavailable ? (
+            <span
+              className="shrink-0 font-sans font-bold rounded-full"
+              style={{
+                fontSize: 10,
+                color: 'rgba(255,255,255,0.35)',
+                background: 'rgba(255,255,255,0.07)',
+                border: '1px solid rgba(255,255,255,0.10)',
+                padding: '2px 7px',
+                whiteSpace: 'nowrap',
+              }}
+            >
+              Unavailable
+            </span>
+          ) : (item.badge || item.is_popular) && (() => {
             const badgeText = item.badge || 'Popular'
             const s = getBadgeStyle(badgeText)
             return (
@@ -477,14 +499,14 @@ interface MenuTabsSectionProps {
 
 function MenuTabsSection({ sections, standId, clientId, tableNumber, onPhotoClick, t }: MenuTabsSectionProps) {
   const visibleSections = sections
-    .map(s => ({ ...s, items: s.items.filter(i => i.name && i.available !== false) }))
+    .map(s => ({ ...s, items: s.items.filter(i => i.name) }))
     .filter(s => s.items.length > 0)
 
   const [activeId, setActiveId] = useState<string>(() => visibleSections[0]?.id ?? '')
 
   if (!visibleSections.length) return null
 
-  const totalItems    = visibleSections.reduce((sum, s) => sum + s.items.length, 0)
+  const totalItems    = visibleSections.reduce((sum, s) => sum + s.items.filter(i => i.available !== false).length, 0)
   const activeSection = visibleSections.find(s => s.id === activeId) ?? visibleSections[0]
 
   return (
@@ -539,15 +561,19 @@ function MenuTabsSection({ sections, standId, clientId, tableNumber, onPhotoClic
       {/* Items for active section */}
       {activeSection && (
         <div className="space-y-2.5">
-          {activeSection.items.map(item => (
-            <MenuItemCard
-              key={item.id}
-              item={item}
-              onView={() => trackMenuView(standId, clientId, item.id, item.name, tableNumber)}
-              onPhotoClick={onPhotoClick}
-              t={t}
-            />
-          ))}
+          {activeSection.items.map(item => {
+            const isAvailable = item.available !== false
+            return (
+              <MenuItemCard
+                key={item.id}
+                item={item}
+                onView={isAvailable ? () => trackMenuView(standId, clientId, item.id, item.name, tableNumber) : () => {}}
+                onPhotoClick={onPhotoClick}
+                t={t}
+                unavailable={!isAvailable}
+              />
+            )
+          })}
         </div>
       )}
     </div>
@@ -557,16 +583,19 @@ function MenuTabsSection({ sections, standId, clientId, tableNumber, onPhotoClic
 // ─── Info section ────────────────────────────────────────────────────────────
 
 function InfoSection({
-  openingHours, phone, address, wifiName, wifiPassword, t,
+  openingHours, phone, address, wifiName, wifiPassword, reservationUrl, clientId, tableNumber, t,
 }: {
-  openingHours: string | null
-  phone:        string | null
-  address:      string | null
-  wifiName:     string | null
-  wifiPassword: string | null
-  t:            (s: string) => string
+  openingHours:   string | null
+  phone:          string | null
+  address:        string | null
+  wifiName:       string | null
+  wifiPassword:   string | null
+  reservationUrl: string | null
+  clientId:       string
+  tableNumber:    number | null
+  t:              (s: string) => string
 }) {
-  if (!openingHours && !phone && !address && !wifiName && !wifiPassword) return null
+  if (!openingHours && !phone && !address && !wifiName && !wifiPassword && !reservationUrl) return null
 
   const labelCls: React.CSSProperties = {
     fontSize: 10,
@@ -643,6 +672,36 @@ function InfoSection({
           </p>
         </div>
       )}
+
+      {/* RESERVE A TABLE */}
+      {reservationUrl && (
+        <a
+          href={reservationUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          onClick={() => trackButton(clientId, 'reservation', tableNumber)}
+          className="flex items-center gap-3 w-full rounded-2xl font-sans font-bold transition-opacity active:opacity-80"
+          style={{
+            background: '#1B4FD8',
+            color: '#fff',
+            fontSize: 15,
+            padding: '15px 18px',
+            textDecoration: 'none',
+          }}
+        >
+          <svg
+            width="20" height="20" viewBox="0 0 24 24" fill="none"
+            stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+            aria-hidden="true" className="shrink-0"
+          >
+            <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+            <line x1="16" y1="2" x2="16" y2="6" />
+            <line x1="8" y1="2" x2="8" y2="6" />
+            <line x1="3" y1="10" x2="21" y2="10" />
+          </svg>
+          {t('Reserve a Table')}
+        </a>
+      )}
     </div>
   )
 }
@@ -650,19 +709,36 @@ function InfoSection({
 // ─── Call Waiter button ───────────────────────────────────────────────────────
 
 function CallWaiterButton({
-  clientId, tableNumber, t,
+  clientId, tableNumber, waiterWhatsapp, waiterMessage, isPro, t,
 }: {
-  clientId: string
-  tableNumber: number | null
-  t: (s: string) => string
+  clientId:       string
+  tableNumber:    number | null
+  waiterWhatsapp: string | null
+  waiterMessage:  string | null
+  isPro:          boolean
+  t:              (s: string) => string
 }) {
   const [notified, setNotified] = useState(false)
 
-  function handleCall() {
+  async function handleCall() {
     if (notified) return
     trackButton(clientId, 'call_waiter', tableNumber)
     setNotified(true)
     setTimeout(() => setNotified(false), 3000)
+
+    if (isPro && waiterWhatsapp) {
+      try {
+        const res  = await fetch('/api/notify-waiter', {
+          method:  'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body:    JSON.stringify({ waiterWhatsapp, tableNumber, message: waiterMessage }),
+        })
+        const data = await res.json() as { url?: string }
+        if (data.url) window.open(data.url, '_blank', 'noopener,noreferrer')
+      } catch {
+        // silent — waiter notification is best-effort
+      }
+    }
   }
 
   const label = notified
@@ -825,6 +901,232 @@ function CookieConsentBanner({ onAccept, onDecline, t }: { onAccept: () => void;
   )
 }
 
+// ─── Google review auto-prompt ────────────────────────────────────────────────
+
+function GoogleReviewPrompt({
+  url,
+  clientId,
+  tableNumber,
+  onReview,
+  onDismiss,
+}: {
+  url:         string
+  clientId:    string
+  tableNumber: number | null
+  onReview:    () => void
+  onDismiss:   () => void
+}) {
+  return (
+    <div
+      className="fixed bottom-0 left-0 right-0 z-40 flex justify-center"
+      style={{ animation: 'slideUp 0.4s cubic-bezier(0.32, 0.72, 0, 1)' }}
+    >
+      <div
+        className="mx-4 mb-4 rounded-2xl p-4 w-full max-w-[430px]"
+        style={{
+          background: '#1A1D26',
+          border:     '1px solid rgba(255,255,255,0.12)',
+          boxShadow:  '0 -4px 40px rgba(0,0,0,0.55)',
+        }}
+      >
+        {/* Header */}
+        <div className="flex items-center gap-2.5 mb-1.5">
+          <svg width="20" height="20" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-label="Google" className="shrink-0">
+            <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+            <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+            <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05"/>
+            <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+          </svg>
+          <p className="font-display font-bold text-white" style={{ fontSize: 15 }}>
+            Enjoying your visit? ⭐
+          </p>
+        </div>
+
+        <p className="font-sans mb-4" style={{ fontSize: 12, color: 'rgba(255,255,255,0.42)', lineHeight: 1.55 }}>
+          Leave us a quick review — it means the world to us
+        </p>
+
+        {/* Gold CTA */}
+        <a
+          href={url}
+          target="_blank"
+          rel="noopener noreferrer"
+          onClick={() => {
+            trackButton(clientId, 'google_review_reminder', tableNumber)
+            sessionStorage.setItem('review_tapped', 'true')
+            onReview()
+          }}
+          className="flex items-center justify-center w-full py-3 rounded-xl font-display font-bold active:scale-[0.97] transition-transform"
+          style={{
+            background:     'linear-gradient(100deg, #F5A623 0%, #E8880A 100%)',
+            boxShadow:      '0 4px 18px rgba(245,166,35,0.38)',
+            color:          '#fff',
+            fontSize:       14,
+            textDecoration: 'none',
+          }}
+        >
+          Leave a Review
+        </a>
+
+        {/* Dismiss */}
+        <div className="flex justify-center mt-3">
+          <button
+            type="button"
+            onClick={() => {
+              sessionStorage.setItem('review_dismissed', 'true')
+              onDismiss()
+            }}
+            className="font-sans active:opacity-50 transition-opacity"
+            style={{ fontSize: 12, color: 'rgba(255,255,255,0.26)' }}
+          >
+            Maybe later
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// ─── Loyalty card section ─────────────────────────────────────────────────────
+
+function LoyaltyCardSection({
+  clientId,
+  stampsRequired: initialRequired,
+  reward: initialReward,
+  title,
+  t,
+}: {
+  clientId:       string
+  stampsRequired: number
+  reward:         string | null
+  title:          string | null
+  t:              (s: string) => string
+}) {
+  const [stamps,         setStamps]         = useState<number | null>(null)
+  const [completed,      setCompleted]      = useState(false)
+  const [cooldown,       setCooldown]       = useState(false)
+  const [stampsRequired, setStampsRequired] = useState(initialRequired)
+  const [reward,         setReward]         = useState(initialReward)
+
+  useEffect(() => {
+    let visitorId = localStorage.getItem('enefsis_visitor_id')
+    if (!visitorId) {
+      visitorId = crypto.randomUUID()
+      localStorage.setItem('enefsis_visitor_id', visitorId)
+    }
+    fetch('/api/loyalty/stamp', {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body:    JSON.stringify({ visitorId, clientId }),
+    })
+      .then(r => r.json() as Promise<{
+        stamps?:         number
+        stampsRequired?: number
+        reward?:         string | null
+        completed?:      boolean
+        cooldown?:       boolean
+        error?:          string
+      }>)
+      .then(data => {
+        if (data.error) return
+        setStamps(data.stamps ?? 0)
+        setCompleted(data.completed ?? false)
+        setCooldown(data.cooldown ?? false)
+        if (data.stampsRequired != null) setStampsRequired(data.stampsRequired)
+        if (data.reward         !== undefined) setReward(data.reward ?? null)
+      })
+      .catch(() => setStamps(0))
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [clientId])
+
+  const cardTitle    = title || 'Loyalty Card'
+  const displayStamps = stamps ?? 0
+
+  return (
+    <div className="px-4 pt-6 pb-2">
+      <div
+        className="rounded-2xl p-5"
+        style={{
+          background: completed
+            ? 'linear-gradient(135deg, rgba(43,101,240,0.15) 0%, rgba(56,190,255,0.08) 100%)'
+            : '#161920',
+          border: completed
+            ? '1px solid rgba(56,190,255,0.30)'
+            : '1px solid rgba(255,255,255,0.07)',
+          transition: 'background 0.4s, border-color 0.4s',
+        }}
+      >
+        {/* Header */}
+        <div className="flex items-center justify-between mb-3">
+          <div>
+            <h2 className="font-display font-bold text-white" style={{ fontSize: 17 }}>
+              {cardTitle}
+            </h2>
+            <p className="font-sans mt-0.5" style={{ fontSize: 12, color: 'rgba(255,255,255,0.35)' }}>
+              {stamps === null ? '…' : `${displayStamps} / ${stampsRequired}`}
+            </p>
+          </div>
+          <span style={{ fontSize: 26, lineHeight: 1 }}>🎟️</span>
+        </div>
+
+        {/* Stamp grid */}
+        <div className="flex flex-wrap gap-2 mb-4">
+          {Array.from({ length: stampsRequired }).map((_, i) => {
+            const filled = i < displayStamps
+            return (
+              <div
+                key={i}
+                className="flex items-center justify-center rounded-full"
+                style={{
+                  width:      34,
+                  height:     34,
+                  background: filled
+                    ? 'linear-gradient(135deg, #2B65F0 0%, #38BEFF 100%)'
+                    : 'rgba(255,255,255,0.06)',
+                  border:     filled
+                    ? '1px solid rgba(56,190,255,0.50)'
+                    : '1px solid rgba(255,255,255,0.09)',
+                  boxShadow:  filled ? '0 2px 8px rgba(43,101,240,0.30)' : 'none',
+                  color:      'white',
+                  fontSize:   15,
+                  transition: 'all 0.3s ease',
+                }}
+              >
+                {filled ? '✓' : ''}
+              </div>
+            )
+          })}
+        </div>
+
+        {/* Completed reward */}
+        {completed && reward && (
+          <div
+            className="rounded-xl px-4 py-3 text-center"
+            style={{
+              background: 'rgba(56,190,255,0.10)',
+              border:     '1px solid rgba(56,190,255,0.25)',
+            }}
+          >
+            <p className="font-display font-bold" style={{ fontSize: 15, color: '#F0F2F8' }}>
+              🎉 You earned: {reward}!
+            </p>
+            <p className="font-sans mt-1" style={{ fontSize: 12, color: 'rgba(255,255,255,0.45)' }}>
+              {t('Show this to staff')}
+            </p>
+          </div>
+        )}
+
+        {/* Cooldown hint */}
+        {!completed && cooldown && stamps !== null && (
+          <p className="font-sans text-center" style={{ fontSize: 11, color: 'rgba(255,255,255,0.28)' }}>
+            {t('Come back later for your next stamp')}
+          </p>
+        )}
+      </div>
+    </div>
+  )
+}
+
 // ─── Main landing client ──────────────────────────────────────────────────────
 
 interface Props {
@@ -846,6 +1148,8 @@ interface Props {
   wifiName: string | null
   wifiPassword: string | null
   callWaiterEnabled: boolean
+  waiterWhatsapp: string | null
+  waiterMessage: string | null
   restaurantType: string | null
   city: string | null
   rating: string | null
@@ -853,6 +1157,12 @@ interface Props {
   todaysSpecials: string | null
   tripAdvisorUrl: string | null
   websiteUrl: string | null
+  reservationUrl: string | null
+  isPro: boolean
+  loyaltyEnabled?: boolean
+  loyaltyStampsRequired?: number | null
+  loyaltyReward?: string | null
+  loyaltyTitle?: string | null
 }
 
 export function LandingClient({
@@ -861,8 +1171,10 @@ export function LandingClient({
   googleReviewUrl, instagramUrl, facebookUrl, tiktokUrl, whatsappNumber,
   menuSections,
   openingHours, phone, address, wifiName, wifiPassword, callWaiterEnabled,
+  waiterWhatsapp, waiterMessage,
   restaurantType, city, rating, reviewCount, todaysSpecials,
-  tripAdvisorUrl, websiteUrl,
+  tripAdvisorUrl, websiteUrl, reservationUrl, isPro,
+  loyaltyEnabled, loyaltyStampsRequired, loyaltyReward, loyaltyTitle,
 }: Props) {
   const [lang, setLang] = useState('EN')
   const [langOpen, setLangOpen] = useState(false)
@@ -875,10 +1187,25 @@ export function LandingClient({
   const chipTable = tableNumber ?? urlTableNum
   const [cookieConsent, setCookieConsent] = useState<'accepted' | 'declined' | null>(null)
 
+  // Google Review auto-prompt (PRO only)
+  const [showReviewPrompt, setShowReviewPrompt] = useState(false)
+
   useEffect(() => {
     document.body.style.overflow = lightboxPhoto ? 'hidden' : ''
     return () => { document.body.style.overflow = '' }
   }, [lightboxPhoto])
+
+  // 120-second auto-prompt — skipped if already tapped or dismissed this session
+  useEffect(() => {
+    if (!isPro || !googleReviewUrl) return
+    const timer = setTimeout(() => {
+      const tapped    = sessionStorage.getItem('review_tapped')    === 'true'
+      const dismissed = sessionStorage.getItem('review_dismissed') === 'true'
+      if (!tapped && !dismissed) setShowReviewPrompt(true)
+    }, 120_000)
+    return () => clearTimeout(timer)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isPro, googleReviewUrl])
 
   // Mount-only: read consent + parse URL table number
   useEffect(() => {
@@ -1171,7 +1498,11 @@ export function LandingClient({
               href={googleReviewUrl}
               target="_blank"
               rel="noopener noreferrer"
-              onClick={() => trackButton(clientId, 'google_review', tableNumber)}
+              onClick={() => {
+                trackButton(clientId, 'google_review', tableNumber)
+                sessionStorage.setItem('review_tapped', 'true')
+                setShowReviewPrompt(false)
+              }}
               className="flex items-center justify-between w-full px-5 rounded-2xl active:scale-[0.98] transition-transform"
               style={{
                 background: 'linear-gradient(100deg, #F5A623 0%, #E8880A 100%)',
@@ -1215,6 +1546,17 @@ export function LandingClient({
           />
         )}
 
+        {/* ── Loyalty card ─────────────────────────────────────────────────── */}
+        {loyaltyEnabled && (loyaltyStampsRequired ?? 0) > 0 && (
+          <LoyaltyCardSection
+            clientId={clientId}
+            stampsRequired={loyaltyStampsRequired ?? 10}
+            reward={loyaltyReward ?? null}
+            title={loyaltyTitle ?? null}
+            t={t}
+          />
+        )}
+
         {/* ── Follow Us ────────────────────────────────────────────────────── */}
         <FollowUsSection
           instagramUrl={instagramUrl}
@@ -1235,13 +1577,23 @@ export function LandingClient({
           address={address}
           wifiName={wifiName}
           wifiPassword={wifiPassword}
+          reservationUrl={reservationUrl}
+          clientId={clientId}
+          tableNumber={tableNumber}
           t={t}
         />
 
         {/* ── Call Waiter ──────────────────────────────────────────────────── */}
         {callWaiterEnabled && (
           <div className="px-4 pt-4">
-            <CallWaiterButton clientId={clientId} tableNumber={tableNumber} t={t} />
+            <CallWaiterButton
+              clientId={clientId}
+              tableNumber={tableNumber}
+              waiterWhatsapp={waiterWhatsapp}
+              waiterMessage={waiterMessage}
+              isPro={isPro}
+              t={t}
+            />
           </div>
         )}
 
@@ -1254,6 +1606,17 @@ export function LandingClient({
         <PoweredByFooter />
 
       </div>
+
+      {/* ── Google Review auto-prompt ────────────────────────────────────── */}
+      {isPro && googleReviewUrl && showReviewPrompt && (
+        <GoogleReviewPrompt
+          url={googleReviewUrl}
+          clientId={clientId}
+          tableNumber={tableNumber}
+          onReview={() => setShowReviewPrompt(false)}
+          onDismiss={() => setShowReviewPrompt(false)}
+        />
+      )}
 
       {/* ── Cookie consent banner ───────────────────────────────────────── */}
       {cookieConsent === null && !isTranslating && (

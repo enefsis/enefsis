@@ -104,6 +104,7 @@ export default async function AdminPage() {
     { data: rawClientTaps },
     { data: earliestProfileRaw },
     { data: rawAgents },
+    { count: pendingStandOrders },
   ] = await Promise.all([
     supabase.from('profiles').select('*', { count: 'exact', head: true }).neq('role', 'admin'),
     supabase.from('profiles').select('*', { count: 'exact', head: true }).neq('role', 'admin').gte('created_at', d30).lte('created_at', nowIso),
@@ -129,6 +130,9 @@ export default async function AdminPage() {
     // Agent commission rates
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (supabase as any).from('sales_agents').select('id, commission_rate').eq('status', 'active'),
+    // Pending stand orders count
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (supabase as any).from('stand_orders').select('*', { count: 'exact', head: true }).eq('status', 'pending'),
   ])
 
   // ── Revenue chart — monthly MRR from earliest client to today ───────────────
@@ -233,6 +237,36 @@ export default async function AdminPage() {
         <h1 className="font-display text-2xl font-bold text-white">Overview</h1>
         <p className="font-sans text-sm text-white/40 mt-0.5">Platform-wide summary</p>
       </div>
+
+      {/* Pending stand orders alert */}
+      {(pendingStandOrders ?? 0) > 0 && (
+        <a
+          href="/admin/stand-orders"
+          className="flex items-center justify-between gap-4 px-5 py-4 rounded-2xl transition-opacity hover:opacity-90"
+          style={{
+            background: 'rgba(245,166,35,0.08)',
+            border:     '1px solid rgba(245,166,35,0.28)',
+            textDecoration: 'none',
+          }}
+        >
+          <div className="flex items-center gap-3">
+            <span style={{ fontSize: 20, lineHeight: 1 }}>📦</span>
+            <div>
+              <p className="font-sans text-sm font-semibold" style={{ color: '#F5A623' }}>
+                {pendingStandOrders} pending stand {(pendingStandOrders ?? 0) === 1 ? 'order' : 'orders'}
+              </p>
+              <p className="font-sans text-xs text-white/40 mt-0.5">
+                Review and process at /admin/stand-orders
+              </p>
+            </div>
+          </div>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
+            stroke="rgba(245,166,35,0.60)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+            aria-hidden="true" className="shrink-0">
+            <path d="M9 18l6-6-6-6" />
+          </svg>
+        </a>
+      )}
 
       {/* Stat cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">

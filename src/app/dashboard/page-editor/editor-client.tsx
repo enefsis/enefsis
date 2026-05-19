@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef, useTransition } from 'react'
+import { useState, useRef, useTransition, useCallback } from 'react'
 import {
   ChevronDown, ChevronRight, Plus, Trash2, Upload, Save, Loader2, ExternalLink,
   ArrowUp, ArrowDown,
@@ -94,6 +94,8 @@ export function PageEditorClient({
   saveLogoUrlFn,
   uploadLogoFn,
   uploadItemPhotoFn,
+  isPro,
+  clientId,
 }: {
   initial: PageData | null
   slug: string | null
@@ -102,6 +104,8 @@ export function PageEditorClient({
   saveLogoUrlFn?: (url: string) => Promise<{ error?: string }>
   uploadLogoFn?: (fd: FormData) => Promise<{ url: string } | { error: string }>
   uploadItemPhotoFn?: (itemId: string, fd: FormData) => Promise<{ url: string } | { error: string }>
+  isPro?: boolean
+  clientId?: string
 }) {
   const supabase = createClient()
   const hero0 = parseHeroBg(initial?.hero_bg ?? null)
@@ -133,6 +137,8 @@ export function PageEditorClient({
   const [wifiName,          setWifiName]          = useState(initial?.wifi_name          ?? '')
   const [wifiPassword,      setWifiPassword]      = useState(initial?.wifi_password      ?? '')
   const [callWaiter,        setCallWaiter]        = useState(initial?.call_waiter_enabled ?? false)
+  const [waiterWhatsapp,    setWaiterWhatsapp]    = useState(initial?.waiter_whatsapp    ?? '')
+  const [waiterMessage,     setWaiterMessage]     = useState(initial?.waiter_message     ?? '')
   const [restaurantType,    setRestaurantType]    = useState(initial?.restaurant_type    ?? '')
   const [city,              setCity]              = useState(initial?.city               ?? '')
   const [rating,            setRating]            = useState(initial?.rating             ?? '')
@@ -143,6 +149,11 @@ export function PageEditorClient({
   const [todaysSpecials,    setTodaysSpecials]    = useState(initial?.todays_specials    ?? '')
   const [tripAdvisorUrl,    setTripAdvisorUrl]    = useState(initial?.trip_advisor_url   ?? '')
   const [websiteUrl,        setWebsiteUrl]        = useState(initial?.website_url        ?? '')
+  const [reservationUrl,       setReservationUrl]       = useState(initial?.reservation_url        ?? '')
+  const [loyaltyEnabled,       setLoyaltyEnabled]       = useState(initial?.loyalty_enabled        ?? false)
+  const [loyaltyStampsRequired, setLoyaltyStampsRequired] = useState(initial?.loyalty_stamps_required ?? 10)
+  const [loyaltyReward,        setLoyaltyReward]        = useState(initial?.loyalty_reward         ?? '')
+  const [loyaltyTitle,         setLoyaltyTitle]         = useState(initial?.loyalty_title          ?? '')
   const [saveMsg,           setSaveMsg]           = useState('')
   const [currentSlug,       setCurrentSlug]       = useState<string | null>(initialSlug)
   const [isPending,         startTransition]      = useTransition()
@@ -303,6 +314,8 @@ export function PageEditorClient({
       wifi_name:           wifiName,
       wifi_password:       wifiPassword,
       call_waiter_enabled: callWaiter,
+      waiter_whatsapp:     waiterWhatsapp,
+      waiter_message:      waiterMessage,
       restaurant_type:     restaurantType,
       city,
       rating,
@@ -310,7 +323,12 @@ export function PageEditorClient({
       todays_specials:     todaysSpecials,
       trip_advisor_url:    tripAdvisorUrl,
       website_url:         websiteUrl,
-      google_place_id:     googlePlaceId,
+      reservation_url:          reservationUrl,
+      loyalty_enabled:          loyaltyEnabled,
+      loyalty_stamps_required:  loyaltyStampsRequired,
+      loyalty_reward:           loyaltyReward,
+      loyalty_title:            loyaltyTitle,
+      google_place_id:          googlePlaceId,
       menu_sections: sectionsToSave.map(({ id, name, items }) => ({
         id, name,
         items: items.map(({ id, name, price, description, photo_url, available, allergens, is_popular, badge }) => ({
@@ -674,9 +692,29 @@ export function PageEditorClient({
                 className={inputCls}
               />
             </Field>
+            <Field label="Reservation Link">
+              <input
+                type="text"
+                value={reservationUrl}
+                onChange={e => setReservationUrl(e.target.value)}
+                placeholder="https://www.opentable.com/... or tel:+43..."
+                className={inputCls}
+              />
+              <p className="text-[10px] text-white/25 mt-1">Shows a &quot;Reserve a Table&quot; button on your page</p>
+            </Field>
             <div className="flex items-center justify-between py-1">
               <div>
-                <p className="text-xs font-medium text-white/50">Call Waiter Button</p>
+                <div className="flex items-center gap-2">
+                  <p className="text-xs font-medium text-white/50">Call Waiter Button</p>
+                  {isPro === false && (
+                    <span
+                      className="font-sans text-[9px] font-bold px-1.5 py-0.5 rounded"
+                      style={{ background: 'rgba(43,92,230,0.15)', color: '#2B5CE6', letterSpacing: '0.05em' }}
+                    >
+                      PRO
+                    </span>
+                  )}
+                </div>
                 <p className="text-[11px] text-white/25 mt-0.5">Show a &quot;Call Waiter&quot; button on the landing page</p>
               </div>
               <button
@@ -696,10 +734,43 @@ export function PageEditorClient({
                 />
               </button>
             </div>
+
+            <Field label="Waiter WhatsApp Number">
+              <input
+                type="tel"
+                value={waiterWhatsapp}
+                onChange={e => setWaiterWhatsapp(e.target.value)}
+                placeholder="+43 664 123456"
+                className={inputCls}
+              />
+            </Field>
+            <Field label="Waiter Notification Message">
+              <input
+                type="text"
+                value={waiterMessage}
+                onChange={e => setWaiterMessage(e.target.value)}
+                placeholder="Table {table} needs assistance"
+                className={inputCls}
+              />
+              <p className="text-[10px] text-white/25 mt-1">Use &#123;table&#125; as a placeholder for the table number</p>
+            </Field>
           </SectionPanel>
 
           {/* Menu */}
           <SectionPanel title="Menu Sections">
+            {/* AI feature flag banner */}
+            {isPro === false && (
+              <div className="flex items-center gap-2 px-3 py-2 rounded-lg mb-1" style={{ background: 'rgba(43,92,230,0.08)', border: '1px solid rgba(43,92,230,0.15)' }}>
+                <span className="text-xs">✨</span>
+                <span className="font-sans text-xs text-white/50 flex-1">AI Descriptions — Pro Feature</span>
+                <span
+                  className="font-sans text-[10px] text-white/35 cursor-default"
+                  title="Upgrade to Pro to unlock AI-generated menu descriptions"
+                >
+                  Upgrade to Pro to unlock ℹ
+                </span>
+              </div>
+            )}
             <div className="space-y-2.5">
               {sections.map((section, si) => (
                 <MenuSectionEditor
@@ -717,6 +788,8 @@ export function PageEditorClient({
                   onUpdateItem={(itemId, patch) => updateItem(section.id, itemId, patch)}
                   onMoveItem={(itemId, dir) => moveItem(section.id, itemId, dir)}
                   onItemPhotoSelect={(itemId, file) => handleItemPhotoSelect(section.id, itemId, file)}
+                  isPro={isPro}
+                  clientId={clientId}
                 />
               ))}
               <button
@@ -728,6 +801,78 @@ export function PageEditorClient({
                 Add section
               </button>
             </div>
+          </SectionPanel>
+
+          {/* Loyalty */}
+          <SectionPanel title="Loyalty" defaultOpen={false}>
+            {isPro === false ? (
+              <div className="rounded-xl p-4 text-center space-y-2" style={{ background: 'rgba(43,92,230,0.06)', border: '1px solid rgba(43,92,230,0.14)' }}>
+                <div className="flex items-center justify-center gap-1.5">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                    <rect x="3" y="11" width="18" height="11" rx="2" stroke="rgba(43,92,230,0.6)" strokeWidth="2" />
+                    <path d="M7 11V7a5 5 0 0110 0v4" stroke="rgba(43,92,230,0.6)" strokeWidth="2" strokeLinecap="round" />
+                  </svg>
+                  <span
+                    className="font-sans text-[10px] font-bold px-1.5 py-0.5 rounded"
+                    style={{ background: 'rgba(43,92,230,0.15)', color: '#2B5CE6', letterSpacing: '0.05em' }}
+                  >
+                    PRO
+                  </span>
+                </div>
+                <p className="font-sans text-xs text-white/40">Upgrade to Pro to enable the Loyalty Stamp Card</p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {/* Enable toggle */}
+                <div className="flex items-center justify-between py-1">
+                  <div>
+                    <p className="text-xs font-medium text-white/50">Enable Loyalty Card</p>
+                    <p className="text-[11px] text-white/25 mt-0.5">Show a stamp card on the landing page</p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setLoyaltyEnabled(v => !v)}
+                    className={cn('relative rounded-full transition-colors shrink-0', loyaltyEnabled ? 'bg-[#2B5CE6]' : 'bg-white/[0.10]')}
+                    style={{ height: 22, width: 40 }}
+                  >
+                    <span
+                      className={cn('absolute top-0.5 w-[18px] h-[18px] rounded-full bg-white shadow transition-transform', loyaltyEnabled ? 'translate-x-[19px]' : 'translate-x-0.5')}
+                    />
+                  </button>
+                </div>
+
+                <Field label="Card Title">
+                  <input
+                    type="text"
+                    value={loyaltyTitle}
+                    onChange={e => setLoyaltyTitle(e.target.value)}
+                    placeholder="Coffee Club"
+                    className={inputCls}
+                  />
+                </Field>
+
+                <Field label="Stamps Required for Reward">
+                  <input
+                    type="number"
+                    min={1}
+                    max={30}
+                    value={loyaltyStampsRequired}
+                    onChange={e => setLoyaltyStampsRequired(Math.max(1, parseInt(e.target.value) || 1))}
+                    className={inputCls}
+                  />
+                </Field>
+
+                <Field label="Reward Description">
+                  <input
+                    type="text"
+                    value={loyaltyReward}
+                    onChange={e => setLoyaltyReward(e.target.value)}
+                    placeholder="Free coffee"
+                    className={inputCls}
+                  />
+                </Field>
+              </div>
+            )}
           </SectionPanel>
 
         </div>
@@ -760,6 +905,8 @@ export function PageEditorClient({
               wifiName={wifiName || null}
               wifiPassword={wifiPassword || null}
               callWaiterEnabled={callWaiter}
+              waiterWhatsapp={waiterWhatsapp || null}
+              waiterMessage={waiterMessage || null}
               restaurantType={restaurantType || null}
               city={city || null}
               rating={rating || null}
@@ -767,6 +914,12 @@ export function PageEditorClient({
               todaysSpecials={todaysSpecials || null}
               tripAdvisorUrl={tripAdvisorUrl || null}
               websiteUrl={websiteUrl || null}
+              reservationUrl={reservationUrl || null}
+              isPro={isPro ?? false}
+              loyaltyEnabled={loyaltyEnabled}
+              loyaltyStampsRequired={loyaltyStampsRequired}
+              loyaltyReward={loyaltyReward || null}
+              loyaltyTitle={loyaltyTitle || null}
             />
           </div>
         </div>
@@ -792,11 +945,13 @@ interface MenuSectionEditorProps {
   onUpdateItem: (itemId: string, patch: Partial<LocalItem>) => void
   onMoveItem: (itemId: string, dir: -1 | 1) => void
   onItemPhotoSelect: (itemId: string, file: File) => void
+  isPro?: boolean
+  clientId?: string
 }
 
 function MenuSectionEditor({
   section, isFirst, isLast, onToggle, onNameChange, onRemove, onMoveUp, onMoveDown,
-  onAddItem, onRemoveItem, onUpdateItem, onMoveItem, onItemPhotoSelect,
+  onAddItem, onRemoveItem, onUpdateItem, onMoveItem, onItemPhotoSelect, isPro, clientId,
 }: MenuSectionEditorProps) {
   const btnCls = 'text-white/20 hover:text-white/60 transition-colors disabled:opacity-20 disabled:cursor-not-allowed'
   return (
@@ -831,11 +986,14 @@ function MenuSectionEditor({
               item={item}
               isFirst={ii === 0}
               isLast={ii === section.items.length - 1}
+              sectionName={section.name}
               onRemove={() => onRemoveItem(item.id)}
               onUpdate={patch => onUpdateItem(item.id, patch)}
               onMoveUp={() => onMoveItem(item.id, -1)}
               onMoveDown={() => onMoveItem(item.id, 1)}
               onPhotoSelect={file => onItemPhotoSelect(item.id, file)}
+              isPro={isPro}
+              clientId={clientId}
             />
           ))}
           <button
@@ -857,18 +1015,45 @@ interface MenuItemEditorProps {
   item: LocalItem
   isFirst: boolean
   isLast: boolean
+  sectionName: string
   onRemove: () => void
   onUpdate: (patch: Partial<LocalItem>) => void
   onMoveUp: () => void
   onMoveDown: () => void
   onPhotoSelect: (file: File) => void
+  isPro?: boolean
+  clientId?: string
 }
 
-function MenuItemEditor({ item, isFirst, isLast, onRemove, onUpdate, onMoveUp, onMoveDown, onPhotoSelect }: MenuItemEditorProps) {
-  const inputRef = useRef<HTMLInputElement>(null)
+function MenuItemEditor({ item, isFirst, isLast, sectionName, onRemove, onUpdate, onMoveUp, onMoveDown, onPhotoSelect, isPro, clientId }: MenuItemEditorProps) {
+  const inputRef       = useRef<HTMLInputElement>(null)
+  const [aiLoading, setAiLoading] = useState(false)
   const preview  = item.photoPreview ?? item.photo_url
   const available = item.available !== false
   const reorderBtnCls = 'text-white/15 hover:text-white/50 transition-colors disabled:opacity-20 disabled:cursor-not-allowed'
+
+  const handleAiGenerate = useCallback(async () => {
+    if (!isPro || aiLoading) return
+    setAiLoading(true)
+    try {
+      const res  = await fetch('/api/admin/ai-description', {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify({
+          clientId,
+          itemName:            item.name,
+          category:            sectionName,
+          existingDescription: item.description,
+        }),
+      })
+      const data = await res.json() as { description?: string; error?: string }
+      if (data.description) onUpdate({ description: data.description })
+    } catch {
+      // silent — description field stays unchanged
+    } finally {
+      setAiLoading(false)
+    }
+  }, [isPro, aiLoading, clientId, item.name, item.description, sectionName, onUpdate])
 
   return (
     <div className={cn('rounded-lg border p-2.5 space-y-1.5', available ? 'bg-white/[0.03] border-white/[0.05]' : 'bg-white/[0.01] border-white/[0.03] opacity-60')}>
@@ -928,6 +1113,21 @@ function MenuItemEditor({ item, isFirst, isLast, onRemove, onUpdate, onMoveUp, o
           placeholder="Description (optional)"
           className={cn(inputCls, 'py-1.5 text-xs flex-1')}
         />
+        {isPro && (
+          <button
+            type="button"
+            onClick={handleAiGenerate}
+            disabled={aiLoading || !item.name.trim()}
+            title="Generate description with AI"
+            className="shrink-0 flex items-center gap-1 px-2 py-1.5 rounded-lg text-[10px] font-semibold border transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+            style={{ background: 'rgba(139,92,246,0.10)', border: '1px solid rgba(139,92,246,0.25)', color: '#a78bfa' }}
+          >
+            {aiLoading
+              ? <svg className="animate-spin" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg>
+              : <span>✨</span>}
+            AI
+          </button>
+        )}
         <input
           type="text"
           value={item.allergens ?? ''}

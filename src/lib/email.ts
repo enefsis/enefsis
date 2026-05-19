@@ -109,6 +109,139 @@ function welcomeEmailHtml({
 </html>`
 }
 
+function standOrderEmailHtml({
+  clientName, clientEmail, quantity, amount, date,
+}: {
+  clientName:  string
+  clientEmail: string
+  quantity:    number
+  amount:      number
+  date:        string
+}): string {
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>New Stand Order</title>
+</head>
+<body style="margin:0;padding:0;background:#0D0F14;font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#0D0F14;min-height:100vh;">
+    <tr>
+      <td align="center" style="padding:48px 16px 32px;">
+        <table width="560" cellpadding="0" cellspacing="0" style="max-width:560px;width:100%;">
+
+          <tr>
+            <td style="padding-bottom:28px;">
+              <span style="font-size:22px;font-weight:800;color:#2B5CE6;letter-spacing:0.08em;text-transform:uppercase;">ENEFSIS</span>
+              <span style="font-size:11px;font-weight:500;color:rgba(255,255,255,0.30);margin-left:10px;vertical-align:middle;letter-spacing:0.04em;">NFC Smart Hub</span>
+            </td>
+          </tr>
+
+          <tr>
+            <td style="background:#161920;border:1px solid rgba(255,255,255,0.07);border-radius:18px;padding:36px 40px;">
+
+              <p style="margin:0 0 6px;font-size:11px;font-weight:700;letter-spacing:0.14em;
+                         color:rgba(245,166,35,0.80);text-transform:uppercase;">New Order</p>
+              <h1 style="margin:0 0 28px;font-size:22px;font-weight:700;color:#F0F2F8;line-height:1.2;">
+                Stand Order from ${clientName}
+              </h1>
+
+              <table width="100%" cellpadding="0" cellspacing="0"
+                style="background:#0D0F14;border:1px solid rgba(255,255,255,0.07);border-radius:12px;margin-bottom:28px;">
+                <tr><td style="padding:22px 26px;">
+                  <p style="margin:0 0 14px;font-size:10px;font-weight:700;letter-spacing:0.14em;
+                             color:rgba(255,255,255,0.30);text-transform:uppercase;">Order Details</p>
+                  <table width="100%" cellpadding="0" cellspacing="0">
+                    <tr>
+                      <td style="padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.05);">
+                        <span style="font-size:12px;color:rgba(255,255,255,0.32);">Client</span>
+                      </td>
+                      <td style="padding:8px 0;text-align:right;border-bottom:1px solid rgba(255,255,255,0.05);">
+                        <span style="font-size:13px;font-weight:600;color:#F0F2F8;">${clientName}</span>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td style="padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.05);">
+                        <span style="font-size:12px;color:rgba(255,255,255,0.32);">Email</span>
+                      </td>
+                      <td style="padding:8px 0;text-align:right;border-bottom:1px solid rgba(255,255,255,0.05);">
+                        <span style="font-size:13px;color:#38BEFF;">${clientEmail}</span>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td style="padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.05);">
+                        <span style="font-size:12px;color:rgba(255,255,255,0.32);">Quantity</span>
+                      </td>
+                      <td style="padding:8px 0;text-align:right;border-bottom:1px solid rgba(255,255,255,0.05);">
+                        <span style="font-size:13px;font-weight:600;color:#F0F2F8;">${quantity} stand${quantity !== 1 ? 's' : ''}</span>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td style="padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.05);">
+                        <span style="font-size:12px;color:rgba(255,255,255,0.32);">Setup Fee</span>
+                      </td>
+                      <td style="padding:8px 0;text-align:right;border-bottom:1px solid rgba(255,255,255,0.05);">
+                        <span style="font-size:14px;font-weight:700;color:#4ade80;">€${amount}</span>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td style="padding:8px 0;">
+                        <span style="font-size:12px;color:rgba(255,255,255,0.32);">Date</span>
+                      </td>
+                      <td style="padding:8px 0;text-align:right;">
+                        <span style="font-size:13px;color:rgba(255,255,255,0.55);">${date}</span>
+                      </td>
+                    </tr>
+                  </table>
+                </td></tr>
+              </table>
+
+              <p style="margin:0;font-size:13px;color:rgba(255,255,255,0.45);line-height:1.6;">
+                Log in to the admin panel to review and process this order.
+              </p>
+
+            </td>
+          </tr>
+
+          <tr>
+            <td style="padding-top:24px;text-align:center;">
+              <p style="margin:0;font-size:12px;color:rgba(255,255,255,0.22);">
+                Enefsis NFC Smart Hub &middot;
+                <a href="mailto:support@enefsis.com"
+                  style="color:rgba(255,255,255,0.35);text-decoration:none;">support@enefsis.com</a>
+              </p>
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`
+}
+
+export async function sendStandOrderEmail({
+  clientName, clientEmail, quantity, amount, date,
+}: {
+  clientName:  string
+  clientEmail: string
+  quantity:    number
+  amount:      number
+  date:        string
+}): Promise<void> {
+  const { error } = await resend.emails.send({
+    from:    'Enefsis <noreply@enefsis.com>',
+    to:      'support@enefsis.com',
+    subject: `New Stand Order from ${clientName}`,
+    html:    standOrderEmailHtml({ clientName, clientEmail, quantity, amount, date }),
+  })
+  if (error) {
+    console.error('[sendStandOrderEmail] Resend error:', error)
+  }
+}
+
 export async function sendWelcomeEmail({
   name,
   email,

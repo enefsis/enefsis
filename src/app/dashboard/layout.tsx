@@ -9,7 +9,8 @@ import type { Profile } from '@/types/database'
 const ADMIN_EMAIL = 'gniokos@gmail.com'
 
 const navItems = [
-  { label: 'Dashboard',   href: '/dashboard',               icon: 'dashboard'    as const },
+  { label: 'Dashboard',    href: '/dashboard',                icon: 'dashboard'     as const },
+  { label: 'Quick Update', href: '/dashboard/quick-update',  icon: 'quick-update'  as const },
   { label: 'Analytics',   href: '/dashboard/analytics',     icon: 'analytics'    as const },
   { label: 'Menu Views',  href: '/dashboard/menu-views',    icon: 'menu-views'   as const },
   { label: 'Page Editor', href: '/dashboard/page-editor',   icon: 'page-editor'  as const },

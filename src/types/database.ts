@@ -178,6 +178,8 @@ export interface Database {
           wifi_name: string | null
           wifi_password: string | null
           call_waiter_enabled: boolean
+          waiter_whatsapp: string | null
+          waiter_message: string | null
           restaurant_type: string | null
           city: string | null
           year_established: string | null
@@ -186,6 +188,11 @@ export interface Database {
           todays_specials: string | null
           trip_advisor_url: string | null
           website_url: string | null
+          reservation_url: string | null
+          loyalty_enabled: boolean
+          loyalty_stamps_required: number | null
+          loyalty_reward: string | null
+          loyalty_title: string | null
         }
         Insert: {
           id?: string
@@ -209,6 +216,8 @@ export interface Database {
           wifi_name?: string | null
           wifi_password?: string | null
           call_waiter_enabled?: boolean
+          waiter_whatsapp?: string | null
+          waiter_message?: string | null
           restaurant_type?: string | null
           city?: string | null
           year_established?: string | null
@@ -217,6 +226,11 @@ export interface Database {
           todays_specials?: string | null
           trip_advisor_url?: string | null
           website_url?: string | null
+          reservation_url?: string | null
+          loyalty_enabled?: boolean
+          loyalty_stamps_required?: number | null
+          loyalty_reward?: string | null
+          loyalty_title?: string | null
         }
         Update: {
           id?: string
@@ -240,6 +254,8 @@ export interface Database {
           wifi_name?: string | null
           wifi_password?: string | null
           call_waiter_enabled?: boolean
+          waiter_whatsapp?: string | null
+          waiter_message?: string | null
           restaurant_type?: string | null
           city?: string | null
           year_established?: string | null
@@ -248,6 +264,11 @@ export interface Database {
           todays_specials?: string | null
           trip_advisor_url?: string | null
           website_url?: string | null
+          reservation_url?: string | null
+          loyalty_enabled?: boolean
+          loyalty_stamps_required?: number | null
+          loyalty_reward?: string | null
+          loyalty_title?: string | null
         }
         Relationships: []
       }

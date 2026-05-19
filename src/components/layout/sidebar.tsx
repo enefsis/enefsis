@@ -13,6 +13,8 @@ import {
   CreditCard,
   PanelLeft,
   Briefcase,
+  Zap,
+  Package,
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import { signOut } from '@/actions/auth'
@@ -27,7 +29,9 @@ const ICON_MAP: Record<string, LucideIcon> = {
   clients:       Users,
   'nfc-stands':  Wifi,
   subscriptions: CreditCard,
-  agents:        Briefcase,
+  agents:          Briefcase,
+  'quick-update':  Zap,
+  'stand-orders':  Package,
 }
 
 export interface NavItem {

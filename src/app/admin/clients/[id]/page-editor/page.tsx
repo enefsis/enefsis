@@ -17,14 +17,15 @@ export default async function AdminPageEditorPage({
   const { id } = await params
   const admin = createAdminClient()
 
-  const { data: rows } = await admin
-    .from('client_pages')
-    .select('*')
-    .eq('user_id', id)
-    .order('created_at', { ascending: false })
+  const [{ data: rows }, { data: subRaw }] = await Promise.all([
+    admin.from('client_pages').select('*').eq('user_id', id).order('created_at', { ascending: false }),
+    admin.from('subscriptions').select('plan').eq('user_id', id).order('created_at', { ascending: false }).limit(1).maybeSingle(),
+  ])
 
   const raw = rows?.[0] ?? null
   if (!raw) notFound()
+
+  const isPro = !!(subRaw as { plan: string | null } | null)?.plan?.includes('pro')
 
   const initial: PageData = {
     restaurant_name:     raw.restaurant_name     ?? '',
@@ -43,6 +44,8 @@ export default async function AdminPageEditorPage({
     wifi_name:           raw.wifi_name           ?? '',
     wifi_password:       raw.wifi_password       ?? '',
     call_waiter_enabled: raw.call_waiter_enabled ?? false,
+    waiter_whatsapp:     raw.waiter_whatsapp     ?? '',
+    waiter_message:      raw.waiter_message      ?? '',
     restaurant_type:     raw.restaurant_type     ?? '',
     city:                raw.city                ?? '',
     rating:              raw.rating              ?? '',
@@ -52,6 +55,11 @@ export default async function AdminPageEditorPage({
     todays_specials:     raw.todays_specials     ?? '',
     trip_advisor_url:    raw.trip_advisor_url    ?? '',
     website_url:         raw.website_url         ?? '',
+    reservation_url:          raw.reservation_url          ?? '',
+    loyalty_enabled:          raw.loyalty_enabled          ?? false,
+    loyalty_stamps_required:  raw.loyalty_stamps_required  ?? 10,
+    loyalty_reward:           raw.loyalty_reward           ?? '',
+    loyalty_title:            raw.loyalty_title            ?? '',
   }
 
   // Bind the client's user_id into each action so saves/uploads target the right row/folder
@@ -69,6 +77,8 @@ export default async function AdminPageEditorPage({
       saveLogoUrlFn={saveLogoUrlBound}
       uploadLogoFn={uploadLogoBound}
       uploadItemPhotoFn={uploadItemPhotoBound}
+      isPro={isPro}
+      clientId={id}
     />
   )
 }

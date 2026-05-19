@@ -51,7 +51,7 @@ export default async function LandingPage({ params, searchParams }: Props) {
   // Check subscription status — suspended clients show an offline page
   const { data: sub } = await admin
     .from('subscriptions')
-    .select('status')
+    .select('status, plan')
     .eq('user_id', page.user_id)
     .maybeSingle()
 
@@ -94,6 +94,8 @@ export default async function LandingPage({ params, searchParams }: Props) {
     if (match) tableNumber = parseInt(match[1], 10)
   }
 
+  const isPro = !!(sub as { plan?: string | null } | null)?.plan?.includes('pro')
+
   const props = {
     standId:            sid ?? null,
     clientId:           page.user_id,
@@ -113,6 +115,8 @@ export default async function LandingPage({ params, searchParams }: Props) {
     wifiName:           page.wifi_name           ?? null,
     wifiPassword:       page.wifi_password       ?? null,
     callWaiterEnabled:  page.call_waiter_enabled ?? false,
+    waiterWhatsapp:     page.waiter_whatsapp     ?? null,
+    waiterMessage:      page.waiter_message      ?? null,
     restaurantType:     page.restaurant_type     ?? null,
     city:               page.city                ?? null,
     rating:             page.rating              ?? null,
@@ -120,6 +124,12 @@ export default async function LandingPage({ params, searchParams }: Props) {
     todaysSpecials:     page.todays_specials     ?? null,
     tripAdvisorUrl:     page.trip_advisor_url    ?? null,
     websiteUrl:         page.website_url         ?? null,
+    reservationUrl:          page.reservation_url          ?? null,
+    isPro,
+    loyaltyEnabled:          page.loyalty_enabled          ?? false,
+    loyaltyStampsRequired:   page.loyalty_stamps_required  ?? 10,
+    loyaltyReward:           page.loyalty_reward           ?? null,
+    loyaltyTitle:            page.loyalty_title            ?? null,
   }
 
   console.log('[LandingPage] passing to LandingClient:', JSON.stringify({

@@ -3,6 +3,7 @@ import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { CopyButton } from '@/components/admin/copy-button'
 import { PasswordForm } from './password-form'
+import { StandOrderForm } from './stand-order-form'
 
 export const metadata = { title: 'Settings' }
 
@@ -101,6 +102,19 @@ export default async function DashboardSettingsPage() {
               ))}
             </div>
           )}
+        </div>
+      </div>
+
+      {/* Order More Stands */}
+      <div className="bg-[#141720] border border-white/[0.06] rounded-2xl overflow-hidden">
+        <div className="px-6 py-4 border-b border-white/[0.06]">
+          <h2 className="font-display font-semibold text-white text-sm">Order More Stands</h2>
+          <p className="font-sans text-xs text-white/35 mt-0.5">
+            Each additional NFC stand is €20 one-time setup fee
+          </p>
+        </div>
+        <div className="px-6 py-5">
+          <StandOrderForm currentCount={stands.length} />
         </div>
       </div>
 

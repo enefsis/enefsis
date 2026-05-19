@@ -11,8 +11,9 @@ const navItems = [
   { label: 'Overview',      href: '/admin',                icon: 'dashboard'      as const },
   { label: 'Clients',       href: '/admin/clients',        icon: 'clients'        as const },
   { label: 'Agents',        href: '/admin/agents',         icon: 'agents'         as const },
-  { label: 'NFC Stands',    href: '/admin/nfc-stands',     icon: 'nfc-stands'     as const },
-  { label: 'Subscriptions', href: '/admin/subscriptions',  icon: 'subscriptions'  as const },
+  { label: 'NFC Stands',    href: '/admin/nfc-stands',     icon: 'nfc-stands'    as const },
+  { label: 'Stand Orders',  href: '/admin/stand-orders',   icon: 'stand-orders'  as const },
+  { label: 'Subscriptions', href: '/admin/subscriptions',  icon: 'subscriptions' as const },
   { label: 'Settings',      href: '/admin/settings',       icon: 'settings'       as const },
 ]
 

@@ -53,6 +53,8 @@ export type PageData = {
   wifi_name: string
   wifi_password: string
   call_waiter_enabled: boolean
+  waiter_whatsapp: string
+  waiter_message: string
   restaurant_type: string
   city: string
   rating: string
@@ -60,6 +62,11 @@ export type PageData = {
   todays_specials: string
   trip_advisor_url: string
   website_url: string
+  reservation_url: string
+  loyalty_enabled: boolean
+  loyalty_stamps_required: number
+  loyalty_reward: string
+  loyalty_title: string
   google_place_id?: string
 }
 
@@ -88,6 +95,8 @@ export async function savePage(data: PageData): Promise<{ slug?: string; error?:
     wifi_name:           data.wifi_name           || null,
     wifi_password:       data.wifi_password       || null,
     call_waiter_enabled: data.call_waiter_enabled ?? false,
+    waiter_whatsapp:     data.waiter_whatsapp     || null,
+    waiter_message:      data.waiter_message      || null,
     restaurant_type:     data.restaurant_type     || null,
     city:                data.city                || null,
     rating:              data.rating              || null,
@@ -95,7 +104,12 @@ export async function savePage(data: PageData): Promise<{ slug?: string; error?:
     todays_specials:     data.todays_specials     || null,
     trip_advisor_url:    data.trip_advisor_url    || null,
     website_url:         data.website_url         || null,
-    updated_at:          new Date().toISOString(),
+    reservation_url:          data.reservation_url          || null,
+    loyalty_enabled:          data.loyalty_enabled          ?? false,
+    loyalty_stamps_required:  data.loyalty_stamps_required  || null,
+    loyalty_reward:           data.loyalty_reward           || null,
+    loyalty_title:            data.loyalty_title            || null,
+    updated_at:               new Date().toISOString(),
   }
 
   // google_place_id is not yet in generated DB types — cast via any

@@ -50,6 +50,8 @@ export default async function PageEditorPage() {
         wifi_name:           raw.wifi_name           ?? '',
         wifi_password:       raw.wifi_password       ?? '',
         call_waiter_enabled: raw.call_waiter_enabled ?? false,
+        waiter_whatsapp:     raw.waiter_whatsapp     ?? '',
+        waiter_message:      raw.waiter_message      ?? '',
         restaurant_type:     raw.restaurant_type     ?? '',
         city:                raw.city                ?? '',
         rating:              raw.rating              ?? '',
@@ -57,6 +59,11 @@ export default async function PageEditorPage() {
         todays_specials:     raw.todays_specials     ?? '',
         trip_advisor_url:    raw.trip_advisor_url    ?? '',
         website_url:         raw.website_url         ?? '',
+        reservation_url:          raw.reservation_url          ?? '',
+        loyalty_enabled:          raw.loyalty_enabled          ?? false,
+        loyalty_stamps_required:  raw.loyalty_stamps_required  ?? 10,
+        loyalty_reward:           raw.loyalty_reward           ?? '',
+        loyalty_title:            raw.loyalty_title            ?? '',
       }
     : null
 
