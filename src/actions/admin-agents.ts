@@ -1,5 +1,6 @@
 'use server'
 
+import { redirect } from 'next/navigation'
 import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
@@ -103,6 +104,38 @@ export async function markCommissionPaid(
   revalidatePath(`/admin/agents/${agentId}`)
   revalidatePath('/admin/agents')
   return {}
+}
+
+export async function deleteAgent(
+  agentId: string,
+): Promise<{ error?: string }> {
+  const admin = await requireAdmin()
+  if (!admin) return { error: 'Unauthorized' }
+
+  // Nullify agent_id on subscriptions and profiles (preserve the records)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { error: subErr } = await (admin as any)
+    .from('subscriptions').update({ agent_id: null }).eq('agent_id', agentId)
+  if (subErr) return { error: subErr.message }
+
+  const { error: profErr } = await admin
+    .from('profiles').update({ agent_id: null } as never).eq('agent_id', agentId)
+  if (profErr) return { error: profErr.message }
+
+  // Delete commission history
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { error: commErr } = await (admin as any)
+    .from('agent_commissions').delete().eq('agent_id', agentId)
+  if (commErr) return { error: commErr.message }
+
+  // Delete the agent row
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { error: agentErr } = await (admin as any)
+    .from('sales_agents').delete().eq('id', agentId)
+  if (agentErr) return { error: agentErr.message }
+
+  revalidatePath('/admin/agents')
+  redirect('/admin/agents')
 }
 
 export async function updateAgentStatus(

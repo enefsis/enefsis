@@ -6,6 +6,7 @@ import Link from 'next/link'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { AgentInfoCard, type AgentData } from './agent-info-card'
 import { MarkPaidButton } from './mark-paid-button'
+import { DeleteAgentButton } from './delete-agent-button'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 type RawProfile    = { id: string; full_name: string | null; email: string }
@@ -167,9 +168,12 @@ export default async function AgentDetailPage({
       </Link>
 
       {/* Agent header */}
-      <div>
-        <h1 className="font-display text-2xl font-bold text-white">{agent.name}</h1>
-        <p className="font-sans text-sm text-white/40 mt-0.5">{agent.email}</p>
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <h1 className="font-display text-2xl font-bold text-white">{agent.name}</h1>
+          <p className="font-sans text-sm text-white/40 mt-0.5">{agent.email}</p>
+        </div>
+        <DeleteAgentButton agentId={id} />
       </div>
 
       {/* Info card (inline-editable) */}
