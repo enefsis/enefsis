@@ -815,9 +815,15 @@ function PoweredByFooter() {
           <span className="font-sans" style={{ fontSize: 12, color: 'rgba(255,255,255,0.25)' }}>
             Powered by
           </span>
-          <span className="font-display font-bold" style={{ fontSize: 13, color: 'rgba(240,242,248,0.55)' }}>
+          <a
+            href="https://www.enefsis.com"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="font-display font-bold"
+            style={{ fontSize: 13, color: 'rgba(240,242,248,0.55)', textDecoration: 'none' }}
+          >
             Enefsis
-          </span>
+          </a>
           <span
             className="font-sans font-semibold px-2 py-0.5 rounded-full"
             style={{
