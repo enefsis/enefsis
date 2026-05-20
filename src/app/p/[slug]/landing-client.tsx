@@ -502,16 +502,15 @@ interface MenuTabsSectionProps {
 }
 
 function MenuTabsSection({ sections, standId, clientId, tableNumber, onPhotoClick, t }: MenuTabsSectionProps) {
-  const visibleSections = sections
-    .map(s => ({ ...s, items: s.items.filter(i => i.name) }))
-    .filter(s => s.items.length > 0)
+  // Keep all sections; only strip unnamed items
+  const allSections = sections.map(s => ({ ...s, items: s.items.filter(i => i.name) }))
 
-  const [activeId, setActiveId] = useState<string>(() => visibleSections[0]?.id ?? '')
+  const [activeId, setActiveId] = useState<string>(() => allSections[0]?.id ?? '')
 
-  if (!visibleSections.length) return null
+  if (!allSections.length) return null
 
-  const totalItems    = visibleSections.reduce((sum, s) => sum + s.items.filter(i => i.available !== false).length, 0)
-  const activeSection = visibleSections.find(s => s.id === activeId) ?? visibleSections[0]
+  const totalItems    = allSections.reduce((sum, s) => sum + s.items.filter(i => i.available !== false).length, 0)
+  const activeSection = allSections.find(s => s.id === activeId) ?? allSections[0]
 
   return (
     <div id="menu-section" className="px-4 pt-6 pb-2">
@@ -532,52 +531,56 @@ function MenuTabsSection({ sections, standId, clientId, tableNumber, onPhotoClic
         </span>
       </div>
 
-      {/* Category tabs */}
-      {visibleSections.length > 1 && (
-        <div
-          className="flex gap-2 overflow-x-auto pb-4"
-          style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' } as React.CSSProperties}
-        >
-          {visibleSections.map(section => {
-            const active = section.id === activeId
-            return (
-              <button
-                key={section.id}
-                type="button"
-                onClick={() => setActiveId(section.id)}
-                className="shrink-0 flex items-center gap-1.5 px-4 py-1.5 rounded-full font-sans font-semibold transition-all active:scale-95"
-                style={{
-                  fontSize: 13,
-                  background: active ? '#2B65F0' : 'rgba(255,255,255,0.065)',
-                  border: active ? '1px solid rgba(43,101,240,0.5)' : '1px solid rgba(255,255,255,0.07)',
-                  color: active ? '#ffffff' : 'rgba(255,255,255,0.45)',
-                  boxShadow: active ? '0 2px 12px rgba(43,101,240,0.35)' : 'none',
-                }}
-              >
-                {section.emoji && <span style={{ fontSize: 15, lineHeight: 1 }}>{section.emoji}</span>}
-                <span>{t(section.name)}</span>
-              </button>
-            )
-          })}
-        </div>
-      )}
+      {/* Category tabs — always shown when there is at least 1 section */}
+      <div
+        className="flex gap-2 overflow-x-auto pb-4"
+        style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' } as React.CSSProperties}
+      >
+        {allSections.map(section => {
+          const active = section.id === activeId
+          return (
+            <button
+              key={section.id}
+              type="button"
+              onClick={() => setActiveId(section.id)}
+              className="shrink-0 flex items-center gap-1.5 px-4 py-1.5 rounded-full font-sans font-semibold transition-all active:scale-95"
+              style={{
+                fontSize: 13,
+                background: active ? '#2B65F0' : 'rgba(255,255,255,0.065)',
+                border: active ? '1px solid rgba(43,101,240,0.5)' : '1px solid rgba(255,255,255,0.07)',
+                color: active ? '#ffffff' : 'rgba(255,255,255,0.45)',
+                boxShadow: active ? '0 2px 12px rgba(43,101,240,0.35)' : 'none',
+              }}
+            >
+              {section.emoji && <span style={{ fontSize: 15, lineHeight: 1 }}>{section.emoji}</span>}
+              <span>{t(section.name)}</span>
+            </button>
+          )
+        })}
+      </div>
 
       {/* Items for active section */}
       {activeSection && (
         <div className="space-y-2.5">
-          {activeSection.items.map(item => {
-            const isAvailable = item.available !== false
-            return (
-              <MenuItemCard
-                key={item.id}
-                item={item}
-                onView={isAvailable ? () => trackMenuView(standId, clientId, item.id, item.name, tableNumber) : () => {}}
-                onPhotoClick={onPhotoClick}
-                t={t}
-                unavailable={!isAvailable}
-              />
-            )
-          })}
+          {activeSection.items.length === 0 ? (
+            <p className="font-sans text-sm text-center py-6" style={{ color: 'rgba(255,255,255,0.25)' }}>
+              No items yet
+            </p>
+          ) : (
+            activeSection.items.map(item => {
+              const isAvailable = item.available !== false
+              return (
+                <MenuItemCard
+                  key={item.id}
+                  item={item}
+                  onView={isAvailable ? () => trackMenuView(standId, clientId, item.id, item.name, tableNumber) : () => {}}
+                  onPhotoClick={onPhotoClick}
+                  t={t}
+                  unavailable={!isAvailable}
+                />
+              )
+            })
+          )}
         </div>
       )}
     </div>
@@ -1561,7 +1564,7 @@ export function LandingClient({
         {todaysSpecials && <div className="pt-4"><TodaysSpecialsBanner specials={t(todaysSpecials)} t={t} /></div>}
 
         {/* ── Menu tabs ─────────────────────────────────────────────────────── */}
-        {hasMenu && (
+        {menuSections.length > 0 && (
           <MenuTabsSection
             sections={menuSections}
             standId={standId}
