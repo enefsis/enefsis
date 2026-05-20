@@ -1368,7 +1368,7 @@ export function LandingClient({
   })
   console.log('[CallWaiter] enabled:', callWaiterEnabled)
 
-  const hasMenu      = menuSections.some(s => s.items.some(i => i.name))
+
   const whatsappHref = whatsappNumber
     ? `https://wa.me/${whatsappNumber.replace(/\D/g, '')}`
     : ''
