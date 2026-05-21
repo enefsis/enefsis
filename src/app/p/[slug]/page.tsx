@@ -126,10 +126,12 @@ export default async function LandingPage({ params, searchParams }: Props) {
     websiteUrl:         page.website_url         ?? null,
     reservationUrl:          page.reservation_url          ?? null,
     isPro,
-    loyaltyEnabled:          page.loyalty_enabled          ?? false,
-    loyaltyStampsRequired:   page.loyalty_stamps_required  ?? 10,
-    loyaltyReward:           page.loyalty_reward           ?? null,
-    loyaltyTitle:            page.loyalty_title            ?? null,
+    loyaltyEnabled:           page.loyalty_enabled          ?? false,
+    loyaltyStampsRequired:    page.loyalty_stamps_required  ?? 10,
+    loyaltyReward:            page.loyalty_reward           ?? null,
+    loyaltyTitle:             page.loyalty_title            ?? null,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    openingHoursStructured:   ((page as any).opening_hours_structured ?? null) as import('@/actions/page-editor').StructuredHours | null,
   }
 
   console.log('[LandingPage] passing to LandingClient:', JSON.stringify({

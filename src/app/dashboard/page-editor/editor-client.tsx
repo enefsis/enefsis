@@ -2,12 +2,12 @@
 
 import { useState, useRef, useTransition, useCallback } from 'react'
 import {
-  ChevronDown, ChevronRight, Plus, Trash2, Upload, Save, Loader2, ExternalLink,
+  ChevronDown, ChevronRight, Plus, Minus, Trash2, Upload, Save, Loader2, ExternalLink,
   ArrowUp, ArrowDown,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { savePage, saveLogoUrl, uploadLogo } from '@/actions/page-editor'
-import type { PageData, MenuSectionData, MenuItemData } from '@/actions/page-editor'
+import type { PageData, MenuSectionData, MenuItemData, StructuredHours, DayHours, DaySchedule } from '@/actions/page-editor'
 import { createClient } from '@/lib/supabase/client'
 import { LandingClient } from '@/app/p/[slug]/landing-client'
 
@@ -49,6 +49,135 @@ function parseHeroBg(heroBg: string | null) {
 
 const inputCls = 'w-full rounded-lg bg-white/[0.05] border border-white/[0.08] text-sm text-white placeholder-white/25 px-3 py-2 focus:outline-none focus:border-[#2B5CE6]/50 transition-colors'
 const labelCls = 'block text-xs font-medium text-white/50 mb-1.5'
+
+// ─── Structured hours editor ──────────────────────────────────────────────────
+
+const WEEK_DAYS = [
+  { key: 'monday',    label: 'Monday'    },
+  { key: 'tuesday',   label: 'Tuesday'   },
+  { key: 'wednesday', label: 'Wednesday' },
+  { key: 'thursday',  label: 'Thursday'  },
+  { key: 'friday',    label: 'Friday'    },
+  { key: 'saturday',  label: 'Saturday'  },
+  { key: 'sunday',    label: 'Sunday'    },
+]
+
+const TIME_SLOTS = Array.from({ length: 48 }, (_, i) => {
+  const h = Math.floor(i / 2)
+  const m = i % 2 === 0 ? '00' : '30'
+  return `${String(h).padStart(2, '0')}:${m}`
+})
+
+function makeDefaultStructuredHours(): StructuredHours {
+  return {
+    monday:    [{ open: '09:00', close: '22:00' }],
+    tuesday:   [{ open: '09:00', close: '22:00' }],
+    wednesday: [{ open: '09:00', close: '22:00' }],
+    thursday:  [{ open: '09:00', close: '22:00' }],
+    friday:    [{ open: '09:00', close: '22:00' }],
+    saturday:  [{ open: '09:00', close: '22:00' }],
+    sunday:    'closed',
+  }
+}
+
+const selectCls = 'flex-1 rounded bg-white/[0.05] border border-white/[0.08] text-xs text-white px-2 py-1.5 focus:outline-none focus:border-[#2B5CE6]/50 transition-colors'
+
+function StructuredHoursEditor({
+  value,
+  onChange,
+}: {
+  value: StructuredHours
+  onChange: (v: StructuredHours) => void
+}) {
+  function updateDay(key: string, schedule: DaySchedule) {
+    onChange({ ...value, [key]: schedule })
+  }
+
+  return (
+    <div className="space-y-2">
+      {WEEK_DAYS.map(({ key, label }) => {
+        const schedule = value[key as keyof StructuredHours]
+        const isClosed = schedule === 'closed'
+        const shifts   = isClosed ? [] : (schedule as DayHours[])
+
+        return (
+          <div key={key} className="rounded-lg bg-white/[0.03] border border-white/[0.06] p-2.5">
+            {/* Day row header */}
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-xs font-semibold text-white/70 w-24">{label}</span>
+              <button
+                type="button"
+                onClick={() =>
+                  updateDay(key, isClosed ? [{ open: '09:00', close: '22:00' }] : 'closed')
+                }
+                className={cn(
+                  'text-[10px] font-semibold px-2.5 py-0.5 rounded-full border transition-colors',
+                  isClosed
+                    ? 'text-red-400 bg-red-400/10 border-red-400/25'
+                    : 'text-emerald-400 bg-emerald-400/10 border-emerald-400/25',
+                )}
+              >
+                {isClosed ? 'Closed' : 'Open'}
+              </button>
+            </div>
+
+            {/* Shifts */}
+            {!isClosed && (
+              <div className="space-y-1.5">
+                {shifts.map((shift, idx) => (
+                  <div key={idx} className="flex items-center gap-1.5">
+                    <select
+                      value={shift.open}
+                      onChange={e => {
+                        const next = [...shifts]
+                        next[idx] = { ...next[idx], open: e.target.value }
+                        updateDay(key, next)
+                      }}
+                      className={selectCls}
+                    >
+                      {TIME_SLOTS.map(t => <option key={t} value={t}>{t}</option>)}
+                    </select>
+                    <span className="text-white/30 text-xs shrink-0">–</span>
+                    <select
+                      value={shift.close}
+                      onChange={e => {
+                        const next = [...shifts]
+                        next[idx] = { ...next[idx], close: e.target.value }
+                        updateDay(key, next)
+                      }}
+                      className={selectCls}
+                    >
+                      {TIME_SLOTS.map(t => <option key={t} value={t}>{t}</option>)}
+                    </select>
+                    {shifts.length > 1 && (
+                      <button
+                        type="button"
+                        title="Remove shift"
+                        onClick={() => updateDay(key, shifts.filter((_, i) => i !== idx))}
+                        className="shrink-0 text-white/25 hover:text-red-400 transition-colors"
+                      >
+                        <Minus size={13} />
+                      </button>
+                    )}
+                  </div>
+                ))}
+                {shifts.length < 2 && (
+                  <button
+                    type="button"
+                    onClick={() => updateDay(key, [...shifts, { open: '17:00', close: '22:00' }])}
+                    className="flex items-center gap-1 text-[10px] text-white/35 hover:text-white/60 transition-colors mt-1"
+                  >
+                    <Plus size={11} /> Add shift
+                  </button>
+                )}
+              </div>
+            )}
+          </div>
+        )
+      })}
+    </div>
+  )
+}
 
 // ─── Small UI components ──────────────────────────────────────────────────────
 
@@ -132,6 +261,9 @@ export function PageEditorClient({
   const [whatsappNumber,   setWhatsappNumber]    = useState(initial?.whatsapp_number   ?? '')
   const [sections,          setSections]          = useState<LocalSection[]>(initSections)
   const [openingHours,      setOpeningHours]      = useState(initial?.opening_hours      ?? '')
+  const [openingHoursStructured, setOpeningHoursStructured] = useState<StructuredHours>(
+    initial?.opening_hours_structured ?? makeDefaultStructuredHours()
+  )
   const [phone,             setPhone]             = useState(initial?.phone              ?? '')
   const [address,           setAddress]           = useState(initial?.address            ?? '')
   const [wifiName,          setWifiName]          = useState(initial?.wifi_name          ?? '')
@@ -308,7 +440,8 @@ export function PageEditorClient({
       facebook_url:        facebookUrl,
       tiktok_url:          tiktokUrl,
       whatsapp_number:     whatsappNumber,
-      opening_hours:       openingHours,
+      opening_hours:            openingHours,
+      opening_hours_structured: openingHoursStructured,
       phone,
       address,
       wifi_name:           wifiName,
@@ -648,12 +781,19 @@ export function PageEditorClient({
           {/* Info */}
           <SectionPanel title="Info" defaultOpen={false}>
             <Field label="Opening Hours">
+              <StructuredHoursEditor
+                value={openingHoursStructured}
+                onChange={setOpeningHoursStructured}
+              />
+              <p className="text-[10px] text-white/25 mt-2">
+                Legacy text fallback (shown if no structured hours)
+              </p>
               <input
                 type="text"
                 value={openingHours}
                 onChange={e => setOpeningHours(e.target.value)}
-                placeholder="Mon–Fri 09:00–23:00, Sat–Sun 10:00–00:00"
-                className={inputCls}
+                placeholder="e.g. Mon–Fri 09:00–22:00"
+                className={cn(inputCls, 'mt-1.5')}
               />
             </Field>
             <Field label="Phone Number">
@@ -920,6 +1060,7 @@ export function PageEditorClient({
               loyaltyStampsRequired={loyaltyStampsRequired}
               loyaltyReward={loyaltyReward || null}
               loyaltyTitle={loyaltyTitle || null}
+              openingHoursStructured={openingHoursStructured}
             />
           </div>
         </div>

@@ -7,7 +7,7 @@ import {
   uploadLogoForClient,
   uploadItemPhotoForClient,
 } from '@/actions/admin-page-editor'
-import type { PageData, MenuSectionData } from '@/actions/page-editor'
+import type { PageData, MenuSectionData, StructuredHours } from '@/actions/page-editor'
 
 export default async function AdminPageEditorPage({
   params,
@@ -56,10 +56,12 @@ export default async function AdminPageEditorPage({
     trip_advisor_url:    raw.trip_advisor_url    ?? '',
     website_url:         raw.website_url         ?? '',
     reservation_url:          raw.reservation_url          ?? '',
-    loyalty_enabled:          raw.loyalty_enabled          ?? false,
-    loyalty_stamps_required:  raw.loyalty_stamps_required  ?? 10,
-    loyalty_reward:           raw.loyalty_reward           ?? '',
-    loyalty_title:            raw.loyalty_title            ?? '',
+    loyalty_enabled:           raw.loyalty_enabled          ?? false,
+    loyalty_stamps_required:   raw.loyalty_stamps_required  ?? 10,
+    loyalty_reward:            raw.loyalty_reward           ?? '',
+    loyalty_title:             raw.loyalty_title            ?? '',
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    opening_hours_structured:  ((raw as any).opening_hours_structured ?? null) as StructuredHours | null,
   }
 
   // Bind the client's user_id into each action so saves/uploads target the right row/folder

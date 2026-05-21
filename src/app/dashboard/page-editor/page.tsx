@@ -2,7 +2,7 @@ import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { PageEditorClient } from './editor-client'
-import type { PageData, MenuSectionData } from '@/actions/page-editor'
+import type { PageData, MenuSectionData, StructuredHours } from '@/actions/page-editor'
 
 export default async function PageEditorPage() {
   const supabase = await createClient()
@@ -59,11 +59,13 @@ export default async function PageEditorPage() {
         todays_specials:     raw.todays_specials     ?? '',
         trip_advisor_url:    raw.trip_advisor_url    ?? '',
         website_url:         raw.website_url         ?? '',
-        reservation_url:          raw.reservation_url          ?? '',
-        loyalty_enabled:          raw.loyalty_enabled          ?? false,
-        loyalty_stamps_required:  raw.loyalty_stamps_required  ?? 10,
-        loyalty_reward:           raw.loyalty_reward           ?? '',
-        loyalty_title:            raw.loyalty_title            ?? '',
+        reservation_url:           raw.reservation_url          ?? '',
+        loyalty_enabled:           raw.loyalty_enabled          ?? false,
+        loyalty_stamps_required:   raw.loyalty_stamps_required  ?? 10,
+        loyalty_reward:            raw.loyalty_reward           ?? '',
+        loyalty_title:             raw.loyalty_title            ?? '',
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        opening_hours_structured:  ((raw as any).opening_hours_structured ?? null) as StructuredHours | null,
       }
     : null
 

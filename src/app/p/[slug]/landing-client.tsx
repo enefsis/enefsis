@@ -70,6 +70,7 @@ const UI_KEYS = [
   'We use cookies to analyse how you use our menu and improve your experience. You can accept or decline non-essential tracking.',
   'Accept',
   'Decline',
+  'Closed',
   'Come back later for your next stamp',
   'Show this to staff',
   'Enjoying your visit?',
@@ -589,20 +590,55 @@ function MenuTabsSection({ sections, standId, clientId, tableNumber, onPhotoClic
 
 // ─── Info section ────────────────────────────────────────────────────────────
 
+function isWithinShifts(shifts: Array<{ open: string; close: string }>): boolean {
+  const now = new Date()
+  const cur = now.getHours() * 60 + now.getMinutes()
+  return shifts.some(s => {
+    const [oh, om] = s.open.split(':').map(Number)
+    const [ch, cm] = s.close.split(':').map(Number)
+    const o = oh * 60 + om
+    const c = ch * 60 + cm
+    return c < o ? (cur >= o || cur <= c) : (cur >= o && cur <= c)
+  })
+}
+
+const DISPLAY_DAYS = [
+  { key: 'monday',    label: 'Monday'    },
+  { key: 'tuesday',   label: 'Tuesday'   },
+  { key: 'wednesday', label: 'Wednesday' },
+  { key: 'thursday',  label: 'Thursday'  },
+  { key: 'friday',    label: 'Friday'    },
+  { key: 'saturday',  label: 'Saturday'  },
+  { key: 'sunday',    label: 'Sunday'    },
+]
+
 function InfoSection({
-  openingHours, phone, address, wifiName, wifiPassword, reservationUrl, clientId, tableNumber, t,
+  openingHours, openingHoursStructured, phone, address, wifiName, wifiPassword, reservationUrl, clientId, tableNumber, t,
 }: {
-  openingHours:   string | null
-  phone:          string | null
-  address:        string | null
-  wifiName:       string | null
-  wifiPassword:   string | null
-  reservationUrl: string | null
-  clientId:       string
-  tableNumber:    number | null
-  t:              (s: string) => string
+  openingHours:           string | null
+  openingHoursStructured: import('@/actions/page-editor').StructuredHours | null
+  phone:                  string | null
+  address:                string | null
+  wifiName:               string | null
+  wifiPassword:           string | null
+  reservationUrl:         string | null
+  clientId:               string
+  tableNumber:            number | null
+  t:                      (s: string) => string
 }) {
-  if (!openingHours && !phone && !address && !wifiName && !wifiPassword && !reservationUrl) return null
+  const hasAnyHours = !!(openingHoursStructured || openingHours)
+  if (!hasAnyHours && !phone && !address && !wifiName && !wifiPassword && !reservationUrl) return null
+
+  // Derive today's schedule
+  const DAY_KEYS_ORDER = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'] as const
+  const todayKey = DAY_KEYS_ORDER[new Date().getDay()]
+  const todaySchedule  = openingHoursStructured?.[todayKey] ?? null
+  const isTodayClosed  = todaySchedule === 'closed'
+  const todayShifts    = Array.isArray(todaySchedule) ? todaySchedule : []
+  const isOpenNow      = !isTodayClosed && todayShifts.length > 0 && isWithinShifts(todayShifts)
+  const todayHoursText = isTodayClosed
+    ? t('Closed')
+    : todayShifts.map(s => `${s.open}–${s.close}`).join(' & ')
 
   const labelCls: React.CSSProperties = {
     fontSize: 10,
@@ -626,19 +662,102 @@ function InfoSection({
         <h2 className="font-display font-bold text-white" style={{ fontSize: 20 }}>{t('Info')}</h2>
       </div>
 
-      {/* TODAY — opening hours */}
-      {openingHours && (
+      {/* STRUCTURED HOURS — today card + 7-day list */}
+      {openingHoursStructured && (
+        <div style={cardStyle}>
+          {/* Today header row */}
+          <div className="flex items-center justify-between mb-1">
+            <span style={labelCls}>{t('Today')}</span>
+            {isOpenNow ? (
+              <span
+                className="font-sans font-bold rounded-full"
+                style={{
+                  fontSize: 10, padding: '2px 8px',
+                  color: '#4ade80', background: 'rgba(74,222,128,0.12)', border: '1px solid rgba(74,222,128,0.25)',
+                }}
+              >
+                ● {t('Open')}
+              </span>
+            ) : (
+              <span
+                className="font-sans font-bold rounded-full"
+                style={{
+                  fontSize: 10, padding: '2px 8px',
+                  color: '#f87171', background: 'rgba(248,113,113,0.12)', border: '1px solid rgba(248,113,113,0.25)',
+                }}
+              >
+                {t('Closed')}
+              </span>
+            )}
+          </div>
+
+          {/* Today's hours */}
+          <p
+            className="font-sans font-semibold"
+            style={{ fontSize: 14, color: isTodayClosed ? 'rgba(255,255,255,0.25)' : '#F0F2F8', marginBottom: 12 }}
+          >
+            {todayHoursText}
+          </p>
+
+          {/* Divider */}
+          <div style={{ height: 1, background: 'rgba(255,255,255,0.05)', margin: '0 0 10px' }} />
+
+          {/* All 7 days */}
+          <div className="space-y-2">
+            {DISPLAY_DAYS.map(({ key, label }) => {
+              const sched    = openingHoursStructured[key as keyof typeof openingHoursStructured]
+              const isToday  = key === todayKey
+              const isClosed = sched === 'closed'
+              const shifts   = Array.isArray(sched) ? sched : []
+              const text     = isClosed
+                ? t('Closed')
+                : shifts.map(s => `${s.open}–${s.close}`).join(' & ')
+
+              return (
+                <div key={key} className="flex items-center justify-between">
+                  <span
+                    className="font-sans"
+                    style={{
+                      fontSize: 12,
+                      fontWeight: isToday ? 700 : 400,
+                      color: isToday ? '#4ade80' : 'rgba(255,255,255,0.45)',
+                      minWidth: 90,
+                    }}
+                  >
+                    {label}
+                  </span>
+                  <span
+                    className="font-sans"
+                    style={{
+                      fontSize: 12,
+                      fontWeight: isToday ? 600 : 400,
+                      color: isClosed
+                        ? 'rgba(255,255,255,0.20)'
+                        : isToday
+                        ? '#4ade80'
+                        : 'rgba(255,255,255,0.60)',
+                      textAlign: 'right',
+                    }}
+                  >
+                    {text}
+                  </span>
+                </div>
+              )
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* FALLBACK — plain text opening hours */}
+      {!openingHoursStructured && openingHours && (
         <div style={cardStyle}>
           <div className="flex items-center justify-between mb-1">
             <span style={labelCls}>{t('Today')}</span>
             <span
               className="font-sans font-bold rounded-full"
               style={{
-                fontSize: 10,
-                padding: '2px 8px',
-                color: '#4ade80',
-                background: 'rgba(74,222,128,0.12)',
-                border: '1px solid rgba(74,222,128,0.25)',
+                fontSize: 10, padding: '2px 8px',
+                color: '#4ade80', background: 'rgba(74,222,128,0.12)', border: '1px solid rgba(74,222,128,0.25)',
               }}
             >
               ● {t('Open')}
@@ -1178,6 +1297,7 @@ interface Props {
   loyaltyStampsRequired?: number | null
   loyaltyReward?: string | null
   loyaltyTitle?: string | null
+  openingHoursStructured?: import('@/actions/page-editor').StructuredHours | null
 }
 
 export function LandingClient({
@@ -1190,6 +1310,7 @@ export function LandingClient({
   restaurantType, city, rating, reviewCount, todaysSpecials,
   tripAdvisorUrl, websiteUrl, reservationUrl, isPro,
   loyaltyEnabled, loyaltyStampsRequired, loyaltyReward, loyaltyTitle,
+  openingHoursStructured,
 }: Props) {
   const [lang, setLang] = useState('EN')
   const [langOpen, setLangOpen] = useState(false)
@@ -1602,6 +1723,7 @@ export function LandingClient({
         {/* ── Info ─────────────────────────────────────────────────────────── */}
         <InfoSection
           openingHours={openingHours}
+          openingHoursStructured={openingHoursStructured ?? null}
           phone={phone}
           address={address}
           wifiName={wifiName}

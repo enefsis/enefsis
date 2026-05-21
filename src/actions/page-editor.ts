@@ -36,6 +36,18 @@ export type MenuSectionData = {
   items: MenuItemData[]
 }
 
+export type DayHours = { open: string; close: string }
+export type DaySchedule = DayHours[] | 'closed'
+export type StructuredHours = {
+  monday:    DaySchedule
+  tuesday:   DaySchedule
+  wednesday: DaySchedule
+  thursday:  DaySchedule
+  friday:    DaySchedule
+  saturday:  DaySchedule
+  sunday:    DaySchedule
+}
+
 export type PageData = {
   restaurant_name: string
   tagline: string
@@ -68,6 +80,7 @@ export type PageData = {
   loyalty_reward: string
   loyalty_title: string
   google_place_id?: string
+  opening_hours_structured?: StructuredHours | null
 }
 
 export async function savePage(data: PageData): Promise<{ slug?: string; error?: string }> {
@@ -112,9 +125,13 @@ export async function savePage(data: PageData): Promise<{ slug?: string; error?:
     updated_at:               new Date().toISOString(),
   }
 
-  // google_place_id is not yet in generated DB types — cast via any
+  // google_place_id and opening_hours_structured are not yet in generated DB types — cast via any
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const payloadWithPlaceId: any = { ...payload, google_place_id: data.google_place_id || null }
+  const payloadWithPlaceId: any = {
+    ...payload,
+    google_place_id:           data.google_place_id || null,
+    opening_hours_structured:  data.opening_hours_structured ?? null,
+  }
 
   console.log('[savePage] user_id:', user.id)
   console.log('[savePage] payload URLs:', {
