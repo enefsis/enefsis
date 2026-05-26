@@ -18,6 +18,7 @@ type LocalItem = MenuItemData & { photoPreview: string | null }
 type LocalSection = {
   id: string
   name: string
+  emoji?: string
   items: LocalItem[]
   expanded: boolean
 }
