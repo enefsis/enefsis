@@ -668,7 +668,7 @@ function InfoSection({
           {/* Today header row */}
           <div className="flex items-center justify-between mb-1">
             <span style={labelCls}>{t('Today')}</span>
-            {isOpenNow ? (
+            {todayShifts.length > 0 && isOpenNow ? (
               <span
                 className="font-sans font-bold rounded-full"
                 style={{
@@ -691,13 +691,15 @@ function InfoSection({
             )}
           </div>
 
-          {/* Today's hours */}
-          <p
-            className="font-sans font-semibold"
-            style={{ fontSize: 14, color: isTodayClosed ? 'rgba(255,255,255,0.25)' : '#F0F2F8', marginBottom: 12 }}
-          >
-            {todayHoursText}
-          </p>
+          {/* Today's hours — only shown when shifts are actually set for today */}
+          {todayShifts.length > 0 && (
+            <p
+              className="font-sans font-semibold"
+              style={{ fontSize: 14, color: '#F0F2F8', marginBottom: 12 }}
+            >
+              {todayHoursText}
+            </p>
+          )}
 
           {/* Divider */}
           <div style={{ height: 1, background: 'rgba(255,255,255,0.05)', margin: '0 0 10px' }} />
@@ -748,21 +750,10 @@ function InfoSection({
         </div>
       )}
 
-      {/* FALLBACK — plain text opening hours */}
+      {/* FALLBACK — plain text opening hours (no badge: structured data absent) */}
       {!openingHoursStructured && openingHours && (
         <div style={cardStyle}>
-          <div className="flex items-center justify-between mb-1">
-            <span style={labelCls}>{t('Today')}</span>
-            <span
-              className="font-sans font-bold rounded-full"
-              style={{
-                fontSize: 10, padding: '2px 8px',
-                color: '#4ade80', background: 'rgba(74,222,128,0.12)', border: '1px solid rgba(74,222,128,0.25)',
-              }}
-            >
-              ● {t('Open')}
-            </span>
-          </div>
+          <p style={labelCls}>{t('Today')}</p>
           <p className="font-sans" style={{ fontSize: 13, color: '#F0F2F8' }}>{t(openingHours)}</p>
         </div>
       )}
