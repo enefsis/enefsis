@@ -17,8 +17,7 @@ function footerHtml(): string {
 }
 
 function logoHtml(): string {
-  return `<span style="font-size:22px;font-weight:800;color:#2B5CE6;letter-spacing:0.08em;text-transform:uppercase;">Enefsis</span>
-              <span style="font-size:11px;font-weight:500;color:rgba(255,255,255,0.30);margin-left:10px;vertical-align:middle;letter-spacing:0.04em;">NFC Smart Hub</span>`
+  return `<img src="https://app.enefsis.com/enefsis-email-logo.png" alt="Enefsis" width="160" style="display:block;margin:0 auto 8px auto;">`
 }
 
 function welcomeEmailHtml({
@@ -47,7 +46,7 @@ function welcomeEmailHtml({
 
           <!-- Header: logo -->
           <tr>
-            <td style="padding-bottom:36px;">
+            <td style="padding-bottom:36px;text-align:center;">
               ${logoHtml()}
             </td>
           </tr>
@@ -176,7 +175,7 @@ function standOrderEmailHtml({
         <table width="560" cellpadding="0" cellspacing="0" style="max-width:560px;width:100%;">
 
           <tr>
-            <td style="padding-bottom:28px;">
+            <td style="padding-bottom:28px;text-align:center;">
               ${logoHtml()}
             </td>
           </tr>
