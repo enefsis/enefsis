@@ -1727,7 +1727,7 @@ export function LandingClient({
         />
 
         {/* ── Call Waiter ──────────────────────────────────────────────────── */}
-        {callWaiterEnabled && (
+        {callWaiterEnabled && isPro && (
           <div className="px-4 pt-4">
             <CallWaiterButton
               clientId={clientId}

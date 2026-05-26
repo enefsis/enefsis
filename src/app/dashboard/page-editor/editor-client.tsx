@@ -882,7 +882,7 @@ export function PageEditorClient({
               <div>
                 <div className="flex items-center gap-2">
                   <p className="text-xs font-medium text-white/50">Call Waiter Button</p>
-                  {isPro === false && (
+                  {isPro !== true && (
                     <span
                       className="font-sans text-[9px] font-bold px-1.5 py-0.5 rounded"
                       style={{ background: 'rgba(43,92,230,0.15)', color: '#2B5CE6', letterSpacing: '0.05em' }}

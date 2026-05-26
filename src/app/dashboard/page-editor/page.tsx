@@ -12,11 +12,18 @@ export default async function PageEditorPage() {
   const admin = createAdminClient()
 
   // Fetch by user_id; order so the most-recent (with slug) row wins if duplicates exist
-  const { data: rows } = await admin
-    .from('client_pages')
-    .select('*')
-    .eq('user_id', user.id)
-    .order('created_at', { ascending: false })
+  const [{ data: rows }, { data: sub }] = await Promise.all([
+    admin
+      .from('client_pages')
+      .select('*')
+      .eq('user_id', user.id)
+      .order('created_at', { ascending: false }),
+    admin
+      .from('subscriptions')
+      .select('plan')
+      .eq('user_id', user.id)
+      .maybeSingle(),
+  ])
 
   const raw = rows?.[0] ?? null
 
@@ -71,5 +78,6 @@ export default async function PageEditorPage() {
       }
     : null
 
-  return <PageEditorClient initial={initial} slug={raw?.slug ?? null} />
+  const isPro = !!((sub as { plan?: string | null } | null)?.plan?.includes('pro'))
+  return <PageEditorClient initial={initial} slug={raw?.slug ?? null} isPro={isPro} />
 }
