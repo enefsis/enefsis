@@ -84,6 +84,12 @@ const selectCls = 'flex-1 rounded bg-[#0D0F14] border border-white/10 text-xs te
 const selectStyle: React.CSSProperties = { background: '#0D0F14', color: 'white' }
 const optionStyle: React.CSSProperties = { background: '#1a1d24', color: 'white' }
 
+const ALL_KEYS      = WEEK_DAYS.map(d => d.key)
+const WEEKDAY_KEYS  = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday']
+const WEEKEND_KEYS  = ['saturday', 'sunday']
+
+const applyBtnCls = 'text-[9px] font-medium px-1.5 py-0.5 rounded border border-[#2B5CE6]/40 text-[#6B90F5] hover:bg-[#2B5CE6]/10 transition-colors whitespace-nowrap shrink-0'
+
 function StructuredHoursEditor({
   value,
   onChange,
@@ -93,6 +99,17 @@ function StructuredHoursEditor({
 }) {
   function updateDay(key: string, schedule: DaySchedule) {
     onChange({ ...value, [key]: schedule })
+  }
+
+  function applyToKeys(sourceKey: string, targetKeys: readonly string[]) {
+    const source = value[sourceKey as keyof StructuredHours]
+    if (!Array.isArray(source) || source.length === 0) return
+    const next = { ...value } as Record<string, DaySchedule>
+    for (const k of targetKeys) {
+      if (k === sourceKey) continue
+      if (next[k] !== 'closed') next[k] = source.map(s => ({ ...s }))
+    }
+    onChange(next as StructuredHours)
   }
 
   return (
@@ -105,15 +122,27 @@ function StructuredHoursEditor({
         return (
           <div key={key} className="rounded-lg bg-white/[0.03] border border-white/[0.06] p-2.5">
             {/* Day row header */}
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-xs font-semibold text-white/70 w-24">{label}</span>
+            <div className="flex items-center gap-1.5 mb-2">
+              <span className="text-xs font-semibold text-white/70 w-20 shrink-0">{label}</span>
+
+              {/* Apply buttons — only shown when this day is Open */}
+              {!isClosed && (
+                <div className="flex items-center gap-1 flex-1 min-w-0">
+                  <button type="button" onClick={() => applyToKeys(key, ALL_KEYS)}     className={applyBtnCls}>Apply to all</button>
+                  <button type="button" onClick={() => applyToKeys(key, WEEKDAY_KEYS)} className={applyBtnCls}>Weekdays</button>
+                  <button type="button" onClick={() => applyToKeys(key, WEEKEND_KEYS)} className={applyBtnCls}>Weekend</button>
+                </div>
+              )}
+              {isClosed && <div className="flex-1" />}
+
+              {/* Open / Closed toggle */}
               <button
                 type="button"
                 onClick={() =>
                   updateDay(key, isClosed ? [{ open: '09:00', close: '22:00' }] : 'closed')
                 }
                 className={cn(
-                  'text-[10px] font-semibold px-2.5 py-0.5 rounded-full border transition-colors',
+                  'text-[10px] font-semibold px-2.5 py-0.5 rounded-full border transition-colors shrink-0',
                   isClosed
                     ? 'text-red-400 bg-red-400/10 border-red-400/25'
                     : 'text-emerald-400 bg-emerald-400/10 border-emerald-400/25',
