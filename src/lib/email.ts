@@ -2,6 +2,25 @@ import { Resend } from 'resend'
 
 const resend = new Resend(process.env.RESEND_API_KEY)
 
+const FOOTER_ADDRESS = `Multimedia Agentur, Georgios Niokos\nSchnirchgasse 2/17, 1030 Wien, Austria`
+const FOOTER_UNSUBSCRIBE = `You received this email because you signed up for Enefsis.`
+
+function footerHtml(): string {
+  return `<p style="margin:0;font-size:12px;color:rgba(255,255,255,0.22);line-height:1.8;">
+                Enefsis NFC Smart Hub &middot;
+                <a href="mailto:support@enefsis.com"
+                  style="color:rgba(255,255,255,0.35);text-decoration:none;">support@enefsis.com</a><br>
+                Multimedia Agentur, Georgios Niokos<br>
+                Schnirchgasse 2/17, 1030 Wien, Austria<br>
+                <span style="font-size:11px;color:rgba(255,255,255,0.18);">${FOOTER_UNSUBSCRIBE}</span>
+              </p>`
+}
+
+function logoHtml(): string {
+  return `<span style="font-size:22px;font-weight:800;color:#2B5CE6;letter-spacing:0.08em;text-transform:uppercase;">Enefsis</span>
+              <span style="font-size:11px;font-weight:500;color:rgba(255,255,255,0.30);margin-left:10px;vertical-align:middle;letter-spacing:0.04em;">NFC Smart Hub</span>`
+}
+
 function welcomeEmailHtml({
   name,
   email,
@@ -18,7 +37,7 @@ function welcomeEmailHtml({
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Your Enefsis invoice</title>
+  <title>Your Enefsis account is ready</title>
 </head>
 <body style="margin:0;padding:0;background:#0D0F14;font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;">
   <table width="100%" cellpadding="0" cellspacing="0" style="background:#0D0F14;min-height:100vh;">
@@ -29,8 +48,7 @@ function welcomeEmailHtml({
           <!-- Header: logo -->
           <tr>
             <td style="padding-bottom:36px;">
-              <span style="font-size:22px;font-weight:800;color:#2B5CE6;letter-spacing:0.08em;text-transform:uppercase;">ENEFSIS</span>
-              <span style="font-size:11px;font-weight:500;color:rgba(255,255,255,0.30);margin-left:10px;vertical-align:middle;letter-spacing:0.04em;">NFC Smart Hub</span>
+              ${logoHtml()}
             </td>
           </tr>
 
@@ -42,7 +60,7 @@ function welcomeEmailHtml({
                 Welcome, ${name}!
               </h1>
               <p style="margin:0 0 32px;font-size:14px;color:rgba(255,255,255,0.42);line-height:1.65;">
-                Your Enefsis account has been created. Use the credentials below to sign in&nbsp;— you can change your password from the dashboard at any time.
+                Your Enefsis account has been created. Use the credentials below to sign in&nbsp;&mdash; you can change your password from the dashboard at any time.
               </p>
 
               <!-- Credentials box -->
@@ -84,7 +102,7 @@ function welcomeEmailHtml({
                        padding:15px 24px;border-radius:12px;
                        letter-spacing:0.02em;
                        box-shadow:0 6px 24px rgba(43,101,240,0.30);">
-                Sign In to Your Dashboard →
+                Sign in to your dashboard &rarr;
               </a>
 
             </td>
@@ -93,11 +111,7 @@ function welcomeEmailHtml({
           <!-- Footer -->
           <tr>
             <td style="padding-top:28px;text-align:center;">
-              <p style="margin:0;font-size:12px;color:rgba(255,255,255,0.22);line-height:1.6;">
-                Enefsis NFC Smart Hub &middot;
-                <a href="mailto:support@enefsis.com"
-                  style="color:rgba(255,255,255,0.35);text-decoration:none;">support@enefsis.com</a>
-              </p>
+              ${footerHtml()}
             </td>
           </tr>
 
@@ -107,6 +121,36 @@ function welcomeEmailHtml({
   </table>
 </body>
 </html>`
+}
+
+function welcomeEmailText({
+  name,
+  email,
+  loginUrl,
+  tempPassword,
+}: {
+  name: string
+  email: string
+  loginUrl: string
+  tempPassword: string
+}): string {
+  return `Welcome to Enefsis, ${name}!
+
+Your account has been created. Use the credentials below to sign in. You can change your password from the dashboard at any time.
+
+Login Credentials
+-----------------
+Email:              ${email}
+Temporary password: ${tempPassword}
+
+Sign in at: ${loginUrl}
+
+---
+Enefsis NFC Smart Hub
+${FOOTER_ADDRESS}
+support@enefsis.com
+
+${FOOTER_UNSUBSCRIBE}`
 }
 
 function standOrderEmailHtml({
@@ -133,8 +177,7 @@ function standOrderEmailHtml({
 
           <tr>
             <td style="padding-bottom:28px;">
-              <span style="font-size:22px;font-weight:800;color:#2B5CE6;letter-spacing:0.08em;text-transform:uppercase;">ENEFSIS</span>
-              <span style="font-size:11px;font-weight:500;color:rgba(255,255,255,0.30);margin-left:10px;vertical-align:middle;letter-spacing:0.04em;">NFC Smart Hub</span>
+              ${logoHtml()}
             </td>
           </tr>
 
@@ -182,7 +225,7 @@ function standOrderEmailHtml({
                         <span style="font-size:12px;color:rgba(255,255,255,0.32);">Setup Fee</span>
                       </td>
                       <td style="padding:8px 0;text-align:right;border-bottom:1px solid rgba(255,255,255,0.05);">
-                        <span style="font-size:14px;font-weight:700;color:#4ade80;">€${amount}</span>
+                        <span style="font-size:14px;font-weight:700;color:#4ade80;">&euro;${amount}</span>
                       </td>
                     </tr>
                     <tr>
@@ -206,11 +249,7 @@ function standOrderEmailHtml({
 
           <tr>
             <td style="padding-top:24px;text-align:center;">
-              <p style="margin:0;font-size:12px;color:rgba(255,255,255,0.22);">
-                Enefsis NFC Smart Hub &middot;
-                <a href="mailto:support@enefsis.com"
-                  style="color:rgba(255,255,255,0.35);text-decoration:none;">support@enefsis.com</a>
-              </p>
+              ${footerHtml()}
             </td>
           </tr>
 
@@ -220,6 +259,37 @@ function standOrderEmailHtml({
   </table>
 </body>
 </html>`
+}
+
+function standOrderEmailText({
+  clientName, clientEmail, quantity, amount, date,
+}: {
+  clientName:  string
+  clientEmail: string
+  quantity:    number
+  amount:      number
+  date:        string
+}): string {
+  return `New Stand Order
+
+Stand Order from ${clientName}
+
+Order Details
+--------------
+Client:    ${clientName}
+Email:     ${clientEmail}
+Quantity:  ${quantity} stand${quantity !== 1 ? 's' : ''}
+Setup Fee: €${amount}
+Date:      ${date}
+
+Log in to the admin panel to review and process this order.
+
+---
+Enefsis NFC Smart Hub
+${FOOTER_ADDRESS}
+support@enefsis.com
+
+${FOOTER_UNSUBSCRIBE}`
 }
 
 export async function sendStandOrderEmail({
@@ -232,10 +302,12 @@ export async function sendStandOrderEmail({
   date:        string
 }): Promise<void> {
   const { error } = await resend.emails.send({
-    from:    'Enefsis <noreply@enefsis.com>',
+    from:    'Enefsis <support@enefsis.com>',
+    replyTo: 'support@enefsis.com',
     to:      'support@enefsis.com',
     subject: `New Stand Order from ${clientName}`,
     html:    standOrderEmailHtml({ clientName, clientEmail, quantity, amount, date }),
+    text:    standOrderEmailText({ clientName, clientEmail, quantity, amount, date }),
   })
   if (error) {
     console.error('[sendStandOrderEmail] Resend error:', error)
@@ -254,10 +326,12 @@ export async function sendWelcomeEmail({
   tempPassword: string
 }): Promise<void> {
   const { error } = await resend.emails.send({
-    from:    'Enefsis <noreply@enefsis.com>',
+    from:    'Enefsis <support@enefsis.com>',
+    replyTo: 'support@enefsis.com',
     to:      email,
-    subject: 'Your Enefsis invoice',
+    subject: 'Your Enefsis account is ready',
     html:    welcomeEmailHtml({ name, email, loginUrl, tempPassword }),
+    text:    welcomeEmailText({ name, email, loginUrl, tempPassword }),
   })
   if (error) {
     console.error('[sendWelcomeEmail] Resend error:', error)
