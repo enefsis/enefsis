@@ -55,6 +55,7 @@ const UI_KEYS = [
   'Info',
   'Today',
   'Open',
+  'Phone',
   'Reservations',
   'Reserve a Table',
   'Address',
@@ -758,10 +759,10 @@ function InfoSection({
         </div>
       )}
 
-      {/* RESERVATIONS — phone */}
+      {/* PHONE NUMBER */}
       {phone && (
         <div style={cardStyle}>
-          <p style={labelCls}>{t('Reservations')}</p>
+          <p style={labelCls}>{t('Phone')}</p>
           <a
             href={`tel:${phone.replace(/\s/g, '')}`}
             className="font-sans font-semibold"
