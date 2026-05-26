@@ -463,6 +463,7 @@ export function PageEditorClient({
 
   async function doSave(overrideSections?: LocalSection[]) {
     const sectionsToSave = overrideSections ?? sections
+    console.log('[doSave] opening_hours_structured state at save time:', JSON.stringify(openingHoursStructured, null, 2))
     const data: PageData = {
       restaurant_name:     restaurantName,
       tagline,
@@ -495,8 +496,9 @@ export function PageEditorClient({
       loyalty_reward:           loyaltyReward,
       loyalty_title:            loyaltyTitle,
       google_place_id:          googlePlaceId,
-      menu_sections: sectionsToSave.map(({ id, name, items }) => ({
+      menu_sections: sectionsToSave.map(({ id, name, emoji, items }) => ({
         id, name,
+        ...(emoji ? { emoji } : {}),
         items: items.map(({ id, name, price, description, photo_url, available, allergens, is_popular, badge }) => ({
           id, name, price, description, photo_url, available: available !== false, allergens,
           ...(is_popular ? { is_popular } : {}),

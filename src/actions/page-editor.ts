@@ -134,6 +134,7 @@ export async function savePage(data: PageData): Promise<{ slug?: string; error?:
   }
 
   console.log('[savePage] user_id:', user.id)
+  console.log('[savePage] opening_hours_structured being written to DB:', JSON.stringify(payloadWithPlaceId.opening_hours_structured, null, 2))
   console.log('[savePage] payload URLs:', {
     google_review_url: payload.google_review_url,
     instagram_url:     payload.instagram_url,

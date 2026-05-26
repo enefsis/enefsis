@@ -65,9 +65,13 @@ export async function savePageForClient(
     updated_at:               new Date().toISOString(),
   }
 
-  // google_place_id is not yet in generated DB types — cast via any
+  // google_place_id and opening_hours_structured are not yet in generated DB types — cast via any
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const payloadWithPlaceId: any = { ...payload, google_place_id: data.google_place_id || null }
+  const payloadWithPlaceId: any = {
+    ...payload,
+    google_place_id:          data.google_place_id          || null,
+    opening_hours_structured: data.opening_hours_structured ?? null,
+  }
 
   const { data: updatedRows, error } = await admin
     .from('client_pages')

@@ -31,6 +31,8 @@ export default async function PageEditorPage() {
     whatsapp_number:   raw?.whatsapp_number,
     menu_sections_len: Array.isArray(raw?.menu_sections) ? (raw.menu_sections as unknown[]).length : 0,
   }, null, 2))
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  console.log('[PageEditor] opening_hours_structured loaded from DB:', JSON.stringify((raw as any)?.opening_hours_structured, null, 2))
 
   const initial: PageData | null = raw
     ? {
