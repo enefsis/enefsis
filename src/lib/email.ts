@@ -17,7 +17,7 @@ function footerHtml(): string {
 }
 
 function logoHtml(): string {
-  return `<img src="https://app.enefsis.com/enefsis-email-logo.png" alt="Enefsis" width="160" style="display:block;margin:0 auto 8px auto;">`
+  return `<img src="https://app.enefsis.com/enefsis-email-logo-v2.png" alt="Enefsis" width="160" style="display:block;margin:0 auto 8px auto;">`
 }
 
 function welcomeEmailHtml({
