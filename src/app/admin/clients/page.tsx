@@ -73,6 +73,8 @@ export default async function AdminClientsPage() {
   }
   function fmtPlanLabel(plan: string | null): string {
     if (!plan) return ''
+    if (plan === 'basic') return 'Basic Monthly'
+    if (plan === 'pro')   return 'Pro Monthly'
     return plan.split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')
   }
 

@@ -47,9 +47,10 @@ export function SubscriptionCard({ data }: { data: SubscriptionData | null }) {
   const isActive       = data.status?.toLowerCase() === 'active'
   const isSuspended    = data.status?.toLowerCase() === 'suspended'
   const isManual       = data.payment_method === 'cash' || data.payment_method === 'bank_transfer'
-  const planLabel      = data.plan
-    ? data.plan.split('_').map((w: string) => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')
-    : '—'
+  const planLabel      = !data.plan ? '—'
+    : data.plan === 'basic' ? 'Basic Monthly'
+    : data.plan === 'pro'   ? 'Pro Monthly'
+    : data.plan.split('_').map((w: string) => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')
   const amountLabel    = data.custom_amount != null
     ? `€${data.custom_amount}`
     : data.plan && PLAN_AMOUNTS[data.plan]

@@ -23,7 +23,9 @@ function initials(name: string | null, email: string) {
   return (name ?? email).charAt(0).toUpperCase()
 }
 
-function fmtPlan(plan: string) {
+function fmtPlan(plan: string): string {
+  if (plan === 'basic') return 'Basic Monthly'
+  if (plan === 'pro')   return 'Pro Monthly'
   return plan.split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')
 }
 
