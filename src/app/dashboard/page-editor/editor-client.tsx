@@ -80,7 +80,9 @@ function makeDefaultStructuredHours(): StructuredHours {
   }
 }
 
-const selectCls = 'flex-1 rounded bg-white/[0.05] border border-white/[0.08] text-xs text-white px-2 py-1.5 focus:outline-none focus:border-[#2B5CE6]/50 transition-colors'
+const selectCls = 'flex-1 rounded bg-[#0D0F14] border border-white/10 text-xs text-white px-2 py-1.5 focus:outline-none focus:border-[#2B5CE6]/50 transition-colors'
+const selectStyle: React.CSSProperties = { background: '#0D0F14', color: 'white' }
+const optionStyle: React.CSSProperties = { background: '#1a1d24', color: 'white' }
 
 function StructuredHoursEditor({
   value,
@@ -134,8 +136,9 @@ function StructuredHoursEditor({
                         updateDay(key, next)
                       }}
                       className={selectCls}
+                      style={selectStyle}
                     >
-                      {TIME_SLOTS.map(t => <option key={t} value={t}>{t}</option>)}
+                      {TIME_SLOTS.map(t => <option key={t} value={t} style={optionStyle}>{t}</option>)}
                     </select>
                     <span className="text-white/30 text-xs shrink-0">–</span>
                     <select
@@ -146,8 +149,9 @@ function StructuredHoursEditor({
                         updateDay(key, next)
                       }}
                       className={selectCls}
+                      style={selectStyle}
                     >
-                      {TIME_SLOTS.map(t => <option key={t} value={t}>{t}</option>)}
+                      {TIME_SLOTS.map(t => <option key={t} value={t} style={optionStyle}>{t}</option>)}
                     </select>
                     {shifts.length > 1 && (
                       <button
