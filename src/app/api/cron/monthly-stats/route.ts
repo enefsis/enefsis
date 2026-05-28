@@ -41,13 +41,13 @@ export async function GET(request: Request) {
         .gte('created_at', sinceIso)
 
       // 2b. Unique taps (distinct visitor_id)
-      const { data: uniqueRows } = await supabase
+      const { data: uniqueRows } = await (supabase as any)
         .from('tap_events')
         .select('visitor_id')
         .eq('user_id', clientId)
         .gte('created_at', sinceIso)
 
-      const uniqueTaps = new Set((uniqueRows ?? []).map((r) => r.visitor_id)).size
+      const uniqueTaps = new Set((uniqueRows ?? []).map((r: any) => r.visitor_id)).size
 
       // 2c. Top 3 menu items
       const { data: itemRows } = await supabase
