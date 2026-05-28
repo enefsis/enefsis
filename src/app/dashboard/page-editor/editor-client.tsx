@@ -934,19 +934,7 @@ export function PageEditorClient({
 
           {/* Menu */}
           <SectionPanel title="Menu Sections">
-            {/* AI feature flag banner */}
-            {isPro === false && (
-              <div className="flex items-center gap-2 px-3 py-2 rounded-lg mb-1" style={{ background: 'rgba(43,92,230,0.08)', border: '1px solid rgba(43,92,230,0.15)' }}>
-                <span className="text-xs">✨</span>
-                <span className="font-sans text-xs text-white/50 flex-1">AI Descriptions — Pro Feature</span>
-                <span
-                  className="font-sans text-[10px] text-white/35 cursor-default"
-                  title="Upgrade to Pro to unlock AI-generated menu descriptions"
-                >
-                  Upgrade to Pro to unlock ℹ
-                </span>
-              </div>
-            )}
+
             <div className="space-y-2.5">
               {sections.map((section, si) => (
                 <MenuSectionEditor
@@ -1204,33 +1192,9 @@ interface MenuItemEditorProps {
 
 function MenuItemEditor({ item, isFirst, isLast, sectionName, onRemove, onUpdate, onMoveUp, onMoveDown, onPhotoSelect, isPro, clientId }: MenuItemEditorProps) {
   const inputRef       = useRef<HTMLInputElement>(null)
-  const [aiLoading, setAiLoading] = useState(false)
   const preview  = item.photoPreview ?? item.photo_url
   const available = item.available !== false
   const reorderBtnCls = 'text-white/15 hover:text-white/50 transition-colors disabled:opacity-20 disabled:cursor-not-allowed'
-
-  const handleAiGenerate = useCallback(async () => {
-    if (!isPro || aiLoading) return
-    setAiLoading(true)
-    try {
-      const res  = await fetch('/api/admin/ai-description', {
-        method:  'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body:    JSON.stringify({
-          clientId,
-          itemName:            item.name,
-          category:            sectionName,
-          existingDescription: item.description,
-        }),
-      })
-      const data = await res.json() as { description?: string; error?: string }
-      if (data.description) onUpdate({ description: data.description })
-    } catch {
-      // silent — description field stays unchanged
-    } finally {
-      setAiLoading(false)
-    }
-  }, [isPro, aiLoading, clientId, item.name, item.description, sectionName, onUpdate])
 
   return (
     <div className={cn('rounded-lg border p-2.5 space-y-1.5', available ? 'bg-white/[0.03] border-white/[0.05]' : 'bg-white/[0.01] border-white/[0.03] opacity-60')}>
@@ -1290,21 +1254,7 @@ function MenuItemEditor({ item, isFirst, isLast, sectionName, onRemove, onUpdate
           placeholder="Description (optional)"
           className={cn(inputCls, 'py-1.5 text-xs flex-1')}
         />
-        {isPro && (
-          <button
-            type="button"
-            onClick={handleAiGenerate}
-            disabled={aiLoading || !item.name.trim()}
-            title="Generate description with AI"
-            className="shrink-0 flex items-center gap-1 px-2 py-1.5 rounded-lg text-[10px] font-semibold border transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-            style={{ background: 'rgba(139,92,246,0.10)', border: '1px solid rgba(139,92,246,0.25)', color: '#a78bfa' }}
-          >
-            {aiLoading
-              ? <svg className="animate-spin" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg>
-              : <span>✨</span>}
-            AI
-          </button>
-        )}
+
         <input
           type="text"
           value={item.allergens ?? ''}
