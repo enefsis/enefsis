@@ -62,6 +62,7 @@ export async function GET(request: Request) {
 
       const itemCounts: Record<string, number> = {}
       for (const { item_name } of itemRows ?? []) {
+        if (!item_name) continue
         itemCounts[item_name] = (itemCounts[item_name] ?? 0) + 1
       }
       const topItems = Object.entries(itemCounts)
