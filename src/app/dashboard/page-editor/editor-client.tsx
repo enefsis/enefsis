@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef, useTransition, useCallback } from 'react'
+import { useState, useRef, useTransition } from 'react'
 import {
   ChevronDown, ChevronRight, Plus, Minus, Trash2, Upload, Save, Loader2, ExternalLink,
   ArrowUp, ArrowDown,
@@ -1190,7 +1190,7 @@ interface MenuItemEditorProps {
   clientId?: string
 }
 
-function MenuItemEditor({ item, isFirst, isLast, sectionName, onRemove, onUpdate, onMoveUp, onMoveDown, onPhotoSelect, isPro, clientId }: MenuItemEditorProps) {
+function MenuItemEditor({ item, isFirst, isLast, onRemove, onUpdate, onMoveUp, onMoveDown, onPhotoSelect }: MenuItemEditorProps) {
   const inputRef       = useRef<HTMLInputElement>(null)
   const preview  = item.photoPreview ?? item.photo_url
   const available = item.available !== false
