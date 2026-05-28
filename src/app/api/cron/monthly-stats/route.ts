@@ -1,8 +1,11 @@
-import { NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { sendMonthlyStatsEmail } from '@/lib/email'
 
 export const dynamic = 'force-dynamic'
+
+interface TapEvent {
+  visitor_id?: string | null
+}
 
 export async function GET(request: Request) {
   const authHeader = request.headers.get('authorization')
@@ -47,7 +50,7 @@ export async function GET(request: Request) {
         .eq('user_id', clientId)
         .gte('created_at', sinceIso)
 
-      const uniqueTaps = new Set((uniqueRows ?? []).map((r: any) => r.visitor_id)).size
+      const uniqueTaps = new Set((uniqueRows as TapEvent[] ?? []).map((r) => r.visitor_id)).size
 
       // 2c. Top 3 menu items
       const { data: itemRows } = await supabase
