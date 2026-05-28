@@ -31,6 +31,7 @@ export async function GET(request: Request) {
   const results: { userId: string; status: string; error?: string }[] = []
 
   for (const { user_id: clientId } of subscriptions ?? []) {
+    if (!clientId) continue
     try {
       // 2a. Total taps
       const { count: totalTaps } = await supabase
