@@ -86,6 +86,7 @@ export async function GET(request: Request) {
 
       const buttonCounts: Record<string, number> = {}
       for (const { button_type } of clickRows ?? []) {
+        if (!button_type) continue
         buttonCounts[button_type] = (buttonCounts[button_type] ?? 0) + 1
       }
       const topButton = Object.entries(buttonCounts).sort((a, b) => b[1] - a[1])[0]?.[0] ?? '—'
