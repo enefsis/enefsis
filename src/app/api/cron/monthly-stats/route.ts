@@ -57,7 +57,7 @@ export async function GET(request: Request) {
       const { data: itemRows } = await supabase
         .from('menu_item_views')
         .select('item_name')
-        .eq('user_id', clientId)
+        .eq('client_id', clientId)
         .gte('created_at', sinceIso)
 
       const itemCounts: Record<string, number> = {}
