@@ -217,16 +217,16 @@ export default async function AnalyticsPage({
     change: i < weeks.length - 1 ? calcChange(w.count, weeks[i + 1].count) : null,
   }))
 
-  // ── Device breakdown ───────────────────────────────────────────────────────
-  const deviceMap: Record<string, number> = { Mobile: 0, Desktop: 0, Tablet: 0 }
+  // ── Device breakdown (iOS vs Android only) ────────────────────────────────
+  const deviceMap: Record<string, number> = { iOS: 0, Android: 0 }
   taps.forEach(t => {
-    const dt = (t.device_type ?? 'desktop').toLowerCase()
-    if (dt === 'tablet')       deviceMap['Tablet']++
-    else if (dt === 'mobile')  deviceMap['Mobile']++
-    else                       deviceMap['Desktop']++
+    const dt = t.device_type ?? ''
+    if (/iPhone|iPad|iOS/i.test(dt))  deviceMap['iOS']++
+    else if (/Android/i.test(dt))     deviceMap['Android']++
   })
-  const deviceTotal = Math.max(Object.values(deviceMap).reduce((s, v) => s + v, 0), 1)
-  const DEVICE_COLORS: Record<string, string> = { Mobile: '#2B5CE6', Desktop: '#38BEFF', Tablet: '#8A90A0' }
+  const deviceTotal = Math.max(deviceMap['iOS'] + deviceMap['Android'], 1)
+  const DEVICE_COLORS: Record<string, string> = { iOS: '#2B5CE6', Android: '#38BEFF' }
+  const DEVICE_LABELS: Record<string, string> = { iOS: '🍎 iOS', Android: '🤖 Android' }
 
   // ── Button clicks breakdown ────────────────────────────────────────────────
   const clickMap: Record<string, number> = {}
@@ -458,29 +458,33 @@ export default async function AnalyticsPage({
         {/* Device breakdown */}
         <div className="bg-[#141720] border border-white/[0.06] rounded-2xl p-5">
           <h2 className="font-display font-semibold text-white text-base">Device Breakdown</h2>
-          <p className="font-sans text-xs text-white/35 mt-0.5 mb-5">Visitors by device type</p>
-          <div className="space-y-5">
-            {Object.entries(deviceMap).map(([device, count]) => {
-              const pct = Math.round((count / deviceTotal) * 100)
-              return (
-                <div key={device}>
-                  <div className="flex items-center justify-between mb-1.5">
-                    <span className="font-sans text-sm text-white/70">{device}</span>
-                    <div className="flex items-center gap-2.5">
-                      <span className="font-sans text-xs text-white/35 tabular-nums">{count.toLocaleString()}</span>
-                      <span className="font-display font-semibold text-white text-sm tabular-nums w-9 text-right">{pct}%</span>
+          <p className="font-sans text-xs text-white/35 mt-0.5 mb-5">Mobile visitors by platform</p>
+          {deviceMap['iOS'] + deviceMap['Android'] === 0 ? (
+            <p className="font-sans text-sm text-white/25">No mobile data yet</p>
+          ) : (
+            <div className="space-y-5">
+              {Object.entries(deviceMap).filter(([, count]) => count > 0).map(([device, count]) => {
+                const pct = Math.round((count / deviceTotal) * 100)
+                return (
+                  <div key={device}>
+                    <div className="flex items-center justify-between mb-1.5">
+                      <span className="font-sans text-sm text-white/70">{DEVICE_LABELS[device]}</span>
+                      <div className="flex items-center gap-2.5">
+                        <span className="font-sans text-xs text-white/35 tabular-nums">{count.toLocaleString()}</span>
+                        <span className="font-display font-semibold text-white text-sm tabular-nums w-9 text-right">{pct}%</span>
+                      </div>
+                    </div>
+                    <div className="h-2 bg-white/[0.06] rounded-full overflow-hidden">
+                      <div
+                        className="h-full rounded-full"
+                        style={{ width: `${pct}%`, background: DEVICE_COLORS[device] }}
+                      />
                     </div>
                   </div>
-                  <div className="h-2 bg-white/[0.06] rounded-full overflow-hidden">
-                    <div
-                      className="h-full rounded-full"
-                      style={{ width: `${pct}%`, background: DEVICE_COLORS[device] ?? '#8A90A0' }}
-                    />
-                  </div>
-                </div>
-              )
-            })}
-          </div>
+                )
+              })}
+            </div>
+          )}
         </div>
 
       </div>
