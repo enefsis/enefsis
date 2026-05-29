@@ -200,32 +200,36 @@ function WhatsAppIcon({ size = 24 }: { size?: number }) {
 function trackButton(clientId: string, buttonType: string, tableNumber: number | null = null) {
   if (localStorage.getItem('enefsis_cookie_consent') !== 'accepted') return
   const visitorId = localStorage.getItem('enefsis_visitor_id')
-  fetch('/api/track', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      event_type:   'button_click',
-      button_type:  buttonType,
-      client_id:    clientId,
-      table_number: tableNumber,
-      visitor_id:   visitorId,
-    }),
-  }).catch(() => {})
+  setTimeout(() => {
+    fetch('/api/track', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        event_type:   'button_click',
+        button_type:  buttonType,
+        client_id:    clientId,
+        table_number: tableNumber,
+        visitor_id:   visitorId,
+      }),
+    }).catch(() => {})
+  }, 0)
 }
 
 function trackMenuView(standId: string | null, clientId: string, itemId: string, itemName: string, tableNumber: number | null = null) {
   if (localStorage.getItem('enefsis_cookie_consent') !== 'accepted') return
-  fetch('/api/menu-view', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      client_id:    clientId,
-      item_id:      itemId,
-      item_name:    itemName,
-      table_number: tableNumber,
-      ...(standId ? { stand_id: standId } : {}),
-    }),
-  }).catch(() => {})
+  setTimeout(() => {
+    fetch('/api/menu-view', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        client_id:    clientId,
+        item_id:      itemId,
+        item_name:    itemName,
+        table_number: tableNumber,
+        ...(standId ? { stand_id: standId } : {}),
+      }),
+    }).catch(() => {})
+  }, 0)
 }
 
 // ─── Follow Us section ───────────────────────────────────────────────────────
@@ -392,7 +396,7 @@ function MenuItemCard({ item, onView, onPhotoClick, t, unavailable = false }: Me
         style={hasPhoto && !unavailable ? { cursor: 'pointer' } : undefined}
       >
         {hasPhoto
-          ? <img src={item.photo_url!} alt={item.name} className="w-full h-full object-cover" />
+          ? <img src={item.photo_url!} alt={item.name} className="w-full h-full object-cover" loading="lazy" />
           : <svg width="20" height="20" viewBox="0 0 24 24" fill="none"
               stroke="rgba(255,255,255,0.25)" strokeWidth="1.5"
               strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -1392,19 +1396,21 @@ export function LandingClient({
     }
     const params = new URLSearchParams(window.location.search)
     const tableNum = params.get('table')
-    fetch('/api/track', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        event_type:   'page_view',
-        client_id:    clientId,
-        visitor_id:   visitorId,
-        table_number: tableNum ? parseInt(tableNum) : null,
-        language:     navigator.language,
-        device_type:  /iPhone|iPad|iPod|Android/i.test(navigator.userAgent)
-          ? 'mobile' : 'desktop',
-      }),
-    }).catch(() => {})
+    setTimeout(() => {
+      fetch('/api/track', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          event_type:   'page_view',
+          client_id:    clientId,
+          visitor_id:   visitorId,
+          table_number: tableNum ? parseInt(tableNum) : null,
+          language:     navigator.language,
+          device_type:  /iPhone|iPad|iPod|Android/i.test(navigator.userAgent)
+            ? 'mobile' : 'desktop',
+        }),
+      }).catch(() => {})
+    }, 0)
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [cookieConsent, clientId])
 
@@ -1473,17 +1479,19 @@ export function LandingClient({
   )
 
   useEffect(() => {
-    // 1. Respect an explicit stored preference
-    const stored = localStorage.getItem('enefsis_lang')
-    if (stored && LANGUAGES.some(l => l.code === stored)) {
-      void selectLang(stored)
-      return
-    }
-    // 2. Auto-detect: map navigator.language (e.g. "el-GR") to a DeepL code
-    const nav   = navigator.language.slice(0, 2).toLowerCase()
-    const match = LANGUAGES.find(l => l.nav === nav)
-    // Only translate if a supported non-English language is detected
-    if (match && match.code !== 'EN') void selectLang(match.code)
+    setTimeout(() => {
+      // 1. Respect an explicit stored preference
+      const stored = localStorage.getItem('enefsis_lang')
+      if (stored && LANGUAGES.some(l => l.code === stored)) {
+        void selectLang(stored)
+        return
+      }
+      // 2. Auto-detect: map navigator.language (e.g. "el-GR") to a DeepL code
+      const nav   = navigator.language.slice(0, 2).toLowerCase()
+      const match = LANGUAGES.find(l => l.nav === nav)
+      // Only translate if a supported non-English language is detected
+      if (match && match.code !== 'EN') void selectLang(match.code)
+    }, 100)
   }, [selectLang])
 
   const t = (text: string) => translated[text] ?? text

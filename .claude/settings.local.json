@@ -6,7 +6,8 @@
       "Bash(npx tsc *)",
       "Bash(dir D:\\\\PROJECT_ENEFSIS\\\\src\\\\app\\\\api *)",
       "Bash(dir D:\\\\PROJECT_ENEFSIS\\\\src\\\\app\\\\api\\\\translate *)",
-      "PowerShell($content = Get-Content \"D:\\\\PROJECT_ENEFSIS\\\\src\\\\app\\\\p\\\\[slug]\\\\landing-client.tsx\" -Raw; $lines = $content -split \"`n\"; \"Total lines: $\\($lines.Count\\)\"; $lines[828..835] | ForEach-Object { $i++; \"$\\($i+828\\): $_\" })"
+      "PowerShell($content = Get-Content \"D:\\\\PROJECT_ENEFSIS\\\\src\\\\app\\\\p\\\\[slug]\\\\landing-client.tsx\" -Raw; $lines = $content -split \"`n\"; \"Total lines: $\\($lines.Count\\)\"; $lines[828..835] | ForEach-Object { $i++; \"$\\($i+828\\): $_\" })",
+      "PowerShell(cd \"D:\\\\PROJECT_ENEFSIS\" ; npx tsc --noEmit --project tsconfig.json 2>&1 | Where-Object { $_ -match \"src/\" } | Select-Object -First 10)"
     ]
   }
 }
