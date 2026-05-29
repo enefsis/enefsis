@@ -1580,6 +1580,7 @@ export function LandingClient({
                     alt="Logo"
                     className="object-contain"
                     style={{ maxHeight: 72, maxWidth: 164 }}
+                    fetchPriority="high"
                   />
                 </div>
               )}

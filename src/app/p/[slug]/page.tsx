@@ -78,7 +78,11 @@ export default async function LandingPage({ params, searchParams }: Props) {
   const isPro = !!(sub as { plan?: string | null } | null)?.plan?.includes('pro')
 
   return (
-    <LandingClient
+    <>
+      {page.logo_url && (
+        <link rel="preload" href={page.logo_url} as="image" />
+      )}
+      <LandingClient
       standId={sid ?? null}
       clientId={page.user_id}
       tableNumber={tableNumber}
@@ -115,5 +119,6 @@ export default async function LandingPage({ params, searchParams }: Props) {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       openingHoursStructured={((page as any).opening_hours_structured ?? null) as import('@/actions/page-editor').StructuredHours | null}
     />
+    </>
   )
 }
