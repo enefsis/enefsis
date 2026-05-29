@@ -189,7 +189,10 @@ export default async function DashboardPage({
   // ── Language preferences ──────────────────────────────────────────────────────
   const langMap: Record<string, number> = {}
   ;(rawLanguages as { language: string | null }[] | null)?.forEach(row => {
-    const lang = row.language ?? 'unknown'
+    const raw = row.language
+    if (!raw) return
+    const lang = raw.split(/[-_]/)[0].toLowerCase()
+    if (!lang) return
     langMap[lang] = (langMap[lang] ?? 0) + 1
   })
   const langData: LangEntry[] = Object.entries(langMap)

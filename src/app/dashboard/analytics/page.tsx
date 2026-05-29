@@ -250,7 +250,9 @@ export default async function AnalyticsPage({
   // ── Language preferences ───────────────────────────────────────────────────
   const langMap: Record<string, number> = {}
   taps.forEach(t => {
-    const lang = t.language ? t.language.split(/[-_]/)[0].toUpperCase() : 'N/A'
+    if (!t.language) return
+    const lang = t.language.split(/[-_]/)[0].toUpperCase()
+    if (!lang) return
     langMap[lang] = (langMap[lang] ?? 0) + 1
   })
   const topLangs = Object.entries(langMap).sort(([, a], [, b]) => b - a).slice(0, 8)
