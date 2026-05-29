@@ -54,7 +54,7 @@ export function Sidebar({ navItems, badge, user }: SidebarProps) {
 
       {/* Logo + optional badge */}
       <div className="px-5 pt-6 pb-5">
-        <img src="/enefsis-logo-transparent.png" alt="Enefsis" style={{ height: '60px', objectFit: 'contain' }} />
+        <img src="/enefsis-logo-transparent.png" alt="Enefsis" style={{ height: '120px', objectFit: 'contain' }} />
         {badge && (
           <div className="mt-2.5">
             <span className="inline-flex items-center text-[10px] font-sans font-bold uppercase tracking-widest px-2.5 py-1 rounded-md bg-[#2B5CE6]/15 text-[#2B5CE6] border border-[#2B5CE6]/20">
