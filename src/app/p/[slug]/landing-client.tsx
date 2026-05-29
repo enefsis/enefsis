@@ -335,19 +335,37 @@ function MenuItemCard({ item, onView, onPhotoClick, t, unavailable = false }: Me
   useEffect(() => {
     const el = ref.current
     if (!el) return
+    const viewTimers = new Map<string, NodeJS.Timeout>()
     const observer = new IntersectionObserver(
       ([entry]) => {
-        if (entry.isIntersecting && !fired.current) {
-          fired.current = true
-          onView()
-          observer.disconnect()
+        if (fired.current) return
+        if (entry.isIntersecting) {
+          const timer = setTimeout(() => {
+            viewTimers.delete(item.id)
+            if (!fired.current) {
+              fired.current = true
+              observer.disconnect()
+              onView()
+            }
+          }, 3000)
+          viewTimers.set(item.id, timer)
+        } else {
+          const pending = viewTimers.get(item.id)
+          if (pending) {
+            clearTimeout(pending)
+            viewTimers.delete(item.id)
+          }
         }
       },
       { threshold: 0.6 },
     )
     observer.observe(el)
-    return () => observer.disconnect()
-  }, [onView])
+    return () => {
+      observer.disconnect()
+      viewTimers.forEach(t => clearTimeout(t))
+      viewTimers.clear()
+    }
+  }, [onView, item.id])
 
   const allergens = item.allergens
     ? item.allergens.split(',').map(a => a.trim()).filter(Boolean)
