@@ -123,8 +123,8 @@ export function SubscriptionCard({ data }: { data: SubscriptionData | null }) {
           )}
           <p className="font-sans text-xs text-white/60">
             Contact:{' '}
-            <a href="mailto:gniokos@gmail.com" className="text-blue-400 hover:text-blue-300 transition-colors">
-              gniokos@gmail.com
+            <a href="mailto:support@enefsis.com" className="text-blue-400 hover:text-blue-300 transition-colors">
+              support@enefsis.com
             </a>
           </p>
         </div>
