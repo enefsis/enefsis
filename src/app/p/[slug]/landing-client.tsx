@@ -1479,20 +1479,19 @@ export function LandingClient({
   )
 
   useEffect(() => {
-    setTimeout(() => {
-      // 1. Respect an explicit stored preference
-      const stored = localStorage.getItem('enefsis_lang')
-      if (stored && LANGUAGES.some(l => l.code === stored)) {
-        void selectLang(stored)
-        return
-      }
-      // 2. Auto-detect: map navigator.language (e.g. "el-GR") to a DeepL code
-      const nav   = navigator.language.slice(0, 2).toLowerCase()
-      const match = LANGUAGES.find(l => l.nav === nav)
-      // Only translate if a supported non-English language is detected
-      if (match && match.code !== 'EN') void selectLang(match.code)
-    }, 100)
-  }, [selectLang])
+    // 1. Respect an explicit stored preference
+    const stored = localStorage.getItem('enefsis_lang')
+    if (stored && LANGUAGES.some(l => l.code === stored)) {
+      void selectLang(stored)
+      return
+    }
+    // 2. Auto-detect: map navigator.language (e.g. "el-GR") to a DeepL code
+    const nav   = navigator.language.slice(0, 2).toLowerCase()
+    const match = LANGUAGES.find(l => l.nav === nav)
+    // Only translate if a supported non-English language is detected
+    if (match && match.code !== 'EN') void selectLang(match.code)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   const t = (text: string) => translated[text] ?? text
 
@@ -1880,9 +1879,35 @@ export function LandingClient({
         </div>
       )}
 
+      {/* ── Translation loading overlay ──────────────────────────────────── */}
+      {isTranslating && (
+        <div
+          className="fixed inset-0 z-40 flex items-center justify-center"
+          style={{ background: 'rgba(0,0,0,0.45)', backdropFilter: 'blur(2px)', WebkitBackdropFilter: 'blur(2px)' }}
+        >
+          <div
+            className="flex flex-col items-center gap-3 px-8 py-5 rounded-2xl"
+            style={{ background: '#161920', border: '1px solid rgba(255,255,255,0.10)' }}
+          >
+            <div
+              className="w-7 h-7 rounded-full border-2"
+              style={{
+                borderColor: 'rgba(255,255,255,0.15)',
+                borderTopColor: '#2B65F0',
+                animation: 'spin 0.75s linear infinite',
+              }}
+            />
+            <span className="font-sans" style={{ fontSize: 13, color: 'rgba(255,255,255,0.50)' }}>
+              Translating…
+            </span>
+          </div>
+        </div>
+      )}
+
       <style>{`
         @keyframes fadeIn  { from { opacity:0 }             to { opacity:1 }            }
         @keyframes slideUp { from { transform:translateY(100%) } to { transform:translateY(0) } }
+        @keyframes spin    { to   { transform:rotate(360deg) }                              }
       `}</style>
     </div>
   )
