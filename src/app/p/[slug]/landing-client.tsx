@@ -1643,18 +1643,17 @@ export function LandingClient({
         <div className="flex justify-end px-4 pt-4">
           <button
             type="button"
-            onClick={() => !isTranslating && setLangOpen(true)}
+            onClick={() => setLangOpen(true)}
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-full transition-all active:scale-95"
             style={{
               background: 'rgba(255,255,255,0.06)',
               border: '1px solid rgba(255,255,255,0.10)',
-              opacity: isTranslating ? 0.55 : 1,
               color: '#ffffff',
             }}
           >
             <GlobeIcon size={13} />
             <span className="font-sans text-xs font-medium" style={{ color: 'rgba(255,255,255,0.55)' }}>
-              {isTranslating ? '···' : LANGUAGES.find(l => l.code === lang)?.name ?? lang}
+              {LANGUAGES.find(l => l.code === lang)?.name ?? lang}
             </span>
           </button>
         </div>
@@ -1879,35 +1878,9 @@ export function LandingClient({
         </div>
       )}
 
-      {/* ── Translation loading overlay ──────────────────────────────────── */}
-      {isTranslating && (
-        <div
-          className="fixed inset-0 z-40 flex items-center justify-center"
-          style={{ background: 'rgba(0,0,0,0.45)', backdropFilter: 'blur(2px)', WebkitBackdropFilter: 'blur(2px)' }}
-        >
-          <div
-            className="flex flex-col items-center gap-3 px-8 py-5 rounded-2xl"
-            style={{ background: '#161920', border: '1px solid rgba(255,255,255,0.10)' }}
-          >
-            <div
-              className="w-7 h-7 rounded-full border-2"
-              style={{
-                borderColor: 'rgba(255,255,255,0.15)',
-                borderTopColor: '#2B65F0',
-                animation: 'spin 0.75s linear infinite',
-              }}
-            />
-            <span className="font-sans" style={{ fontSize: 13, color: 'rgba(255,255,255,0.50)' }}>
-              Translating…
-            </span>
-          </div>
-        </div>
-      )}
-
       <style>{`
         @keyframes fadeIn  { from { opacity:0 }             to { opacity:1 }            }
         @keyframes slideUp { from { transform:translateY(100%) } to { transform:translateY(0) } }
-        @keyframes spin    { to   { transform:rotate(360deg) }                              }
       `}</style>
     </div>
   )
