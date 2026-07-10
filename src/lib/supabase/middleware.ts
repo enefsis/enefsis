@@ -24,6 +24,11 @@ export async function updateSession(request: NextRequest) {
           )
         },
       },
+      cookieOptions: {
+        sameSite: 'lax',
+        secure: true,
+        httpOnly: true,
+      },
     }
   )
 
