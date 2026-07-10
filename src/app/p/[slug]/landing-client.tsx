@@ -1493,6 +1493,10 @@ export function LandingClient({
       console.log('[LangDetect] navigator.language:', navigator.language)
       console.log('[LangDetect] navigator.languages:', JSON.stringify(navigator.languages))
       console.log('[LangDetect] detected lang:', navigator.language?.split('-')[0])
+      console.log('[Android Debug] userAgent:', navigator.userAgent)
+      console.log('[Android Debug] language:', navigator.language)
+      console.log('[Android Debug] languages:', JSON.stringify(navigator.languages))
+      console.log('[Android Debug] connection lang:', document.documentElement.lang)
       void selectLang(match.code)
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
