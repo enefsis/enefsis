@@ -44,9 +44,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ translations: text })
   }
 
-  const baseUrl = apiKey.endsWith(':fx')
-    ? 'https://api-free.deepl.com/v2/translate'
-    : 'https://api.deepl.com/v2/translate'
+  const baseUrl = 'https://api.deepl.com/v2/translate'
 
   const requestBody: Record<string, unknown> = {
     text,
