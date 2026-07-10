@@ -5,7 +5,7 @@ import { LandingClient } from './landing-client'
 import { Logo } from '@/components/ui/logo'
 import type { MenuSectionData } from '@/actions/page-editor'
 
-export const revalidate = 300
+export const revalidate = 3600
 
 interface Props {
   params:       Promise<{ slug: string }>
