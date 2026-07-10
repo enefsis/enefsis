@@ -32,6 +32,8 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Invalid request' }, { status: 400 })
   }
 
+  console.log('[Translate] target lang:', targetLang)
+
   const deeplLang = DEEPL_LANG[targetLang.toUpperCase()]
   if (!deeplLang) {
     // Unsupported language — return originals so the client falls back gracefully

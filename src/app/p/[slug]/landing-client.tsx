@@ -1489,7 +1489,12 @@ export function LandingClient({
     const nav   = navigator.language.slice(0, 2).toLowerCase()
     const match = LANGUAGES.find(l => l.nav === nav)
     // Only translate if a supported non-English language is detected
-    if (match && match.code !== 'EN') void selectLang(match.code)
+    if (match && match.code !== 'EN') {
+      console.log('[LangDetect] navigator.language:', navigator.language)
+      console.log('[LangDetect] navigator.languages:', JSON.stringify(navigator.languages))
+      console.log('[LangDetect] detected lang:', navigator.language?.split('-')[0])
+      void selectLang(match.code)
+    }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
