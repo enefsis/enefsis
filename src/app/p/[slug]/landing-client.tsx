@@ -90,6 +90,13 @@ const UI_KEYS = [
   'Leave us a quick review — it means the world to us',
   'Leave a Review',
   'Maybe later',
+  'Monday',
+  'Tuesday',
+  'Wednesday',
+  'Thursday',
+  'Friday',
+  'Saturday',
+  'Sunday',
 ]
 
 // ─── SVG icons ────────────────────────────────────────────────────────────────
@@ -761,7 +768,7 @@ function InfoSection({
                       minWidth: 90,
                     }}
                   >
-                    {label}
+                    {t(label)}
                   </span>
                   <span
                     className="font-sans"
