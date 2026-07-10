@@ -1440,7 +1440,6 @@ export function LandingClient({
   const selectLang = useCallback(
     async (code: string) => {
       setLang(code)
-      localStorage.setItem('enefsis_lang', code)
       setLangOpen(false)
 
       if (code === 'EN') {
@@ -1491,13 +1490,7 @@ export function LandingClient({
   )
 
   useEffect(() => {
-    // 1. Respect an explicit stored preference
-    const stored = localStorage.getItem('enefsis_lang')
-    if (stored && LANGUAGES.some(l => l.code === stored)) {
-      void selectLang(stored)
-      return
-    }
-    // 2. Auto-detect (Xiaomi HyperOS-safe normalization)
+    // Auto-detect (Xiaomi HyperOS-safe normalization)
     const lang = getLang()
     console.log('[LangDetect]:', lang)
     if (lang && lang.toUpperCase() !== 'EN') {
