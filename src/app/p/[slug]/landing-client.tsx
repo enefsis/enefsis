@@ -41,6 +41,18 @@ const LANGUAGES = [
   { code: 'MS', flag: '🇲🇾', name: 'Melayu',      nav: 'ms' },
 ]
 
+// Detects browser language, normalized to a supported DeepL code.
+// Falls back through navigator.languages[0] — some Xiaomi HyperOS devices
+// report an incorrect/empty navigator.language.
+function getLang(): string | null {
+  const raw = navigator.language || navigator.languages?.[0] || 'en'
+  const normalized = raw.split('-')[0].toLowerCase()
+  const supported = ['el', 'de', 'fr', 'it', 'es', 'tr', 'ru', 'zh', 'ja', 'ar', 'pl',
+    'nl', 'pt', 'sv', 'da', 'fi', 'cs', 'ro', 'hu', 'bg', 'hr', 'uk', 'id', 'ko']
+  if (!supported.includes(normalized)) return null
+  return normalized
+}
+
 // Static UI strings sent to DeepL when translating
 const UI_KEYS = [
   'Review us on Google',
@@ -1485,19 +1497,11 @@ export function LandingClient({
       void selectLang(stored)
       return
     }
-    // 2. Auto-detect: map navigator.language (e.g. "el-GR") to a DeepL code
-    const nav   = navigator.language.slice(0, 2).toLowerCase()
-    const match = LANGUAGES.find(l => l.nav === nav)
-    // Only translate if a supported non-English language is detected
-    if (match && match.code !== 'EN') {
-      console.log('[LangDetect] navigator.language:', navigator.language)
-      console.log('[LangDetect] navigator.languages:', JSON.stringify(navigator.languages))
-      console.log('[LangDetect] detected lang:', navigator.language?.split('-')[0])
-      console.log('[Android Debug] userAgent:', navigator.userAgent)
-      console.log('[Android Debug] language:', navigator.language)
-      console.log('[Android Debug] languages:', JSON.stringify(navigator.languages))
-      console.log('[Android Debug] connection lang:', document.documentElement.lang)
-      void selectLang(match.code)
+    // 2. Auto-detect (Xiaomi HyperOS-safe normalization)
+    const lang = getLang()
+    console.log('[LangDetect]:', lang)
+    if (lang && lang.toUpperCase() !== 'EN') {
+      void selectLang(lang.toUpperCase())
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
